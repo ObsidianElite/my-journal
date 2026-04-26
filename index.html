@@ -10,54 +10,70 @@
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: #06090c; border: 1px solid #1f2937; border-radius: 8px; position: relative; }
         label { color: #00FFCC; font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 10px; }
+        
+        /* Widget Styles */
+        .widget-label { color: #00FFCC; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; }
+        .efficiency-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #111827; font-size: 11px; }
+        .lifecycle-row { background: #0d1117; padding: 10px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        
         input { background: #0d1117; border: 1px solid #30363d; color: #fff; padding: 8px; border-radius: 4px; width: 100%; outline: none; }
-        .toggle-group { display: flex; gap: 4px; flex-wrap: wrap; }
         .toggle-btn, .setup-btn { background: #0d1117; border: 1px solid #1f2937; padding: 6px; font-size: 9px; font-weight: 800; border-radius: 4px; cursor: pointer; text-transform: uppercase; color: #4b5563; }
         .toggle-btn.active { background: #1f2937; color: #fff; border-color: #00FFCC; box-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
         .setup-btn.active { background: #00FFCC; color: #000; border-color: #00FFCC; box-shadow: 0 0 15px rgba(0, 255, 204, 0.5); }
         .btn-live { background: #00FFCC; color: #000; padding: 12px; font-weight: 900; border-radius: 4px; width: 100%; text-transform: uppercase; margin-top: 10px; }
         .group-header { background: #0d1117; cursor: pointer; border-left: 3px solid #00FFCC; }
-        thead th { color: #00FFCC; font-size: 9px; text-transform: uppercase; padding: 12px; border-bottom: 1px solid #1f2937; }
     </style>
 </head>
 <body class="p-4">
-    <div class="max-w-[1600px] mx-auto">
+    <div class="max-w-[1700px] mx-auto">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-black text-[#00FFCC]">OBSIDIAN <span class="text-white">ELITE</span></h1>
+            <div>
+                <h1 class="text-2xl font-black text-[#00FFCC] leading-none">OBSIDIAN <span class="text-white">ELITE</span></h1>
+                <p class="text-[9px] text-gray-500 mt-1 uppercase">Execution Terminal | <span id="currentDate"></span></p>
+            </div>
             <div class="flex gap-8">
-                <div class="text-right"><p class="text-[9px] text-[#00FFCC]">NET P&L</p><p id="totalPnl" class="text-2xl font-black">$0.00</p></div>
-                <div class="text-right"><p class="text-[9px] text-[#00FFCC]">EXPOSURE</p><p id="activeCount" class="text-2xl font-black">0</p></div>
+                <div class="text-right"><p class="text-[9px] text-[#00FFCC] uppercase">Net P&L</p><p id="totalPnl" class="text-2xl font-black">$0.00</p></div>
+                <div class="text-right"><p class="text-[9px] text-[#00FFCC] uppercase">Exposure</p><p id="activeCount" class="text-2xl font-black text-[#00D9FF]">0</p></div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-            <div class="stat-card p-4 h-[220px]"><label>Daily Performance Candles</label><canvas id="equityChart"></canvas></div>
-            <div class="stat-card p-4 h-[220px] flex flex-col items-center justify-center">
-                <label class="self-start">Precision</label>
-                <div class="relative w-28 h-28"><canvas id="precisionChart"></canvas><div class="absolute inset-0 flex items-center justify-center font-black text-[#00FFCC]" id="winRateText">0%</div></div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="stat-card p-4 h-[200px]"><div class="widget-label">Equity Curve</div><canvas id="equityChart"></canvas></div>
+            <div class="stat-card p-4 h-[200px] flex flex-col items-center">
+                <div class="widget-label self-start">Execution Precision</div>
+                <div class="relative w-28 h-28 mt-2"><canvas id="precisionChart"></canvas><div class="absolute inset-0 flex items-center justify-center font-black text-[#00FFCC]" id="winRateText">0%</div></div>
             </div>
-            <div class="stat-card p-4 h-[220px]"><label>Ticker P&L Range (Peak/Valley)</label><canvas id="tickerChart"></canvas></div>
+            <div class="stat-card p-4 h-[200px]">
+                <div class="widget-label">Efficiency Matrix</div>
+                <div class="efficiency-row text-gray-500 mt-4"><span>Profit Factor</span><span id="pFactor" class="text-[#00D9FF]">0.00</span></div>
+                <div class="efficiency-row text-gray-500"><span>Avg Win</span><span id="avgWin" class="text-green-400">$0</span></div>
+                <div class="efficiency-row text-gray-500"><span>Avg Loss</span><span id="avgLoss" class="text-red-400">$0</span></div>
+            </div>
+            <div class="stat-card p-4 h-[200px]">
+                <div class="widget-label">Win/Loss Lifecycle</div>
+                <div class="lifecycle-row"><div class="text-[9px]"><p class="text-gray-500">DAILY</p><p id="dCount">0 Trades</p></div><div id="dRate" class="text-[#00FFCC] font-bold">0%</div></div>
+                <div class="lifecycle-row"><div class="text-[9px]"><p class="text-gray-500">WEEKLY</p><p id="wCount">0 Trades</p></div><div id="wRate" class="text-[#00D9FF] font-bold">0%</div></div>
+                <div class="lifecycle-row"><div class="text-[9px]"><p class="text-gray-500">MONTHLY</p><p id="mCount">0 Trades</p></div><div id="mRate" class="text-purple-400 font-bold">0%</div></div>
+            </div>
         </div>
 
         <div class="stat-card p-6 mb-6">
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-6 gap-6">
                 <input type="hidden" id="editId">
                 <div class="md:col-span-2"><label>Symbol Selection</label><div class="toggle-group" id="tickerSelect"></div></div>
-                <div><label>Type</label><div class="toggle-group" id="typeSelect"><div class="toggle-btn" data-type="CALL">CALL</div><div class="toggle-btn" data-type="PUT">PUT</div></div></div>
+                <div><label>Contract Type</label><div class="toggle-group" id="typeSelect"><div class="toggle-btn" data-type="CALL">CALL</div><div class="toggle-btn" data-type="PUT">PUT</div></div></div>
                 <div><label>Qty</label><input type="number" id="count" value="1"></div>
-                <div><label>Entry</label><input type="number" id="entry" step="0.01"></div>
-                <div><label>Exit</label><input type="number" id="exit" step="0.01" disabled></div>
+                <div><label>Entry Price</label><input type="number" id="entry" step="0.01"></div>
+                <div><label>Exit Price</label><input type="number" id="exit" step="0.01" disabled placeholder="Locked"></div>
                 <div class="md:col-span-full"><label>Execution Setups</label><div id="setupGrid" class="grid grid-cols-2 md:grid-cols-7 gap-2"></div></div>
                 <button type="submit" id="submitBtn" class="md:col-span-full btn-live">Open Live Trade</button>
             </form>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="matrixContainer"></div>
-
         <div class="stat-card overflow-hidden">
             <table class="w-full text-left text-[11px]">
                 <thead class="bg-[#0d1117]">
-                    <tr><th>Day / Date</th><th>Asset</th><th>Timeline</th><th>Fills</th><th>Setup Logic</th><th class="text-right">PNL</th><th>Manage</th></tr>
+                    <tr><th class="p-4">Day / Date</th><th>Asset</th><th>Timeline</th><th>Fills</th><th>Setup Logic</th><th class="text-right">PNL</th><th class="p-4 text-center">Manage</th></tr>
                 </thead>
                 <tbody id="tradeBody"></tbody>
             </table>
@@ -65,80 +81,70 @@
     </div>
 
     <script>
-        // Custom Plugin for "Peak/Valley" wicks as seen in original screenshot
-        const wickPlugin = { id: 'wickPlugin', afterDatasetsDraw(chart) {
-            const { ctx, scales: { y } } = chart;
-            const ds = chart.data.datasets.find(d => d.wicks);
-            if (!ds) return;
-            ctx.save();
-            chart.getDatasetMeta(chart.data.datasets.indexOf(ds)).data.forEach((bar, i) => {
-                const { h, l } = ds.wicks[i]; if (h === -Infinity) return;
-                const x = bar.x;
-                ctx.beginPath(); ctx.strokeStyle = '#ffffff55'; ctx.lineWidth = 1;
-                ctx.moveTo(x, y.getPixelForValue(h)); ctx.lineTo(x, y.getPixelForValue(l)); ctx.stroke();
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 8px JetBrains Mono'; ctx.textAlign = 'center';
-                ctx.fillText(`$${Math.round(h)}`, x, y.getPixelForValue(h) - 5);
-                ctx.fillText(`$${Math.round(l)}`, x, y.getPixelForValue(l) + 10);
-            });
-            ctx.restore();
-        }};
-        Chart.register(wickPlugin);
-
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v3')) || [];
-        let equityChart, precisionChart, tickerChart;
+        let trades = JSON.parse(localStorage.getItem('obsidian_v4')) || [];
+        let equityChart, precisionChart;
         const tickers = ["AAPL","AMD","COIN","META","MSTR","MU","NVDA","PLTR","QQQ","SPX","SPY","TSLA"];
         const setups = ["5/12 CURL","5/12 REJECT","34/50 Bounce","34/50 Reject","PM HI break","PM low break","PD CL Bounce","PD CL Fail","PD HI Brko","PD LW Brkdwn","34/50 MTF Bnc","34/50 MTF Rej","50/55 MTF Bnc","50/55 MTF Rej"];
 
         function initCharts() {
             equityChart = new Chart(document.getElementById('equityChart'), { 
-                data: { labels: [], datasets: [{ type: 'bar', data: [], backgroundColor: [], wicks: [] }]},
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1f2937' } } } }
+                type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: '#00FFCC', tension: 0.4, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 255, 204, 0.05)' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#111827' }, ticks: { font: { size: 8 } } } } }
             });
             precisionChart = new Chart(document.getElementById('precisionChart'), { 
-                type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '85%' }] },
+                type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: ['#00FFCC', '#111827'], borderWidth: 0, cutout: '85%' }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-            tickerChart = new Chart(document.getElementById('tickerChart'), { 
-                type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: [], wicks: [] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#fff', font: { size: 8 } } } } }
             });
         }
 
         function updateAnalytics() {
-            const closed = trades.filter(t => t.status === 'CLOSED').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const closed = trades.filter(t => t.status === 'CLOSED');
+            const now = new Date();
+            let net = 0, wins = 0, totalW = 0, totalL = 0;
             
-            // Ticker Analytics with Peak/Valley Wicks
-            let tData = {};
-            closed.forEach(t => {
-                if (!tData[t.stock]) tData[t.stock] = { val: 0, h: -Infinity, l: Infinity };
-                tData[t.stock].val += parseFloat(t.pnl);
-                if (tData[t.stock].val > tData[t.stock].h) tData[t.stock].h = tData[t.stock].val;
-                if (tData[t.stock].val < tData[t.stock].l) tData[t.stock].l = tData[t.stock].val;
-            });
-            const keys = Object.keys(tData);
-            tickerChart.data.labels = keys;
-            tickerChart.data.datasets[0].data = keys.map(k => tData[k].val);
-            tickerChart.data.datasets[0].backgroundColor = keys.map(k => tData[k].val >= 0 ? '#4ade80' : '#f87171');
-            tickerChart.data.datasets[0].wicks = keys.map(k => ({ h: tData[k].h, l: tData[k].l }));
-            tickerChart.update();
+            let lifecycle = { d: {t:0, w:0}, w: {t:0, w:0}, m: {t:0, w:0} };
 
-            // Precision Gauge Correction
-            const wins = closed.filter(t => parseFloat(t.pnl) >= 0).length;
+            closed.forEach(t => {
+                const val = parseFloat(t.pnl); net += val;
+                const d = new Date(t.timestamp);
+                const diff = (now - d) / (1000 * 60 * 60 * 24);
+                
+                if (val >= 0) { wins++; totalW += val; } else { totalL += Math.abs(val); }
+                
+                if (d.toDateString() === now.toDateString()) { lifecycle.d.t++; if(val >= 0) lifecycle.d.w++; }
+                if (diff <= 7) { lifecycle.w.t++; if(val >= 0) lifecycle.w.w++; }
+                if (diff <= 30) { lifecycle.m.t++; if(val >= 0) lifecycle.m.w++; }
+            });
+
+            // Precision & Matrix
             const rate = closed.length ? Math.round((wins / closed.length) * 100) : 0;
             precisionChart.data.datasets[0].data = [rate, 100 - rate];
-            document.getElementById('winRateText').innerText = rate + '%';
             precisionChart.update();
+            document.getElementById('winRateText').innerText = rate + '%';
+            document.getElementById('pFactor').innerText = totalL ? (totalW / totalL).toFixed(2) : (totalW ? 'MAX' : '0.00');
+            document.getElementById('avgWin').innerText = '$' + (wins ? Math.round(totalW / wins) : 0);
+            document.getElementById('avgLoss').innerText = '$' + (closed.length - wins ? Math.round(totalL / (closed.length - wins)) : 0);
 
-            // Global Totals
-            let net = closed.reduce((acc, t) => acc + parseFloat(t.pnl), 0);
-            const pnlBox = document.getElementById('totalPnl');
-            pnlBox.innerText = `$${net.toFixed(2)}`;
-            pnlBox.className = `text-2xl font-black ${net >= 0 ? 'text-green-400' : 'text-red-500'}`;
+            // Lifecycle UI
+            const updateRow = (idPrefix, data) => {
+                document.getElementById(idPrefix+'Count').innerText = `${data.t} Trades`;
+                document.getElementById(idPrefix+'Rate').innerText = (data.t ? Math.round((data.w/data.t)*100) : 0) + '%';
+            }
+            updateRow('d', lifecycle.d); updateRow('w', lifecycle.w); updateRow('m', lifecycle.m);
+
+            // Equity Curve
+            let running = 0;
+            equityChart.data.labels = closed.map((_, i) => i);
+            equityChart.data.datasets[0].data = closed.map(t => running += parseFloat(t.pnl));
+            equityChart.update();
+
+            document.getElementById('totalPnl').innerText = `$${net.toFixed(2)}`;
+            document.getElementById('totalPnl').className = `text-2xl font-black ${net >= 0 ? 'text-green-400' : 'text-red-500'}`;
             document.getElementById('activeCount').innerText = trades.filter(t => t.status === 'OPEN').length;
         }
 
         function render() {
-            localStorage.setItem('obsidian_elite_v3', JSON.stringify(trades));
+            localStorage.setItem('obsidian_v4', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             const now = new Date();
             const groups = { 'Daily': [], 'Weekly': [], 'Monthly': [] };
@@ -153,21 +159,23 @@
 
             ['Daily', 'Weekly', 'Monthly'].forEach(label => {
                 if (!groups[label].length) return;
-                body.innerHTML += `<tr class="group-header"><td colspan="7" class="p-3 text-[10px] font-black text-[#00FFCC] uppercase">${label} RECAP (${groups[label].length})</td></tr>`;
+                body.innerHTML += `<tr class="group-header"><td colspan="7" class="p-3 text-[10px] font-black text-[#00FFCC] uppercase">${label} (${groups[label].length})</td></tr>`;
                 groups[label].forEach(t => {
                     const isC = t.status === 'CLOSED';
-                    body.innerHTML += `<tr class="border-b border-gray-800">
+                    body.innerHTML += `<tr class="border-b border-gray-900">
                         <td class="p-4 text-gray-500">${new Date(t.timestamp).toLocaleDateString([], {weekday:'short', month:'numeric', day:'numeric'})}</td>
                         <td class="p-4 font-bold">${t.stock} <span class="${t.option==='CALL'?'text-green-400':'text-red-400'}">${t.option}</span></td>
                         <td class="p-4 text-gray-600">${t.entryTime} → ${t.exitTime||'--'}</td>
                         <td class="p-4">${t.entry} → ${t.exit||'??'} (${t.count}x)</td>
                         <td class="p-4 text-[#00D9FF]">${t.setups?.join(', ')||'--'}</td>
                         <td class="p-4 text-right font-black ${parseFloat(t.pnl)>=0?'text-green-400':'text-red-500'}">${isC?'$'+t.pnl:'--'}</td>
-                        <td class="p-4"><button onclick="editTrade(${t.idx})">✏️</button></td></tr>`;
+                        <td class="p-4 text-center"><button onclick="editTrade(${t.idx})">✏️</button> <button onclick="deleteTrade(${t.idx})">🗑️</button></td></tr>`;
                 });
             });
             updateAnalytics();
         }
+
+        function deleteTrade(i) { trades.splice(i, 1); render(); }
 
         function editTrade(i) {
             const t = trades[i]; document.getElementById('editId').value = i;
@@ -178,22 +186,27 @@
         }
 
         document.getElementById('tradeForm').onsubmit = (e) => {
-            e.preventDefault(); const id = document.getElementById('editId').value;
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
             const tick = document.querySelector('#tickerSelect .active')?.dataset.ticker;
             const type = document.querySelector('#typeSelect .active')?.dataset.type;
             const ent = parseFloat(document.getElementById('entry').value);
             const ext = parseFloat(document.getElementById('exit').value);
             const count = parseInt(document.getElementById('count').value);
             const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
+            
             if (id !== "") {
                 const t = trades[id];
-                if (!isNaN(ext)) { trades[id] = { ...t, exit: ext, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, pnl: ((ext - t.entry) * 100 * t.count).toFixed(2) }; }
-                else trades[id].setups = set;
+                if (!isNaN(ext)) { 
+                    trades[id] = { ...t, exit: ext, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, pnl: ((ext - t.entry) * 100 * t.count).toFixed(2) }; 
+                } else trades[id].setups = set;
             } else {
                 trades.unshift({ stock: tick, option: type, entry: ent, count: count, status: 'OPEN', entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, timestamp: new Date().toISOString(), pnl: 0 });
             }
             document.getElementById('tradeForm').reset(); document.getElementById('editId').value = '';
+            document.getElementById('exit').disabled = true;
             document.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
+            document.getElementById('submitBtn').innerText = "Open Live Trade";
             render();
         };
 
@@ -204,6 +217,7 @@
                 if (this.classList.contains('setup-btn')) this.classList.toggle('active');
                 else { this.parentElement.querySelectorAll('.toggle-btn').forEach(x => x.classList.remove('active')); this.classList.add('active'); }
             });
+            document.getElementById('currentDate').innerText = new Date().toDateString();
             initCharts(); render();
         };
     </script>
