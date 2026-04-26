@@ -11,15 +11,16 @@
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 16px; position: relative; overflow: hidden; }
         .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00f2ff, transparent); opacity: 0.3; }
         label { color: #94a3b8; font-weight: 800; font-size: 10px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.1em; }
-        input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
+        input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
         input:focus { border-color: #00f2ff; }
-        input:disabled { opacity: 0.4; cursor: not-allowed; background-color: #030508; }
+        input:disabled { opacity: 0.3; cursor: not-allowed; }
         .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; flex-wrap: wrap; }
         .toggle-btn { flex: 1; min-width: 45px; text-align: center; padding: 8px 4px; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; background: #0d1117; border: 1px solid #30363d; transition: 0.2s; }
-        .toggle-btn.active { border-color: #00f2ff; color: #fff; }
-        .toggle-btn.active[data-type="CALL"], .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Above"], .toggle-btn.active[data-val="HI"] { background: #064e3b; color: #4ade80; }
-        .toggle-btn.active[data-type="PUT"], .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Below"], .toggle-btn.active[data-val="LO"] { background: #7f1d1d; color: #f87171; }
-        .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
+        .toggle-btn.active { border-color: #00f2ff; color: #fff; background: #1e3a8a; }
+        .toggle-btn.active[data-type="CALL"] { background: #064e3b; color: #4ade80; }
+        .toggle-btn.active[data-type="PUT"] { background: #7f1d1d; color: #f87171; }
+        .setup-btn { background: #0d1117; border: 1px solid #30363d; padding: 10px; border-radius: 8px; font-size: 9px; font-weight: 800; color: #4b5563; cursor: pointer; transition: 0.2s; text-align: center; text-transform: uppercase; }
+        .setup-btn.active { border-color: #00f2ff; color: #fff; background: #1e40af; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
         .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; cursor: pointer; }
     </style>
 </head>
@@ -39,6 +40,7 @@
         <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500">
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 <input type="hidden" id="editId" value="">
+                
                 <div class="col-span-2">
                     <label>Ticker</label>
                     <div class="toggle-group" id="tickerSelect">
@@ -58,17 +60,27 @@
                 <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="Required"></div>
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
                 
-                <div class="col-span-full grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 border-t border-gray-800 pt-6">
-                    <div><label>Setup</label><select id="setup"><option value="">Select...</option><option>A+</option><option>V-Rev</option><option>Scalp</option></select></div>
-                    <div><label>VWAP</label><div class="toggle-group" data-id="vwap"><div class="toggle-btn" data-val="Y">Y</div><div class="toggle-btn" data-val="N">N</div></div></div>
-                    <div><label>EMA 5/12</label><div class="toggle-group" data-id="ema5"><div class="toggle-btn" data-val="BUY">B</div><div class="toggle-btn" data-val="SELL">S</div></div></div>
-                    <div><label>MTF</label><div class="toggle-group" data-id="mtf"><div class="toggle-btn blue" data-val="H34">H34</div><div class="toggle-btn blue" data-val="21">21</div><div class="toggle-btn blue" data-val="55">55</div></div></div>
-                    <div><label>PM Range</label><div class="toggle-group" data-id="pmRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
-                    <div><label>PD Range</label><div class="toggle-group" data-id="pdRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
-                    <div><label>PDC Level</label><div class="toggle-group" data-id="pdc"><div class="toggle-btn" data-val="Above">Abv</div><div class="toggle-btn" data-val="Below">Bel</div></div></div>
+                <div class="col-span-full border-t border-gray-800 pt-6">
+                    <label class="mb-4">Mandatory Execution Setup (Select at least one to close trade)</label>
+                    <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                        <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div>
+                        <div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
+                        <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div>
+                        <div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
+                        <div class="setup-btn" data-val="PM HI break">PM HI break</div>
+                        <div class="setup-btn" data-val="PM low break">PM low break</div>
+                        <div class="setup-btn" data-val="PD CL Bounce">PD CL Bounce</div>
+                        <div class="setup-btn" data-val="PD CL Fail">PD CL Fail</div>
+                        <div class="setup-btn" data-val="PD HI Brk">PD HI Brko</div>
+                        <div class="setup-btn" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
+                        <div class="setup-btn" data-val="34/50 MTF Bounce">34/50 MTF Bounce</div>
+                        <div class="setup-btn" data-val="34/50 MTF Reject">34/50 MTF Reject</div>
+                        <div class="setup-btn" data-val="50/55 MTF Bounce">50/55 MTF Bounce</div>
+                        <div class="setup-btn" data-val="50/55 MTF reject">50/55 MTF reject</div>
+                    </div>
                 </div>
 
-                <div class="col-span-full flex gap-4">
+                <div class="col-span-full flex gap-4 mt-4">
                     <button type="submit" id="submitBtn" class="btn-live">Open Live Trade</button>
                     <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden bg-gray-800 p-4 rounded-lg font-bold">Cancel</button>
                 </div>
@@ -76,16 +88,15 @@
         </div>
 
         <div class="stat-card overflow-hidden">
-            <table class="w-full text-left text-[10px]">
+            <table class="w-full text-left text-xs">
                 <thead class="bg-gray-900/50 uppercase text-gray-500">
                     <tr>
-                        <th class="p-4">Asset</th>
-                        <th class="p-4">Timeline</th>
-                        <th class="p-4">Fills</th>
-                        <th class="p-4">Setup</th>
-                        <th class="p-4">Context (V|E|M|PM|PD|PDC)</th>
-                        <th class="p-4 text-right">PNL</th>
-                        <th class="p-4 text-center">Manage</th>
+                        <th class="p-5">Asset</th>
+                        <th class="p-5">Timeline</th>
+                        <th class="p-5">Fills</th>
+                        <th class="p-5">Setups Used</th>
+                        <th class="p-5 text-right">PNL</th>
+                        <th class="p-5 text-center">Manage</th>
                     </tr>
                 </thead>
                 <tbody id="tradeBody"></tbody>
@@ -94,29 +105,26 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v12')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v13')) || [];
 
         function render() {
-            localStorage.setItem('obsidian_elite_v12', JSON.stringify(trades));
-            const body = document.getElementById('tradeBody');
-            body.innerHTML = '';
+            localStorage.setItem('obsidian_elite_v13', JSON.stringify(trades));
+            const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
-
+            
             trades.forEach((t, i) => {
                 const isC = t.status === 'CLOSED';
                 if(!isC) active++; else total += parseFloat(t.pnl);
+                
+                const setups = t.setups ? t.setups.join(', ') : '--';
 
-                // Concatenate technical context into a single string for table display
-                const contextStr = `${t.vwap} | ${t.ema5} | ${t.mtf} | ${t.pmRange} | ${t.pdRange} | ${t.pdc}`;
-
-                body.innerHTML += `<tr class="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
-                    <td class="p-4"><span class="font-black text-white">${t.stock}</span> <span class="${t.option === 'CALL' ? 'text-green-500' : 'text-red-500'}">${t.option}</span></td>
-                    <td class="p-4 text-gray-400">${t.entryTime} → ${t.exitTime || '--'}</td>
-                    <td class="p-4 text-white">${t.entry} → ${t.exit || '??'} <span class="text-gray-600">(${t.count}x)</span></td>
-                    <td class="p-4 font-bold text-cyan-400">${t.setup || '--'}</td>
-                    <td class="p-4 text-gray-500">${isC ? contextStr : 'Awaiting Exit...'}</td>
-                    <td class="p-4 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$'+t.pnl : '--'}</td>
-                    <td class="p-4 text-center"><div class="flex justify-center gap-3">
+                body.innerHTML += `<tr class="border-b border-gray-800/50">
+                    <td class="p-5"><span class="font-black text-white">${t.stock}</span> <span class="${t.option === 'CALL' ? 'text-green-500' : 'text-red-500'}">${t.option}</span></td>
+                    <td class="p-5 text-gray-400">${t.entryTime} → ${t.exitTime || '--'}</td>
+                    <td class="p-5 text-white">${t.entry} → ${t.exit || '??'} <span class="text-gray-600">(${t.count}x)</span></td>
+                    <td class="p-5"><span class="text-cyan-400 font-bold">${setups}</span></td>
+                    <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$'+t.pnl : '--'}</td>
+                    <td class="p-5 text-center"><div class="flex justify-center gap-3">
                         <button onclick="editTrade(${i})" class="hover:text-cyan-400">✏️</button>
                         <button onclick="removeTrade(${i})" class="hover:text-red-500">🗑️</button>
                         ${!isC ? `<button onclick="closeTradeUI(${i})" class="bg-orange-500 text-white px-2 py-1 rounded text-[9px] font-bold">CLOSE</button>` : ''}
@@ -126,10 +134,15 @@
             document.getElementById('totalPnl').innerText = '$' + total.toFixed(2);
         }
 
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
+        // Setup Toggles (Multi-select)
+        document.querySelectorAll('.setup-btn').forEach(btn => {
+            btn.onclick = function() { this.classList.toggle('active'); };
+        });
+
+        // Ticker/Type Toggles (Single-select)
+        document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => {
             btn.onclick = function() {
-                if(this.closest('#tickerSelect') && document.getElementById('editId').value !== "") return;
-                if(this.closest('#typeSelect') && document.getElementById('editId').value !== "") return;
+                if(document.getElementById('editId').value !== "") return; // Lock during edit
                 this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
             };
@@ -142,29 +155,25 @@
             const type = document.querySelector('#typeSelect .active')?.dataset.type;
             const entryVal = document.getElementById('entry').value;
             const exitVal = document.getElementById('exit').value;
-            const getV = (id) => document.querySelector(`.toggle-group[data-id="${id}"] .active`)?.dataset.val;
+            const selectedSetups = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
 
-            // 1. ENTRY VALIDATION
+            // Entry Validation
             if (editId === "" && (!ticker || !type || !entryVal)) {
                 alert("STRICT GOVERNANCE: Ticker, Type, and Entry Price are mandatory.");
                 return;
-            } 
-            // 2. EXIT VALIDATION (Mandatory Fields)
-            else if (editId !== "" && exitVal !== "") {
-                const setup = document.getElementById('setup').value;
-                const contexts = ['vwap', 'ema5', 'mtf', 'pmRange', 'pdRange', 'pdc'];
-                const missing = contexts.filter(id => !getV(id));
-                if (!setup || setup === "" || missing.length > 0) {
-                    alert(`MANDATORY EXIT DATA MISSING: Setup and all Toggles must be active.`);
+            }
+
+            // Exit Validation
+            if (editId !== "" && exitVal !== "") {
+                if (selectedSetups.length === 0) {
+                    alert("MANDATORY: You must select at least one Setup to close this trade.");
                     return;
                 }
             }
 
             const tradeData = {
                 stock: ticker, option: type, count: document.getElementById('count').value,
-                entry: parseFloat(entryVal), setup: document.getElementById('setup').value,
-                vwap: getV('vwap') || '-', ema5: getV('ema5') || '-', mtf: getV('mtf') || '-',
-                pmRange: getV('pmRange') || '-', pdRange: getV('pdRange') || '-', pdc: getV('pdc') || '-',
+                entry: parseFloat(entryVal), setups: selectedSetups,
                 date: new Date().toISOString().split('T')[0]
             };
 
@@ -190,13 +199,16 @@
             document.getElementById('entry').value = t.entry;
             document.getElementById('entry').disabled = true;
             document.getElementById('count').value = t.count;
-            document.getElementById('setup').value = t.setup || "";
-            
             document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.ticker === t.stock));
             document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t.option));
             
+            // Populate setups
+            document.querySelectorAll('.setup-btn').forEach(btn => {
+                btn.classList.toggle('active', t.setups && t.setups.includes(btn.dataset.val));
+            });
+
             document.getElementById('exit').disabled = false;
-            document.getElementById('submitBtn').innerText = "Update Record";
+            document.getElementById('submitBtn').innerText = "Finalize Exit";
             document.getElementById('cancelBtn').classList.remove('hidden');
         }
 
@@ -208,15 +220,13 @@
             document.getElementById('editId').value = ''; 
             document.getElementById('exit').disabled = true; 
             document.getElementById('entry').disabled = false; 
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.toggle-btn, .setup-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('submitBtn').innerText = "Open Live Trade";
             document.getElementById('cancelBtn').classList.add('hidden');
+            render();
         }
 
-        window.onload = () => { 
-            render(); 
-            document.getElementById('currentDateDisplay').innerText = new Date().toISOString().split('T')[0]; 
-        };
+        window.onload = () => { render(); document.getElementById('currentDateDisplay').innerText = new Date().toISOString().split('T')[0]; };
     </script>
 </body>
 </html>
