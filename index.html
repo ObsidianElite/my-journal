@@ -132,7 +132,7 @@
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
                 
                 <div class="col-span-full border-t border-gray-800 pt-4">
-                    <label>Execution Setups (Select to log)</label>
+                    <label>Execution Setups (Mandatory: Min 1 selection to Enter)</label>
                     <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
                         <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div><div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
                         <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div><div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
@@ -169,7 +169,7 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_v19')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_v20')) || [];
         let equityChart, precisionChart;
 
         function initCharts() {
@@ -197,43 +197,28 @@
         function updateAnalytics() {
             const closedTrades = trades.filter(t => t.status === 'CLOSED');
             const now = new Date();
-            
-            // Filters for Lifecycle
             const daily = closedTrades.filter(t => new Date(t.timestamp).toDateString() === now.toDateString());
-            const weekly = closedTrades.filter(t => {
-                const tDate = new Date(t.timestamp);
-                const diff = (now - tDate) / (1000 * 60 * 60 * 24);
-                return diff <= 7;
-            });
-            const monthly = closedTrades.filter(t => {
-                const tDate = new Date(t.timestamp);
-                return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
-            });
+            const weekly = closedTrades.filter(t => (now - new Date(t.timestamp)) / (1000 * 60 * 60 * 24) <= 7);
+            const monthly = closedTrades.filter(t => new Date(t.timestamp).getMonth() === now.getMonth());
 
-            // Update Lifecycle UI
             const dStat = calculateWinRate(daily);
             document.getElementById('dailyTrades').innerText = `${dStat.count} Trades`;
             document.getElementById('dailyWinRate').innerText = `${dStat.rate}%`;
-
             const wStat = calculateWinRate(weekly);
             document.getElementById('weeklyTrades').innerText = `${wStat.count} Trades`;
             document.getElementById('weeklyWinRate').innerText = `${wStat.rate}%`;
-
             const mStat = calculateWinRate(monthly);
             document.getElementById('monthlyTrades').innerText = `${mStat.count} Trades`;
             document.getElementById('monthlyWinRate').innerText = `${mStat.rate}%`;
 
-            // Standard Analytics
             let runningPnl = 0, equityData = [0], totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
             closedTrades.reverse().forEach(t => {
                 const p = parseFloat(t.pnl);
-                runningPnl += p;
-                equityData.push(runningPnl);
+                runningPnl += p; equityData.push(runningPnl);
                 if (p >= 0) { totalProfit += p; wins++; } else { totalLoss += Math.abs(p); losses++; }
             });
             closedTrades.reverse();
 
-            // Precision & Charts
             const winRate = closedTrades.length ? Math.round((wins / closedTrades.length) * 100) : 0;
             precisionChart.data.datasets[0].data = [wins, losses];
             precisionChart.update();
@@ -242,21 +227,18 @@
             equityChart.data.datasets[0].data = equityData;
             equityChart.update();
 
-            // Matrix
             document.getElementById('profitFactor').innerText = totalLoss === 0 ? (totalProfit > 0 ? 'INF' : '0.00') : (totalProfit / totalLoss).toFixed(2);
             document.getElementById('avgWin').innerText = wins ? `$${(totalProfit / wins).toFixed(0)}` : '$0';
             document.getElementById('avgLoss').innerText = losses ? `$${(totalLoss / losses).toFixed(0)}` : '$0';
         }
 
         function render() {
-            localStorage.setItem('obsidian_v19', JSON.stringify(trades));
+            localStorage.setItem('obsidian_v20', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
-            
             trades.forEach((t, i) => {
                 const isC = t.status === 'CLOSED';
                 if(!isC) active++; else total += parseFloat(t.pnl);
-                
                 body.innerHTML += `<tr class="border-b border-gray-800/50 hover:bg-white/5 transition-all">
                     <td class="p-4 font-bold text-white">${t.stock} <span class="${t.option === 'CALL' ? 'text-[#00FFCC]' : 'text-red-400'} text-[9px]">${t.option}</span></td>
                     <td class="p-4 text-gray-500 text-[10px]">${t.entryTime} → ${t.exitTime || '--'}</td>
@@ -291,13 +273,19 @@
             const exitVal = document.getElementById('exit').value;
             const selectedSetups = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
 
-            if (editId === "" && (!ticker || !type || !entryVal)) { alert("Ticker, Type, and Entry required."); return; }
+            // MANDATORY CHECK FOR NEW TRADE
+            if (editId === "") {
+                if (!ticker || !type || !entryVal) { alert("Ticker, Type, and Entry required."); return; }
+                if (selectedSetups.length === 0) { alert("MANDATORY: Select at least 1 Execution Setup to open a live trade."); return; }
+            }
 
             if (editId !== "") {
                 const t = trades[editId];
                 if (exitVal) {
                     const ex = parseFloat(exitVal);
                     trades[editId] = { ...t, exit: ex, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: selectedSetups, pnl: ((ex - t.entry) * 100 * t.count).toFixed(2), timestamp: new Date().toISOString() };
+                } else {
+                    trades[editId] = { ...t, setups: selectedSetups }; // Allow updating setups without closing
                 }
             } else {
                 trades.unshift({ stock: ticker, option: type, entry: parseFloat(entryVal), count: document.getElementById('count').value, status: 'OPEN', entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), pnl: 0, setups: selectedSetups, timestamp: new Date().toISOString() });
@@ -310,6 +298,9 @@
             document.getElementById('editId').value = i;
             document.getElementById('entry').value = t.entry;
             document.getElementById('exit').disabled = false;
+            document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.ticker === t.stock));
+            document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t.option));
+            document.querySelectorAll('.setup-btn').forEach(btn => btn.classList.toggle('active', t.setups?.includes(btn.dataset.val)));
             document.getElementById('submitBtn').innerText = "Update Record";
             document.getElementById('cancelBtn').classList.remove('hidden');
         }
