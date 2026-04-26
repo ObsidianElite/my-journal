@@ -9,12 +9,12 @@
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 16px; position: relative; overflow: hidden; }
         
-        /* FLUORESCENT LABELS - NEON MINT */
+        /* FLUORESCENT LABELS */
         label { 
             color: #00FFCC !important; 
-            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+            text-shadow: 0 0 12px rgba(0, 255, 204, 0.6);
             font-weight: 800; 
-            font-size: 12px; 
+            font-size: 13px; 
             text-transform: uppercase; 
             margin-bottom: 12px; 
             display: block; 
@@ -22,56 +22,70 @@
         }
 
         input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
-        input:focus { border-color: #00FFCC; box-shadow: 0 0 10px rgba(0, 255, 204, 0.2); }
+        input:focus { border-color: #00FFCC; box-shadow: 0 0 15px rgba(0, 255, 204, 0.3); }
         input:disabled { opacity: 0.2; cursor: not-allowed; }
         
-        /* SELECTION BUTTONS */
-        .toggle-group { display: flex; gap: 6px; background: #111827; padding: 6px; border-radius: 10px; border: 1px solid #1f2937; flex-wrap: wrap; }
+        /* ALL BUTTONS (TICKERS, CALL/PUT, SETUPS) - FLUORESCENT THEME */
+        .toggle-group { display: flex; gap: 6px; background: #0a0e14; padding: 6px; border-radius: 10px; border: 1px solid #1f2937; flex-wrap: wrap; }
         
-        /* INACTIVE STATE */
         .toggle-btn, .setup-btn { 
-            flex: 1; min-width: 60px; text-align: center; padding: 10px 6px; 
-            font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; 
-            color: #4b5563; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s; 
+            flex: 1; min-width: 65px; text-align: center; padding: 12px 8px; 
+            font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; 
+            /* High contrast inactive state */
+            color: #00D9FF; 
+            background: #0d1117; 
+            border: 1px solid #00D9FF; 
+            transition: all 0.2s ease-in-out;
+            text-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
         }
 
-        /* ACTIVE STATE - ELECTRIC BLUE & NEON MINT */
+        /* HOVER EFFECT */
+        .toggle-btn:hover, .setup-btn:hover {
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+            background: #111827;
+        }
+
+        /* ACTIVE STATE - NEON GREEN GLOW */
         .toggle-btn.active, .setup-btn.active { 
             border-color: #00FFCC !important; 
-            color: #ffffff !important; 
-            background: #1e40af !important; /* Deep Blue background */
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); 
+            color: #030508 !important; /* Dark text for contrast against bright bg */
+            background: #00FFCC !important; 
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.8); 
+            text-shadow: none;
         }
 
-        /* SPECIAL COLOR FOR CALL/PUT WHEN ACTIVE */
-        .toggle-btn.active[data-type="CALL"] { background: #064e3b !important; color: #00FFCC !important; border-color: #00FFCC !important; }
-        .toggle-btn.active[data-type="PUT"] { background: #7f1d1d !important; color: #ff4d4d !important; border-color: #ff4d4d !important; }
+        /* SPECIAL CALL/PUT COLORS */
+        .toggle-btn[data-type="CALL"] { border-color: #4ade80; color: #4ade80; }
+        .toggle-btn.active[data-type="CALL"] { background: #4ade80 !important; color: #000 !important; border-color: #4ade80 !important; box-shadow: 0 0 20px #4ade80; }
         
-        .btn-live { background: linear-gradient(to bottom, #00FFCC, #0077ff); color: #000; padding: 16px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; }
+        .toggle-btn[data-type="PUT"] { border-color: #f87171; color: #f87171; }
+        .toggle-btn.active[data-type="PUT"] { background: #f87171 !important; color: #000 !important; border-color: #f87171 !important; box-shadow: 0 0 20px #f87171; }
+        
+        .btn-live { background: linear-gradient(to bottom, #00FFCC, #00D9FF); color: #000; padding: 18px; font-weight: 900; border-radius: 12px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; font-size: 16px; letter-spacing: 2px; }
         
         /* TABLE HEADERS */
-        thead th { color: #00FFCC !important; text-shadow: 0 0 5px rgba(0, 255, 204, 0.3); font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; }
+        thead th { color: #00FFCC !important; text-shadow: 0 0 8px rgba(0, 255, 204, 0.4); font-weight: 800; text-transform: uppercase; font-size: 12px; }
     </style>
 </head>
 <body class="p-6">
     <div class="max-w-[1850px] mx-auto">
         <div class="flex justify-between items-end mb-8">
             <div>
-                <h1 class="text-3xl font-black text-[#00FFCC] uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
-                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Terminal | <span id="currentDateDisplay" class="text-[#00FFCC]"></span></p>
+                <h1 class="text-4xl font-black text-[#00FFCC] uppercase tracking-tighter" style="text-shadow: 0 0 20px rgba(0,255,204,0.4)">Obsidian <span class="text-white">Elite</span></h1>
+                <p class="text-[11px] font-bold text-gray-400 mt-1 uppercase tracking-widest">Execution Terminal | <span id="currentDateDisplay" class="text-[#00FFCC]"></span></p>
             </div>
-            <div class="flex gap-6">
-                <div class="text-right"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-3xl font-black text-green-400">$0.00</p></div>
-                <div class="text-right border-l border-gray-800 pl-6"><p class="text-gray-500 text-[10px] font-black uppercase">Exposure</p><p id="activeCount" class="text-3xl font-black text-[#00FFCC]">0</p></div>
+            <div class="flex gap-8">
+                <div class="text-right"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-4xl font-black text-green-400">$0.00</p></div>
+                <div class="text-right border-l border-gray-800 pl-8"><p class="text-gray-500 text-[10px] font-black uppercase">Active Trades</p><p id="activeCount" class="text-4xl font-black text-[#00D9FF]">0</p></div>
             </div>
         </div>
 
-        <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-[#00FFCC]">
-            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        <div id="formContainer" class="stat-card p-10 mb-10 border-t-4 border-t-[#00FFCC]">
+            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-8">
                 <input type="hidden" id="editId" value="">
                 
                 <div class="col-span-2">
-                    <label>Ticker Selection</label>
+                    <label>Symbol / Ticker</label>
                     <div class="toggle-group" id="tickerSelect">
                         <div class="toggle-btn" data-ticker="SPY">SPY</div><div class="toggle-btn" data-ticker="SPX">SPX</div>
                         <div class="toggle-btn" data-ticker="TSLA">TSLA</div><div class="toggle-btn" data-ticker="NVDA">NVDA</div>
@@ -80,18 +94,18 @@
                     </div>
                 </div>
                 <div>
-                    <label>Option Type</label>
+                    <label>Contract Type</label>
                     <div class="toggle-group" id="typeSelect">
                         <div class="toggle-btn" data-type="CALL">CALL</div><div class="toggle-btn" data-type="PUT">PUT</div>
                     </div>
                 </div>
-                <div><label>Contract Qty</label><input type="number" id="count" value="1" min="1"></div>
-                <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="Required"></div>
+                <div><label>Qty</label><input type="number" id="count" value="1" min="1"></div>
+                <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
                 
-                <div class="col-span-full border-t border-gray-800 pt-6">
-                    <label>Mandatory Execution Setups (Choose at least one to close trade)</label>
-                    <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mt-2">
+                <div class="col-span-full border-t border-gray-800 pt-8">
+                    <label>Execution Setup (Fluorescent Selection Mandatory to Close)</label>
+                    <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-4">
                         <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div>
                         <div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
                         <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div>
@@ -102,30 +116,30 @@
                         <div class="setup-btn" data-val="PD CL Fail">PD CL Fail</div>
                         <div class="setup-btn" data-val="PD HI Brk">PD HI Brko</div>
                         <div class="setup-btn" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
-                        <div class="setup-btn" data-val="34/50 MTF Bounce">34/50 MTF Bounce</div>
-                        <div class="setup-btn" data-val="34/50 MTF Reject">34/50 MTF Reject</div>
-                        <div class="setup-btn" data-val="50/55 MTF Bounce">50/55 MTF Bounce</div>
-                        <div class="setup-btn" data-val="50/55 MTF reject">50/55 MTF reject</div>
+                        <div class="setup-btn" data-val="34/50 MTF Bounce">34/50 MTF Bnc</div>
+                        <div class="setup-btn" data-val="34/50 MTF Reject">34/50 MTF Rej</div>
+                        <div class="setup-btn" data-val="50/55 MTF Bounce">50/55 MTF Bnc</div>
+                        <div class="setup-btn" data-val="50/55 MTF reject">50/55 MTF Rej</div>
                     </div>
                 </div>
 
-                <div class="col-span-full flex gap-4 mt-4">
+                <div class="col-span-full flex gap-4 mt-6">
                     <button type="submit" id="submitBtn" class="btn-live">Open Live Trade</button>
-                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden bg-gray-800 p-4 rounded-lg font-bold text-white">Cancel</button>
+                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden bg-gray-900 border border-red-500 text-red-500 p-4 rounded-lg font-bold uppercase tracking-widest">Cancel</button>
                 </div>
             </form>
         </div>
 
         <div class="stat-card overflow-hidden">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-gray-900/50">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-gray-900">
                     <tr>
-                        <th class="p-5">Asset</th>
-                        <th class="p-5">Timeline</th>
-                        <th class="p-5">Fills</th>
-                        <th class="p-5">Execution Setups</th>
-                        <th class="p-5 text-right">PNL</th>
-                        <th class="p-5 text-center">Manage</th>
+                        <th class="p-6">Asset</th>
+                        <th class="p-6">Timeline</th>
+                        <th class="p-6">Fills</th>
+                        <th class="p-6">Setup Logic</th>
+                        <th class="p-6 text-right">Net PNL</th>
+                        <th class="p-6 text-center">Manage</th>
                     </tr>
                 </thead>
                 <tbody id="tradeBody"></tbody>
@@ -134,10 +148,10 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v15')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v16')) || [];
 
         function render() {
-            localStorage.setItem('obsidian_elite_v15', JSON.stringify(trades));
+            localStorage.setItem('obsidian_elite_v16', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
             
@@ -146,28 +160,28 @@
                 if(!isC) active++; else total += parseFloat(t.pnl);
                 const setups = t.setups ? t.setups.join(', ') : '--';
 
-                body.innerHTML += `<tr class="border-b border-gray-800/50 hover:bg-white/5">
-                    <td class="p-5"><span class="font-black text-white">${t.stock}</span> <span class="${t.option === 'CALL' ? 'text-[#00FFCC]' : 'text-red-500'}">${t.option}</span></td>
-                    <td class="p-5 text-gray-400">${t.entryTime} → ${t.exitTime || '--'}</td>
-                    <td class="p-5 text-white">${t.entry} → ${t.exit || '??'} <span class="text-gray-600">(${t.count}x)</span></td>
-                    <td class="p-5"><span class="text-[#00FFCC] font-bold">${setups}</span></td>
-                    <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$'+t.pnl : '--'}</td>
-                    <td class="p-5 text-center"><div class="flex justify-center gap-4">
-                        <button onclick="editTrade(${i})" class="text-gray-400 hover:text-[#00FFCC]">✏️</button>
-                        <button onclick="removeTrade(${i})" class="text-gray-400 hover:text-red-500">🗑️</button>
-                        ${!isC ? `<button onclick="closeTradeUI(${i})" class="bg-orange-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Close</button>` : ''}
+                body.innerHTML += `<tr class="border-b border-gray-800/50 hover:bg-white/5 transition-all">
+                    <td class="p-6"><span class="font-black text-white">${t.stock}</span> <span class="${t.option === 'CALL' ? 'text-green-400' : 'text-red-400'}">${t.option}</span></td>
+                    <td class="p-6 text-gray-500 text-xs">${t.entryTime} → ${t.exitTime || '--'}</td>
+                    <td class="p-6 text-white">${t.entry} → ${t.exit || '??'} <span class="text-gray-600">(${t.count}x)</span></td>
+                    <td class="p-6"><span class="text-[#00FFCC] font-bold text-xs">${setups}</span></td>
+                    <td class="p-6 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$'+t.pnl : '--'}</td>
+                    <td class="p-6 text-center"><div class="flex justify-center gap-6">
+                        <button onclick="editTrade(${i})" class="text-gray-500 hover:text-[#00FFCC] text-lg">✏️</button>
+                        <button onclick="removeTrade(${i})" class="text-gray-500 hover:text-red-500 text-lg">🗑️</button>
+                        ${!isC ? `<button onclick="closeTradeUI(${i})" class="bg-orange-500 text-black px-3 py-1 rounded text-[10px] font-black uppercase">CLOSE</button>` : ''}
                     </div></td></tr>`;
             });
             document.getElementById('activeCount').innerText = active;
             document.getElementById('totalPnl').innerText = '$' + total.toFixed(2);
         }
 
-        // Handle Setup multi-select
+        // Setup Selection
         document.querySelectorAll('.setup-btn').forEach(btn => {
             btn.onclick = function() { this.classList.toggle('active'); };
         });
 
-        // Handle Ticker/Type single-select
+        // Ticker/Type Selection
         document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => {
             btn.onclick = function() {
                 if(document.getElementById('editId').value !== "") return; 
@@ -186,12 +200,12 @@
             const selectedSetups = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
 
             if (editId === "" && (!ticker || !type || !entryVal)) {
-                alert("MANDATORY: Ticker, Type, and Entry Price required.");
+                alert("SYSTEM: Ticker, Type, and Entry Price are required.");
                 return;
             }
 
             if (editId !== "" && exitVal !== "" && selectedSetups.length === 0) {
-                alert("MANDATORY: Select at least one Setup to close.");
+                alert("GOVERNANCE: Select at least one Setup to log exit.");
                 return;
             }
 
@@ -226,12 +240,12 @@
             document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t.option));
             document.querySelectorAll('.setup-btn').forEach(btn => btn.classList.toggle('active', t.setups?.includes(btn.dataset.val)));
             document.getElementById('exit').disabled = false;
-            document.getElementById('submitBtn').innerText = "Update Record";
+            document.getElementById('submitBtn').innerText = "FINAL RECORD LOG";
             document.getElementById('cancelBtn').classList.remove('hidden');
         }
 
         function closeTradeUI(i) { editTrade(i); document.getElementById('exit').focus(); }
-        function removeTrade(i) { if(confirm("Delete?")) { trades.splice(i, 1); render(); } }
+        function removeTrade(i) { if(confirm("Purge record?")) { trades.splice(i, 1); render(); } }
 
         function resetForm() { 
             document.getElementById('tradeForm').reset(); document.getElementById('editId').value = ''; 
