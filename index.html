@@ -2,338 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Obsidian Elite | Professional Terminal</title>
+    <title>Obsidian Elite | Quant Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
-        .stat-card { background: #0a0e14; border: 1px solid #1f2937; border-radius: 12px; transition: border 0.3s; }
-        label { color: #00f2ff; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.05em; }
-        input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
-        input:focus, select:focus { border-color: #00f2ff; }
-        .cmd-input { border: 2px solid #1f2937; background: #05070a; font-size: 16px; color: #00f2ff; padding: 15px; border-radius: 12px; width: 100%; }
-        .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; }
-        .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; }
-        .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Buy"], .toggle-btn.active[data-val="HI"], .toggle-btn.active[data-val="Above"] { background: #064e3b; color: #4ade80; }
-        .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Sell"], .toggle-btn.active[data-val="LO"], .toggle-btn.active[data-val="Below"] { background: #7f1d1d; color: #f87171; }
-        .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
-        .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; }
-        .btn-close { background: linear-gradient(to bottom, #f59e0b, #d97706); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; }
-        .status-live { color: #00f2ff; animation: pulse 2s infinite; font-weight: 800; font-size: 10px; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .error-glow { border: 1px solid #ef4444 !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+        body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; overflow-x: hidden; }
+        .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 16px; position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00f2ff, transparent); opacity: 0.3; }
+        
+        label { color: #94a3b8; font-weight: 800; font-size: 10px; text-transform: uppercase; margin-bottom: 12px; display: block; letter-spacing: 0.1em; }
+        input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 8px; font-size: 14px; width: 100%; transition: 0.3s; }
+        input:focus { border-color: #00f2ff; box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
+        
+        .gauge-container { position: relative; height: 120px; width: 120px; }
+        .gauge-value { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; color: #00f2ff; text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
+        
+        .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .metric-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .metric-val { font-size: 14px; font-weight: 800; }
+        
+        .btn-live { background: linear-gradient(135deg, #00f2ff 0%, #0077ff 100%); box-shadow: 0 4px 15px rgba(0, 119, 255, 0.3); transition: 0.3s; }
+        .btn-live:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 119, 255, 0.5); }
+        
+        .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"] { background: #059669; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); color: #fff; }
+        .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"] { background: #dc2626; box-shadow: 0 0 10px rgba(220, 38, 38, 0.4); color: #fff; }
+
+        .status-pill { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 900; letter-spacing: 1px; }
+        .pill-open { background: rgba(0, 242, 255, 0.1); color: #00f2ff; border: 1px solid #00f2ff; animation: pulse 2s infinite; }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-[1850px] mx-auto">
-        <div class="flex justify-between items-start mb-8">
+<body class="p-8">
+    <div class="max-w-[1800px] mx-auto">
+        
+        <div class="flex justify-between items-end mb-10">
             <div>
-                <h1 class="text-3xl font-black text-cyan-400 uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
-                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Engine | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
-            </div>
-            <div class="flex gap-4">
-                <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-2xl font-black text-green-400">$0.00</p></div>
-                <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Active</p><p id="activeCount" class="text-2xl font-black text-cyan-400">0</p></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="stat-card p-6 h-[300px]">
-                <label>Equity Growth</label>
-                <canvas id="dailyPnlChart"></canvas>
-            </div>
-            <div class="stat-card p-6 h-[300px] flex flex-col items-center">
-                <label class="w-full">Win/Loss Distribution</label>
-                <div class="relative h-full w-full flex items-center justify-center">
-                    <canvas id="winLossChart"></canvas>
-                    <div class="absolute text-center">
-                        <p id="winRatioPercent" class="text-3xl font-black">0%</p>
-                        <p class="text-[9px] text-gray-500 uppercase">Success</p>
-                    </div>
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-2 bg-cyan-500 rounded-full shadow-[0_0_15px_#06b6d4]"></div>
+                    <h1 class="text-4xl font-black tracking-tighter uppercase">Obsidian <span class="text-cyan-500">Elite</span></h1>
                 </div>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-2">Quantitative Performance Terminal // <span id="currentDateDisplay" class="text-white"></span></p>
             </div>
-            <div class="stat-card p-6 h-[300px] flex flex-col justify-between">
-                <label>Efficiency Matrix</label>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-end border-b border-gray-800 pb-2">
-                        <span class="text-[10px] text-gray-500 uppercase font-bold">Profit Factor</span>
-                        <span id="profitFactor" class="text-xl font-black text-cyan-400">0.00</span>
-                    </div>
-                    <div class="flex justify-between items-end border-b border-gray-800 pb-2">
-                        <span class="text-[10px] text-gray-500 uppercase font-bold">Avg Win Duration</span>
-                        <span id="avgWinTime" class="text-sm font-black text-green-400">--</span>
-                    </div>
-                    <div class="flex justify-between items-end border-b border-gray-800 pb-2">
-                        <span class="text-[10px] text-gray-500 uppercase font-bold">Avg Loss Duration</span>
-                        <span id="avgLossTime" class="text-sm font-black text-red-500">--</span>
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <span class="text-[10px] text-gray-500 uppercase font-bold">Best Trade</span>
-                        <span id="bestTrade" class="text-sm font-black text-green-400">$0</span>
-                    </div>
+            <div class="flex gap-6">
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 font-black uppercase">Net Liquidity</p>
+                    <p id="totalPnl" class="text-4xl font-black text-white">$0.00</p>
+                </div>
+                <div class="text-right border-l border-slate-800 pl-6">
+                    <p class="text-[10px] text-slate-500 font-black uppercase">Exposure</p>
+                    <p id="activeCount" class="text-4xl font-black text-cyan-500">0</p>
                 </div>
             </div>
         </div>
 
-        <div class="mb-6">
-            <label>Rapid Command [Ticker Type Qty Price]</label>
-            <input type="text" id="cmdInput" class="cmd-input" placeholder="e.g. TSLA C 5 1.45">
-        </div>
-
-        <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500">
-            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-6">
-                <input type="hidden" id="editId" value="">
-                <div class="flex flex-col"><label>Ticker</label><select id="stock" required><option value="">Select...</option><option>AAPL</option><option>AMD</option><option>COIN</option><option>GOOG</option><option>META</option><option>MSFT</option><option>MSTR</option><option>MU</option><option>NFLX</option><option>NVDA</option><option>PLTR</option><option>SPX</option><option>SPY</option><option>TSLA</option></select></div>
-                <div class="flex flex-col"><label>Type</label><select id="optionType"><option value="CALL">CALL</option><option value="PUT">PUT</option></select></div>
-                <div class="flex flex-col"><label>Qty</label><input type="number" id="count" value="1"></div>
-                <div class="flex flex-col"><label>Entry Price</label><input type="number" id="entry" step="0.01" required placeholder="0.00"></div>
-                <div class="flex flex-col"><label>Exit Price</label><input type="number" id="exit" step="0.01" disabled placeholder="Locked"></div>
-                <div class="flex flex-col"><label>Setup</label><select id="setup" required><option value="">Select...</option><option>A+</option><option>B</option><option>C</option></select></div>
-                <div class="flex flex-col"><label>VWAP</label><div class="toggle-group" data-id="vwap"><div class="toggle-btn" data-val="Y">Y</div><div class="toggle-btn" data-val="N">N</div></div></div>
-                <div class="flex flex-col"><label>EMA 5/12</label><div class="toggle-group" data-id="ema512"><div class="toggle-btn" data-val="BUY">BUY</div><div class="toggle-btn" data-val="SELL">SELL</div></div></div>
-                <div class="flex flex-col"><label>MTF</label><div class="toggle-group" data-id="mtf"><div class="toggle-btn blue" data-val="H34">H34</div><div class="toggle-btn blue" data-val="21">21</div><div class="toggle-btn blue" data-val="55">55</div></div></div>
-                <div class="flex flex-col"><label>PM Range</label><div class="toggle-group" data-id="pmRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
-                <div class="flex flex-col"><label>PD Range</label><div class="toggle-group" data-id="pdRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
-                <div class="flex flex-col"><label>PDC Level</label><div class="toggle-group" data-id="pdc"><div class="toggle-btn" data-val="Above">Above</div><div class="toggle-btn" data-val="Below">Below</div></div></div>
-
-                <div class="col-span-full mt-2 flex gap-4">
-                    <button type="submit" id="submitBtn" class="btn-live">Record Daily Execution</button>
-                    <button type="button" id="cancelEdit" onclick="resetForm()" class="hidden bg-gray-800 px-8 py-3 rounded-xl font-black text-xs uppercase">Cancel Update</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="stat-card overflow-hidden">
-            <table class="w-full text-left">
-                <thead class="bg-gray-900/50">
-                    <tr>
-                        <th class="p-5 text-[10px] text-gray-500 uppercase">Asset Details</th>
-                        <th class="p-5 text-[10px] text-gray-500 uppercase">Timeline / Dur</th>
-                        <th class="p-5 text-[10px] text-gray-500 uppercase">Fills</th>
-                        <th class="p-5 text-[10px] text-gray-500 uppercase text-right">PNL ($)</th>
-                        <th class="p-5 text-[10px] text-gray-500 text-right">PNL (%)</th>
-                        <th class="p-5 text-[10px] text-gray-500 text-center">Manage</th>
-                    </tr>
-                </thead>
-                <tbody id="tradeBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v7')) || [];
-        let pnlChart = null;
-        let winLossChart = null;
-
-        function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false}); }
-        function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
-
-        function initCharts() {
-            const ctxPnL = document.getElementById('dailyPnlChart').getContext('2d');
-            pnlChart = new Chart(ctxPnL, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: '#00f2ff', borderRadius: 4 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: {
-                        y: { grid: { color: '#1f2937' }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            const ctxWL = document.getElementById('winLossChart').getContext('2d');
-            winLossChart = new Chart(ctxWL, {
-                type: 'doughnut',
-                data: { labels: ['Wins', 'Losses'], datasets: [{ data: [0, 0], backgroundColor: ['#4ade80', '#f87171'], borderWidth: 0, cutout: '85%' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-        }
-
-        function updateAnalytics() {
-            const closed = trades.filter(t => t.status === 'CLOSED');
-            const dailyData = {};
-            let wins = 0, losses = 0, winTime = 0, lossTime = 0, grossP = 0, grossL = 0, maxWin = 0;
-
-            closed.forEach(t => {
-                const pnl = parseFloat(t.pnl);
-                dailyData[t.date] = (dailyData[t.date] || 0) + pnl;
-                
-                const dur = parseDurationToSeconds(t.entryTime, t.exitTime);
-                if (pnl >= 0) { 
-                    wins++; winTime += dur; grossP += pnl; 
-                    if(pnl > maxWin) maxWin = pnl;
-                } else { 
-                    losses++; lossTime += dur; grossL += Math.abs(pnl); 
-                }
-            });
-
-            // 1. Update Bar Chart
-            const sortedDates = Object.keys(dailyData).sort();
-            pnlChart.data.labels = sortedDates;
-            pnlChart.data.datasets[0].data = sortedDates.map(d => dailyData[d]);
-            pnlChart.data.datasets[0].backgroundColor = sortedDates.map(d => dailyData[d] >= 0 ? '#4ade80' : '#f87171');
-            pnlChart.update();
-
-            // 2. Update Doughnut
-            winLossChart.data.datasets[0].data = [wins, losses];
-            winLossChart.update();
-            const ratio = closed.length > 0 ? Math.round((wins / closed.length) * 100) : 0;
-            document.getElementById('winRatioPercent').innerText = ratio + '%';
-
-            // 3. Update Matrix
-            document.getElementById('profitFactor').innerText = grossL > 0 ? (grossP / grossL).toFixed(2) : (grossP > 0 ? "INF" : "0.00");
-            document.getElementById('avgWinTime').innerText = wins > 0 ? formatSeconds(winTime / wins) : "--";
-            document.getElementById('avgLossTime').innerText = losses > 0 ? formatSeconds(lossTime / losses) : "--";
-            document.getElementById('bestTrade').innerText = '$' + maxWin.toLocaleString();
-        }
-
-        function parseDurationToSeconds(start, end) {
-            const s = start.split(':'), e = end.split(':');
-            return (parseInt(e[0])*3600 + parseInt(e[1])*60 + parseInt(e[2])) - (parseInt(s[0])*3600 + parseInt(s[1])*60 + parseInt(s[2]));
-        }
-
-        function formatSeconds(sec) {
-            const m = Math.floor(sec / 60);
-            const s = Math.floor(sec % 60);
-            return `${m}m ${s}s`;
-        }
-
-        document.getElementById('cmdInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const parts = this.value.toUpperCase().split(' ');
-                if (parts.length >= 4) {
-                    document.getElementById('stock').value = parts[0];
-                    document.getElementById('optionType').value = parts[1].startsWith('C') ? 'CALL' : 'PUT';
-                    document.getElementById('count').value = parts[2];
-                    document.getElementById('entry').value = parts[3];
-                    document.getElementById('tradeForm').dispatchEvent(new Event('submit'));
-                    this.value = '';
-                }
-            }
-        });
-
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                this.parentElement.classList.remove('error-glow');
-            });
-        });
-
-        function calculateDuration(start, end) {
-            if (!start || !end) return "--";
-            const diff = parseDurationToSeconds(start, end);
-            return diff < 0 ? "--" : formatSeconds(diff);
-        }
-
-        function render() {
-            localStorage.setItem('obsidian_elite_v7', JSON.stringify(trades));
-            const body = document.getElementById('tradeBody'); body.innerHTML = '';
-            let total = 0, active = 0;
-            const groups = {};
-            trades.forEach(t => {
-                if (!groups[t.date]) groups[t.date] = []; groups[t.date].push(t);
-                if (t.status === 'OPEN') active++;
-                if (t.status === 'CLOSED') total += parseFloat(t.pnl);
-            });
-            document.getElementById('activeCount').innerText = active;
-            document.getElementById('totalPnl').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits:2})}`;
-            document.getElementById('totalPnl').className = `text-2xl font-black ${total >= 0 ? 'text-green-400' : 'text-red-500'}`;
-
-            Object.keys(groups).sort().reverse().forEach(date => {
-                body.innerHTML += `<tr class="bg-gray-900/40"><td colspan="6" class="p-3 text-[10px] font-black text-cyan-400 uppercase tracking-widest border-l-4 border-cyan-500">${date}</td></tr>`;
-                groups[date].forEach(t => {
-                    const isC = t.status === 'CLOSED';
-                    body.innerHTML += `
-                        <tr class="border-b border-gray-800/50 hover:bg-white/5 transition">
-                            <td class="p-5">
-                                <div class="text-lg font-black text-white">${t.stock} <span class="${t.option === 'CALL' ? 'text-green-500' : 'text-red-500'}">${t.option}</span></div>
-                                <div class="${isC ? 'text-gray-600' : 'status-live'} uppercase text-[9px] font-black">${t.status}</div>
-                            </td>
-                            <td class="p-5">
-                                <div class="text-white text-xs font-bold">${t.entryTime} → ${t.exitTime || '--'}</div>
-                                <div class="text-cyan-500 text-[9px] font-black uppercase mt-1">DUR: ${isC ? calculateDuration(t.entryTime, t.exitTime) : '--'}</div>
-                            </td>
-                            <td class="p-5 text-white font-bold text-sm">${t.entry} → ${t.exit || '???'} <span class="text-gray-600">(${t.count}x)</span></td>
-                            <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$' + parseFloat(t.pnl).toLocaleString() : '--'}</td>
-                            <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? t.pnlPct + '%' : '--'}</td>
-                            <td class="p-5 text-center">${!isC ? `<button onclick="prepareClose('${t.id}')" class="bg-orange-500 text-white px-4 py-2 rounded font-black text-[10px] uppercase">Close Trade</button>` : `<button onclick="remove('${t.id}')" class="text-red-500">🗑</button>`}</td>
-                        </tr>`;
-                });
-            });
-            updateAnalytics();
-        }
-
-        document.getElementById('tradeForm').onsubmit = (e) => {
-            e.preventDefault();
-            const editId = document.getElementById('editId').value;
-            const getT = (id) => { const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
             
-            if(editId) {
-                const required = ['vwap', 'ema512', 'mtf', 'pmRange', 'pdRange', 'pdc'];
-                let missing = false;
-                required.forEach(key => {
-                    if(!getT(key)) { document.querySelector(`.toggle-group[data-id="${key}"]`).classList.add('error-glow'); missing = true; }
-                });
-                if(missing || !document.getElementById('exit').value || !document.getElementById('setup').value) {
-                    alert("STRICT GOVERNANCE: All technical context fields and Exit Price are mandatory to close a trade.");
-                    return;
-                }
-            }
+            <div class="lg:col-span-2 stat-card p-8">
+                <label>Equity Curve (Daily Realized)</label>
+                <div class="h-[240px] w-full">
+                    <canvas id="dailyPnlChart"></canvas>
+                </div>
+            </div>
 
-            if (!editId) {
-                trades.unshift({
-                    id: Date.now(), date: getNYDate(), status: 'OPEN',
-                    stock: document.getElementById('stock').value, option: document.getElementById('optionType').value,
-                    count: document.getElementById('count').value, entry: parseFloat(document.getElementById('entry').value),
-                    entryTime: getNYTime(), exit: null, exitTime: null, pnl: 0, pnlPct: 0,
-                    setup: document.getElementById('setup').value, vwap: getT('vwap'), ema512: getT('ema512'), mtf: getT('mtf'),
-                    pmRange: getT('pmRange'), pdRange: getT('pdRange'), pdc: getT('pdc')
-                });
-            } else {
-                const idx = trades.findIndex(t => String(t.id) === String(editId));
-                const ex = parseFloat(document.getElementById('exit').value);
-                const en = trades[idx].entry;
-                trades[idx].status = 'CLOSED'; trades[idx].exit = ex; trades[idx].exitTime = getNYTime();
-                trades[idx].pnl = ((ex - en) * 100 * trades[idx].count).toFixed(2);
-                trades[idx].pnlPct = (((ex - en) / en) * 100).toFixed(2);
-                ['vwap','ema512','mtf','pmRange','pdRange','pdc'].forEach(k => trades[idx][k] = getT(k));
-                trades[idx].setup = document.getElementById('setup').value;
-            }
-            resetForm(); render();
-        };
+            <div class="stat-card p-8 flex flex-col items-center justify-center">
+                <label class="self-start">Execution Precision</label>
+                <div class="gauge-container mb-4">
+                    <canvas id="winLossChart"></canvas>
+                    <div class="gauge-value" id="winRatioPercent">0%</div>
+                </div>
+                <p class="text-[10px] text-slate-500 font-bold uppercase">Success Rate</p>
+            </div>
 
-        function prepareClose(id) {
-            const t = trades.find(tr => String(tr.id) === String(id));
-            document.getElementById('editId').value = t.id;
-            document.getElementById('stock').value = t.stock;
-            document.getElementById('entry').value = t.entry;
-            document.getElementById('exit').disabled = false;
-            document.getElementById('exit').focus();
-            document.getElementById('submitBtn').innerText = "Finalize Exit (Strict Mode)";
-            document.getElementById('submitBtn').className = "btn-close";
-            document.getElementById('cancelEdit').classList.remove('hidden');
-        }
+            <div class="stat-card p-8">
+                <label>Efficiency Matrix</label>
+                <div class="mt-4">
+                    <div class="metric-row">
+                        <span class="metric-label">Profit Factor</span>
+                        <span id="profitFactor" class="metric-val text-cyan-400">0.00</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Avg Win Hold</span>
+                        <span id="avgWinTime" class="metric-val text-emerald-400">0m</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Avg Loss Hold</span>
+                        <span id="avgLossTime" class="metric-val text-rose-500">0m</span>
+                    </div>
+                    <div class="metric-row border-none">
+                        <span class="metric-label">Hold Efficiency</span>
+                        <span id="holdEfficiency" class="metric-val text-white">0%</span>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-800">
+                    <p class="text-[9px] text-slate-600 font-bold uppercase mb-2">Edge Indicator</p>
+                    <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                        <div id="edgeBar" class="bg-cyan-500 h-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        function resetForm() {
-            document.getElementById('tradeForm').reset();
-            document.querySelectorAll('.toggle-group').forEach(g => g.classList.remove('error-glow'));
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('editId').value = ""; document.getElementById('exit').disabled = true;
-            document.getElementById('submitBtn').innerText = "Record Daily Execution";
-            document.getElementById('submitBtn').className = "btn-live";
-            document.getElementById('cancelEdit').classList.add('hidden');
-        }
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-10 items-end">
+            <div class="lg:col-span-12">
+                <label>Command Override [Asset Type Size Price]</label>
+                <input type="text" id="cmdInput" class="bg-[#0a0e14] border-2 border-slate-800 p-4 text-cyan-400 text-lg font-bold rounded-xl placeholder:text-slate-700" placeholder="e.g. TSLA C 10 2.45">
+            </div>
+        </div>
 
-        function remove(id) { if(confirm("Permanently delete execution data?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
-        window.onload = () => { 
-            document.getElementById('currentDateDisplay').innerText = getNYDate(); 
-            initCharts();
-            render(); 
-        };
-    </script>
-</body>
+        </div>
+
+    </body>
 </html>
