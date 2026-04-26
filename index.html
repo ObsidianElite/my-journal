@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Obsidian Elite | Live Execution Command</title>
+    <title>Obsidian Elite | Live Intel Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
@@ -13,55 +13,59 @@
         input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 8px; font-size: 15px; width: 100%; outline: none; }
         
         .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 16px; font-weight: 800; border-radius: 12px; width: 100%; transition: 0.3s; font-size: 16px; text-transform: uppercase; box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
-        .btn-close { background: linear-gradient(to bottom, #f59e0b, #d97706); color: white; padding: 16px; font-weight: 800; border-radius: 12px; width: 100%; transition: 0.3s; font-size: 16px; text-transform: uppercase; }
+        .btn-close { background: linear-gradient(to bottom, #f59e0b, #d97706); color: white; padding: 16px; font-weight: 800; border-radius: 12px; width: 100%; transition: 0.3s; font-size: 16px; text-transform: uppercase; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
         
         .group-header { background: #111827; cursor: pointer; transition: 0.2s; border-left: 4px solid #00f2ff; }
-        .hidden-row { display: none; }
-        
         .status-live { color: #00f2ff; animation: pulse 2s infinite; font-weight: 800; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         
-        .edit-mode { border: 2px solid #eab308 !important; }
-        .locked-badge { color: #4b5563; font-size: 16px; opacity: 0.5; }
-        
         .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; }
         .toggle-btn { flex: 1; text-align: center; padding: 10px 2px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: all 0.2s; color: #4b5563; }
-        .toggle-btn.active.green { background: #064e3b; color: #4ade80; }
-        .toggle-btn.active.red { background: #7f1d1d; color: #f87171; }
+        .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Buy"], .toggle-btn.active[data-val="HI"], .toggle-btn.active[data-val="Above"] { background: #064e3b; color: #4ade80; }
+        .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Sell"], .toggle-btn.active[data-val="LO"], .toggle-btn.active[data-val="Below"] { background: #7f1d1d; color: #f87171; }
         .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
+        
+        .edit-mode { border: 2px solid #f59e0b !important; }
+        .locked-badge { color: #4b5563; font-size: 16px; opacity: 0.5; }
+        th { font-size: 11px !important; letter-spacing: 0.1em; }
     </style>
 </head>
 <body class="p-6">
-    <div class="max-w-[1750px] mx-auto">
+    <div class="max-w-[1850px] mx-auto">
         <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-4xl font-black text-cyan-400 tracking-tighter uppercase">Obsidian <span class="text-white">Elite</span></h1>
-                <p class="text-sm font-bold text-gray-500 mt-1 uppercase">Live Terminal | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
+                <p class="text-sm font-bold text-gray-500 mt-1 uppercase">Live Execution Command | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
             </div>
             <div class="grid grid-cols-3 gap-4">
                 <div class="stat-card px-8 py-4 border-cyan-500/30 text-center"><p class="text-gray-500 text-[11px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-3xl font-black">$0.00</p></div>
                 <div class="stat-card px-8 py-4 border-purple-500/30 text-center"><p class="text-gray-500 text-[11px] font-black uppercase">Active</p><p id="activeCount" class="text-3xl font-black text-cyan-400">0</p></div>
-                <button onclick="exportCSV()" class="bg-white text-black px-6 rounded-xl font-black text-xs uppercase hover:bg-cyan-400 transition">Export</button>
+                <button onclick="exportCSV()" class="bg-white text-black px-6 rounded-xl font-black text-xs uppercase hover:bg-cyan-400 transition">Export CSV</button>
             </div>
         </div>
 
         <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500 shadow-2xl transition-all">
-            <h3 id="formTitle" class="text-[10px] font-black uppercase text-cyan-500 mb-6 tracking-widest">Execution Entry</h3>
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-8">
                 <input type="hidden" id="editId" value="">
-                <input type="hidden" id="entryTime" value="">
                 
                 <div class="flex flex-col"><label>Ticker</label><select id="stock"><option>TSLA</option><option>NVDA</option><option>AMD</option><option>COIN</option><option>MSTR</option><option>SPY</option><option>SPX</option><option>MU</option></select></div>
                 <div class="flex flex-col"><label>Type</label><select id="optionType"><option value="C">CALL</option><option value="P">PUT</option></select></div>
                 <div class="flex flex-col"><label>Qty</label><input type="number" id="count" value="1"></div>
-                <div class="flex flex-col"><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="Live Price"></div>
-                <div class="flex flex-col"><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Waiting..." disabled></div>
+                <div class="flex flex-col"><label>Entry Price</label><input type="number" id="entry" step="0.01" required></div>
+                <div class="flex flex-col"><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Closed Price" disabled></div>
                 <div class="flex flex-col"><label>Setup</label><select id="setup"><option value="-">None</option><option>A+</option><option>B</option><option>C</option></select></div>
-                <div class="flex flex-col"><label>VWAP</label><div class="toggle-group" data-id="vwap"><div class="toggle-btn green" data-val="Y">Y</div><div class="toggle-btn red" data-val="N">N</div></div></div>
+                <div class="flex flex-col"><label>VWAP Hold</label><div class="toggle-group" data-id="vwap"><div class="toggle-btn" data-val="Y">Y</div><div class="toggle-btn" data-val="N">N</div></div></div>
                 
-                <div class="col-span-full mt-4 flex gap-4">
+                <div class="flex flex-col"><label>EMA 5/12</label><div class="toggle-group" data-id="ema512"><div class="toggle-btn" data-val="BUY">BUY</div><div class="toggle-btn" data-val="SELL">SELL</div></div></div>
+                <div class="flex flex-col"><label>EMA 34/50</label><div class="toggle-group" data-id="ema3450"><div class="toggle-btn" data-val="Buy">Buy</div><div class="toggle-btn" data-val="Sell">Sell</div></div></div>
+                <div class="flex flex-col"><label>MTF</label><div class="toggle-group" data-id="mtf"><div class="toggle-btn blue" data-val="H34">H34</div><div class="toggle-btn blue" data-val="21">21</div><div class="toggle-btn blue" data-val="55">55</div></div></div>
+                <div class="flex flex-col"><label>PM Range</label><div class="toggle-group" data-id="pmRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
+                <div class="flex flex-col"><label>PD Range</label><div class="toggle-group" data-id="pdRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
+                <div class="flex flex-col"><label>PDC Level</label><div class="toggle-group" data-id="pdc"><div class="toggle-btn" data-val="Above">Above</div><div class="toggle-btn" data-val="Below">Below</div></div></div>
+
+                <div class="col-span-full mt-2 flex gap-4">
                     <button type="submit" id="submitBtn" class="btn-live">Open Live Trade</button>
-                    <button type="button" id="cancelEdit" class="hidden bg-gray-800 text-white px-8 py-4 rounded-xl font-black text-xs uppercase">Cancel</button>
+                    <button type="button" id="cancelEdit" onclick="resetForm()" class="hidden bg-gray-800 text-white px-8 py-4 rounded-xl font-black text-xs uppercase">Cancel Update</button>
                 </div>
             </form>
         </div>
@@ -70,10 +74,10 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-900/50 text-gray-500 uppercase font-black">
                     <tr>
-                        <th class="p-5">Ticker/Status</th>
-                        <th class="p-5">Entry Time</th>
-                        <th class="p-5">Exit Time</th>
-                        <th class="p-5">Fills (In/Out)</th>
+                        <th class="p-5">Asset</th>
+                        <th class="p-5">Timeline</th>
+                        <th class="p-5">Fills</th>
+                        <th class="p-5">Context (EMA/MTF)</th>
                         <th class="p-5 text-right">PNL ($)</th>
                         <th class="p-5 text-center">Manage</th>
                     </tr>
@@ -84,17 +88,17 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_live_v1')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_live_v2')) || [];
         
         function getNYTime() {
             return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
         }
 
         function getNYDate() {
-            return new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split(',')[0].replace(/\//g, '-');
+            const d = new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Handle Toggles
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
@@ -103,15 +107,12 @@
         });
 
         function render() {
-            localStorage.setItem('obsidian_live_v1', JSON.stringify(trades));
+            localStorage.setItem('obsidian_live_v2', JSON.stringify(trades));
             const body = document.getElementById('tradeBody');
             body.innerHTML = '';
-            
             const today = getNYDate();
-            let activeCount = 0;
-            let totalPnl = 0;
+            let activeCount = 0; let totalPnl = 0;
 
-            // Group by Date
             const groups = {};
             trades.forEach(t => {
                 if (!groups[t.date]) groups[t.date] = [];
@@ -121,12 +122,12 @@
             });
 
             document.getElementById('activeCount').innerText = activeCount;
-            document.getElementById('totalPnl').innerText = `$${totalPnl.toLocaleString()}`;
+            document.getElementById('totalPnl').innerText = `$${totalPnl.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
             document.getElementById('totalPnl').className = `text-3xl font-black ${totalPnl >= 0 ? 'text-green-400' : 'text-red-500'}`;
 
             Object.keys(groups).sort().reverse().forEach(date => {
                 const isToday = date === today;
-                body.innerHTML += `<tr class="group-header"><td colspan="6" class="p-4 text-[12px] font-black text-cyan-400 uppercase tracking-widest">${date} ${isToday ? '(ACTIVE SESSION)' : '🔒 (LOCKED)'}</td></tr>`;
+                body.innerHTML += `<tr class="group-header"><td colspan="6" class="p-4 text-[12px] font-black text-cyan-400 uppercase tracking-widest">${date} ${isToday ? '— LIVE SESSION' : '— 🔒 LOCKED'}</td></tr>`;
                 
                 groups[date].forEach(t => {
                     const isClosed = t.status === 'CLOSED';
@@ -134,11 +135,22 @@
                         <tr class="border-b border-gray-800 hover:bg-white/5 transition">
                             <td class="p-5">
                                 <div class="text-xl font-bold ${t.option === 'C' ? 'text-green-500' : 'text-red-500'}">${t.stock} ${t.option}</div>
-                                <div class="${isClosed ? 'text-gray-500' : 'status-live'} text-[10px] uppercase">${t.status}</div>
+                                <div class="${isClosed ? 'text-gray-500' : 'status-live'} text-[10px] uppercase font-black">${t.status}</div>
                             </td>
-                            <td class="p-5 text-gray-400 font-bold">${t.entryTime}</td>
-                            <td class="p-5 text-gray-400 font-bold">${t.exitTime || '--:--:--'}</td>
-                            <td class="p-5 text-white font-bold">${t.entry} → ${t.exit || '???'} <span class="text-gray-600">(${t.count}x)</span></td>
+                            <td class="p-5">
+                                <div class="text-white text-xs font-bold">IN: ${t.entryTime}</div>
+                                <div class="text-gray-500 text-xs font-bold">OUT: ${t.exitTime || '--:--:--'}</div>
+                            </td>
+                            <td class="p-5 text-white font-bold text-sm">
+                                ${t.entry} → ${t.exit || '???'} <span class="text-gray-600">(${t.count}x)</span>
+                            </td>
+                            <td class="p-5">
+                                <div class="flex gap-2">
+                                    ${t.ema512 ? `<span class="text-[9px] font-black px-2 py-0.5 rounded ${t.ema512 === 'BUY' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">${t.ema512}</span>` : ''}
+                                    ${t.mtf ? `<span class="text-[9px] font-black px-2 py-0.5 rounded bg-blue-900 text-blue-300">${t.mtf}</span>` : ''}
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded bg-gray-800 text-gray-400 uppercase">${t.setup || '-'}</span>
+                                </div>
+                            </td>
                             <td class="p-5 text-right text-lg font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">
                                 ${isClosed ? '$' + parseFloat(t.pnl).toLocaleString() : '--'}
                             </td>
@@ -146,7 +158,10 @@
                                 ${!isClosed ? `
                                     <button onclick="prepareClose('${t.id}')" class="bg-orange-500 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase hover:bg-white hover:text-orange-500 transition">Close Trade</button>
                                 ` : isToday ? `
-                                    <button onclick="remove('${t.id}')" class="text-red-500 text-lg">🗑</button>
+                                    <div class="flex justify-center gap-3">
+                                        <button onclick="prepareClose('${t.id}')" class="text-yellow-500 text-lg">✏️</button>
+                                        <button onclick="remove('${t.id}')" class="text-red-500 text-lg">🗑</button>
+                                    </div>
                                 ` : `<span class="locked-badge">🔒</span>`}
                             </td>
                         </tr>`;
@@ -157,10 +172,11 @@
         document.getElementById('tradeForm').onsubmit = (e) => {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
-            const entryPrice = document.getElementById('entry').value;
-            const exitPrice = document.getElementById('exit').value;
-            
-            // If opening a new trade
+            const getToggleVal = (id) => {
+                const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`);
+                return el ? el.dataset.val : null;
+            };
+
             if (!editId) {
                 const newTrade = {
                     id: Date.now(),
@@ -169,20 +185,29 @@
                     stock: document.getElementById('stock').value,
                     option: document.getElementById('optionType').value,
                     count: document.getElementById('count').value,
-                    entry: entryPrice,
+                    entry: document.getElementById('entry').value,
                     entryTime: getNYTime(),
-                    exit: null,
-                    exitTime: null,
-                    pnl: 0
+                    exit: null, exitTime: null, pnl: 0,
+                    setup: document.getElementById('setup').value,
+                    vwap: getToggleVal('vwap'), ema512: getToggleVal('ema512'),
+                    ema3450: getToggleVal('ema3450'), mtf: getToggleVal('mtf'),
+                    pmRange: getToggleVal('pmRange'), pdRange: getToggleVal('pdRange'), pdc: getToggleVal('pdc')
                 };
                 trades.unshift(newTrade);
             } else {
-                // Closing / Updating a trade
                 const idx = trades.findIndex(t => String(t.id) === String(editId));
+                const exitPrice = document.getElementById('exit').value;
+                trades[idx].status = 'CLOSED';
                 trades[idx].exit = exitPrice;
                 trades[idx].exitTime = trades[idx].exitTime || getNYTime();
-                trades[idx].status = 'CLOSED';
                 trades[idx].setup = document.getElementById('setup').value;
+                trades[idx].vwap = getToggleVal('vwap');
+                trades[idx].ema512 = getToggleVal('ema512');
+                trades[idx].ema3450 = getToggleVal('ema3450');
+                trades[idx].mtf = getToggleVal('mtf');
+                trades[idx].pmRange = getToggleVal('pmRange');
+                trades[idx].pdRange = getToggleVal('pdRange');
+                trades[idx].pdc = getToggleVal('pdc');
                 trades[idx].pnl = ((exitPrice - trades[idx].entry) * 100 * trades[idx].count).toFixed(2);
             }
             
@@ -197,13 +222,24 @@
             document.getElementById('optionType').value = t.option;
             document.getElementById('count').value = t.count;
             document.getElementById('entry').value = t.entry;
+            document.getElementById('setup').value = t.setup || '-';
             
+            // Set Toggles
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            ['vwap', 'ema512', 'ema3450', 'mtf', 'pmRange', 'pdRange', 'pdc'].forEach(key => {
+                if(t[key]) {
+                    const btn = document.querySelector(`.toggle-group[data-id="${key}"] .toggle-btn[data-val="${t[key]}"]`);
+                    if(btn) btn.classList.add('active');
+                }
+            });
+
             document.getElementById('exit').disabled = false;
             document.getElementById('exit').focus();
             document.getElementById('formContainer').classList.add('edit-mode');
-            document.getElementById('submitBtn').innerText = "Confirm Execution & Close";
+            document.getElementById('submitBtn').innerText = "Finalize Execution";
             document.getElementById('submitBtn').className = "btn-close";
             document.getElementById('cancelEdit').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function resetForm() {
@@ -214,9 +250,19 @@
             document.getElementById('submitBtn').innerText = "Open Live Trade";
             document.getElementById('submitBtn').className = "btn-live";
             document.getElementById('cancelEdit').classList.add('hidden');
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
         }
 
         function remove(id) { if(confirm("Delete record?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
+        
+        function exportCSV() {
+            let csv = "Date,Ticker,Type,Qty,Entry,EntryTime,Exit,ExitTime,PNL\n";
+            trades.forEach(t => {
+                csv += `${t.date},${t.stock},${t.option},${t.count},${t.entry},${t.entryTime},${t.exit || ''},${t.exitTime || ''},${t.pnl}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `Obsidian_Elite_Live.csv`; a.click();
+        }
 
         window.onload = () => {
             document.getElementById('currentDateDisplay').innerText = getNYDate();
