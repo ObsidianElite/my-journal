@@ -9,15 +9,20 @@
     <style>
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 16px; position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #00f2ff, transparent); opacity: 0.3; }
         
         label { color: #94a3b8; font-weight: 800; font-size: 10px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.1em; }
         input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
         
         .gauge-container { position: relative; height: 140px; width: 140px; }
-        .gauge-value { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; color: #00f2ff; }
+        .gauge-value { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; color: #00f2ff; text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
+        
+        .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .metric-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .metric-val { font-size: 14px; font-weight: 800; }
         
         .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; flex-wrap: wrap; }
-        .toggle-btn { flex: 1; min-width: 45px; text-align: center; padding: 6px 2px; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; background: #0d1117; border: 1px solid #30363d; transition: 0.2s; }
+        .toggle-btn { flex: 1; min-width: 45px; text-align: center; padding: 8px 4px; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; background: #0d1117; border: 1px solid #30363d; transition: 0.2s; }
         
         .toggle-btn.active { border-color: #00f2ff; color: #fff; }
         .toggle-btn.active[data-type="CALL"], .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Above"], .toggle-btn.active[data-val="HI"] { background: #064e3b; color: #4ade80; }
@@ -30,6 +35,39 @@
 </head>
 <body class="p-6">
     <div class="max-w-[1850px] mx-auto">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h1 class="text-3xl font-black text-cyan-400 uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
+                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Terminal | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
+            </div>
+            <div class="flex gap-6">
+                <div class="text-right"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-3xl font-black text-green-400">$0.00</p></div>
+                <div class="text-right border-l border-gray-800 pl-6"><p class="text-gray-500 text-[10px] font-black uppercase">Exposure</p><p id="activeCount" class="text-3xl font-black text-cyan-400">0</p></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <div class="lg:col-span-2 stat-card p-6 h-[300px]">
+                <label>Equity Curve</label>
+                <canvas id="dailyPnlChart"></canvas>
+            </div>
+            <div class="stat-card p-6 h-[300px] flex flex-col items-center justify-center">
+                <label class="self-start">Execution Precision</label>
+                <div class="gauge-container">
+                    <canvas id="winLossChart"></canvas>
+                    <div class="gauge-value" id="winRatioPercent">0%</div>
+                </div>
+            </div>
+            <div class="stat-card p-6 h-[300px]">
+                <label>Efficiency Matrix</label>
+                <div class="metric-row"><span class="metric-label">Profit Factor</span><span id="profitFactor" class="metric-val text-cyan-400">0.00</span></div>
+                <div class="metric-row"><span class="metric-label">Avg Win Hold</span><span id="avgWinTime" class="metric-val text-green-400">--</span></div>
+                <div class="metric-row border-none"><span class="metric-label">Avg Loss Hold</span><span id="avgLossTime" class="metric-val text-red-500">--</span></div>
+            </div>
+        </div>
+
+        <div class="mb-6"><label>Rapid Override</label><input type="text" id="cmdInput" class="bg-black border border-gray-800 p-4 w-full text-cyan-400 font-bold rounded-xl" placeholder="TSLA C 5 1.50"></div>
+
         <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500">
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 <input type="hidden" id="editId" value="">
@@ -81,26 +119,33 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v8')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v9')) || [];
+        let pnlChart, winLossChart;
 
-        // Logic for handling context gathering
+        function initCharts() {
+            pnlChart = new Chart(document.getElementById('dailyPnlChart'), { type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: '#00f2ff' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false } } });
+            winLossChart = new Chart(document.getElementById('winLossChart'), { type: 'doughnut', data: { labels: ['W', 'L'], datasets: [{ data: [0, 0], backgroundColor: ['#4ade80', '#f87171'], cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false } } });
+        }
+
         function getContextValue(id) {
             const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`);
             return el ? el.dataset.val : '-';
         }
 
         function render() {
-            localStorage.setItem('obsidian_elite_v8', JSON.stringify(trades));
+            localStorage.setItem('obsidian_elite_v9', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
+            let total = 0, active = 0;
             
             trades.forEach((t, i) => {
                 const isC = t.status === 'CLOSED';
+                if(!isC) active++; else total += parseFloat(t.pnl);
                 body.innerHTML += `
                     <tr class="border-b border-gray-800/50">
-                        <td class="p-5"><span class="font-black">${t.stock}</span> <span class="${t.option === 'CALL' ? 'text-green-500' : 'text-red-500'}">${t.option}</span></td>
+                        <td class="p-5"><span class="font-black text-white">${t.stock}</span> <span class="${t.option === 'CALL' ? 'text-green-500' : 'text-red-500'}">${t.option}</span></td>
                         <td class="p-5 text-gray-400">${t.entryTime} → ${t.exitTime || '--'}</td>
-                        <td class="p-5">${t.entry} → ${t.exit || '??'} (${t.count}x)</td>
-                        <td class="p-5 text-[9px] text-gray-500">${t.setup} | VWAP:${t.vwap} | MTF:${t.mtf}</td>
+                        <td class="p-5 text-white">${t.entry} → ${t.exit || '??'} <span class="text-gray-600">(${t.count}x)</span></td>
+                        <td class="p-5 text-[9px] text-gray-500 uppercase">${t.setup} | V:${t.vwap} | M:${t.mtf} | PM:${t.pmRange}</td>
                         <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$'+t.pnl : '--'}</td>
                         <td class="p-5 text-center">
                             <div class="flex justify-center gap-3">
@@ -111,8 +156,17 @@
                         </td>
                     </tr>`;
             });
-            // Analytics updates omitted for brevity
+            document.getElementById('activeCount').innerText = active;
+            document.getElementById('totalPnl').innerText = '$' + total.toFixed(2);
+            document.getElementById('totalPnl').className = `text-3xl font-black ${total >= 0 ? 'text-green-400' : 'text-red-500'}`;
         }
+
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.onclick = function() {
+                this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            };
+        });
 
         document.getElementById('tradeForm').onsubmit = (e) => {
             e.preventDefault();
@@ -120,16 +174,18 @@
             const ticker = document.querySelector('#tickerSelect .active')?.dataset.ticker;
             const type = document.querySelector('#typeSelect .active')?.dataset.type;
             
+            if(!ticker || !type) return alert("Select Ticker and Type!");
+
             const tradeData = {
                 stock: ticker, option: type, count: document.getElementById('count').value,
-                entry: parseFloat(document.getElementById('entry').value), 
+                entry: parseFloat(document.getElementById('entry').value),
                 setup: document.getElementById('setup').value,
                 vwap: getContextValue('vwap'), ema5: getContextValue('ema5'), mtf: getContextValue('mtf'),
                 pmRange: getContextValue('pmRange'), pdRange: getContextValue('pdRange'), pdc: getContextValue('pdc'),
-                status: 'OPEN', entryTime: new Date().toLocaleTimeString(), id: Date.now()
+                status: 'OPEN', entryTime: new Date().toLocaleTimeString(), id: Date.now(), pnl: 0
             };
 
-            if(editId) {
+            if(editId !== "") {
                 trades[editId] = {...trades[editId], ...tradeData};
                 if(document.getElementById('exit').value) {
                     const ex = parseFloat(document.getElementById('exit').value);
@@ -141,7 +197,6 @@
             resetForm(); render();
         };
 
-        // UI Helpers
         function editTrade(i) {
             const t = trades[i];
             document.getElementById('editId').value = i;
@@ -150,13 +205,15 @@
             document.getElementById('exit').disabled = false;
             document.getElementById('submitBtn').innerText = "Update Record";
             document.getElementById('cancelBtn').classList.remove('hidden');
-            // Logic to reactivate correct toggle buttons based on saved data...
         }
-
-        function removeTrade(i) { if(confirm("Delete trade?")) { trades.splice(i, 1); render(); } }
+        function closeTradeUI(i) { editTrade(i); document.getElementById('exit').focus(); }
+        function removeTrade(i) { if(confirm("Delete?")) { trades.splice(i, 1); render(); } }
         function resetForm() { document.getElementById('tradeForm').reset(); document.getElementById('editId').value = ''; document.getElementById('exit').disabled = true; render(); }
 
-        window.onload = () => { render(); };
+        window.onload = () => { 
+            document.getElementById('currentDateDisplay').innerText = new Date().toISOString().split('T')[0];
+            initCharts(); render(); 
+        };
     </script>
 </body>
 </html>
