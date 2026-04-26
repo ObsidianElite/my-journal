@@ -16,15 +16,39 @@
         input:disabled { opacity: 0.2; cursor: not-allowed; }
         
         .toggle-group { display: flex; gap: 4px; background: #0a0e14; padding: 4px; border-radius: 8px; border: 1px solid #1f2937; flex-wrap: wrap; }
-        .toggle-btn { flex: 1; min-width: 60px; text-align: center; padding: 8px 4px; font-size: 10px; font-weight: 800; border-radius: 4px; cursor: pointer; color: #00D9FF; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s; text-transform: uppercase; }
-        .setup-btn { flex: 1; min-width: 80px; text-align: center; padding: 10px 6px; font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer; color: #00D9FF; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s; text-transform: uppercase; }
+        
+        /* TICKER BUTTONS WITH BRAND COLORS */
+        .toggle-btn { 
+            flex: 1; min-width: 60px; text-align: center; padding: 8px 4px; 
+            font-size: 10px; font-weight: 800; border-radius: 4px; cursor: pointer; 
+            background: #0d1117; border: 1px solid #1f2937; transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .toggle-btn:hover { box-shadow: inset 0 0 8px var(--brand-color); border-color: var(--brand-color); }
+        .toggle-btn.active { 
+            background: var(--brand-color) !important; 
+            color: #fff !important; 
+            border-color: #fff !important; 
+            box-shadow: 0 0 15px var(--brand-color); 
+        }
 
-        .toggle-btn.active, .setup-btn.active { border-color: #00FFCC !important; color: #000 !important; background: #00FFCC !important; box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+        /* SETUP BUTTONS */
+        .setup-btn { 
+            flex: 1; min-width: 80px; text-align: center; padding: 10px 6px; 
+            font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer; 
+            color: #00D9FF; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .setup-btn.active { border-color: #00FFCC !important; color: #000 !important; background: #00FFCC !important; box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+
+        /* CONTRACT COLORS */
         .toggle-btn.active[data-type="CALL"] { background: #4ade80 !important; border-color: #4ade80 !important; }
         .toggle-btn.active[data-type="PUT"] { background: #f87171 !important; border-color: #f87171 !important; }
         
         .btn-live { background: linear-gradient(to right, #00FFCC, #00D9FF); color: #000; padding: 14px; font-weight: 900; border-radius: 8px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; font-size: 14px; letter-spacing: 1px; transition: 0.3s; }
-        .group-header { background: #111827; cursor: pointer; user-select: none; border-left: 4px solid #00FFCC; }
+        .group-header { background: #111827; cursor: pointer; user-select: none; border-left: 4px solid #00FFCC; transition: background 0.2s; }
+        .group-header:hover { background: #1f2937; }
+        
         .matrix-val { color: #00D9FF; font-weight: 800; font-size: 1.1rem; }
         .metric-sub { font-size: 9px; color: #4b5563; font-weight: bold; }
         thead th { color: #00FFCC !important; font-weight: 800; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid #1f2937; }
@@ -70,20 +94,30 @@
         <div id="formContainer" class="stat-card p-6 mb-6 border-t-2 border-t-[#00FFCC]">
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 <input type="hidden" id="editId" value="">
-                <div class="col-span-2"><label>Symbol Selection</label><div class="toggle-group" id="tickerSelect">
-                    <div class="toggle-btn" data-ticker="AAPL">AAPL</div><div class="toggle-btn" data-ticker="AMD">AMD</div>
-                    <div class="toggle-btn" data-ticker="COIN">COIN</div><div class="toggle-btn" data-ticker="META">META</div>
-                    <div class="toggle-btn" data-ticker="MSTR">MSTR</div><div class="toggle-btn" data-ticker="MU">MU</div>
-                    <div class="toggle-btn" data-ticker="NVDA">NVDA</div><div class="toggle-btn" data-ticker="PLTR">PLTR</div>
-                    <div class="toggle-btn" data-ticker="QQQ">QQQ</div><div class="toggle-btn" data-ticker="SPX">SPX</div>
-                    <div class="toggle-btn" data-ticker="SPY">SPY</div><div class="toggle-btn" data-ticker="TSLA">TSLA</div>
-                </div></div>
-                <div><label>Contract Type</label><div class="toggle-group" id="typeSelect"><div class="toggle-btn" data-type="CALL">CALL</div><div class="toggle-btn" data-type="PUT">PUT</div></div></div>
+                <div class="col-span-2">
+                    <label>Symbol Selection</label>
+                    <div class="toggle-group" id="tickerSelect">
+                        <div class="toggle-btn" style="--brand-color: #666666; color: #fff;" data-ticker="AAPL">AAPL</div>
+                        <div class="toggle-btn" style="--brand-color: #ED1C24; color: #ED1C24;" data-ticker="AMD">AMD</div>
+                        <div class="toggle-btn" style="--brand-color: #0052FF; color: #0052FF;" data-ticker="COIN">COIN</div>
+                        <div class="toggle-btn" style="--brand-color: #0668E1; color: #0668E1;" data-ticker="META">META</div>
+                        <div class="toggle-btn" style="--brand-color: #701CC4; color: #701CC4;" data-ticker="MSTR">MSTR</div>
+                        <div class="toggle-btn" style="--brand-color: #0050AA; color: #0050AA;" data-ticker="MU">MU</div>
+                        <div class="toggle-btn" style="--brand-color: #76B900; color: #76B900;" data-ticker="NVDA">NVDA</div>
+                        <div class="toggle-btn" style="--brand-color: #ffffff; color: #F0F0F0;" data-ticker="PLTR">PLTR</div>
+                        <div class="toggle-btn" style="--brand-color: #00D9FF; color: #00D9FF;" data-ticker="QQQ">QQQ</div>
+                        <div class="toggle-btn" style="--brand-color: #FFD700; color: #FFD700;" data-ticker="SPX">SPX</div>
+                        <div class="toggle-btn" style="--brand-color: #00FFCC; color: #00FFCC;" data-ticker="SPY">SPY</div>
+                        <div class="toggle-btn" style="--brand-color: #E81828; color: #E81828;" data-ticker="TSLA">TSLA</div>
+                    </div>
+                </div>
+                <div><label>Contract Type</label><div class="toggle-group" id="typeSelect"><div class="toggle-btn" data-type="CALL" style="--brand-color: #4ade80; color: #4ade80;">CALL</div><div class="toggle-btn" data-type="PUT" style="--brand-color: #f87171; color: #f87171;">PUT</div></div></div>
                 <div><label>Qty</label><input type="number" id="count" value="1" min="1"></div>
                 <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
+                
                 <div class="col-span-full border-t border-gray-800 pt-4">
-                    <label>Execution Setups (Min 1 mandatory)</label>
+                    <label>Execution Setups (Mandatory: Min 1 selection to Enter)</label>
                     <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                         <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div><div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
                         <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div><div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
@@ -101,16 +135,18 @@
             </form>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card overflow-x-auto">
             <table class="w-full text-left text-xs">
-                <thead class="bg-gray-900/50"><tr><th class="p-4">Day / Date</th><th class="p-4">Asset</th><th class="p-4">Timeline</th><th class="p-4">Fills</th><th class="p-4">Setup Logic</th><th class="p-4 text-right">PNL</th><th class="p-4 text-center">Manage</th></tr></thead>
+                <thead class="bg-gray-900/50">
+                    <tr><th class="p-4">Day / Date</th><th class="p-4">Asset</th><th class="p-4">Timeline</th><th class="p-4">Fills</th><th class="p-4">Setup Logic</th><th class="p-4 text-right">PNL</th><th class="p-4 text-center">Manage</th></tr>
+                </thead>
                 <tbody id="tradeBody"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_v23')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v3')) || [];
         let equityChart, precisionChart;
         const collapsedGroups = new Set();
 
@@ -140,11 +176,10 @@
             document.getElementById('monthlyTrades').innerText = monthly.length + ' Trades';
 
             let runningPnl = 0, eqData = [0], totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
-            closed.reverse().forEach(t => {
+            closed.slice().reverse().forEach(t => {
                 const p = parseFloat(t.pnl); runningPnl += p; eqData.push(runningPnl);
                 if (p >= 0) { totalProfit += p; wins++; } else { totalLoss += Math.abs(p); losses++; }
             });
-            closed.reverse();
 
             precisionChart.data.datasets[0].data = [wins, losses]; precisionChart.update();
             document.getElementById('winRateText').innerText = closed.length ? Math.round((wins / closed.length) * 100) + '%' : '0%';
@@ -157,7 +192,7 @@
         function toggleGroup(id) { collapsedGroups.has(id) ? collapsedGroups.delete(id) : collapsedGroups.add(id); render(); }
 
         function render() {
-            localStorage.setItem('obsidian_v23', JSON.stringify(trades));
+            localStorage.setItem('obsidian_elite_v3', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             const now = new Date();
             const groups = { 'Daily': [], 'Weekly': [], 'Monthly': [] };
@@ -203,7 +238,9 @@
             const type = document.querySelector('#typeSelect .active')?.dataset.type;
             const ent = document.getElementById('entry').value; const ext = document.getElementById('exit').value;
             const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
-            if (editId === "" && (!tick || !type || !ent || set.length === 0)) { alert("Ticker, Type, Entry, and Setup required."); return; }
+
+            if (editId === "" && (!tick || !type || !ent || set.length === 0)) { alert("Selection Required: Ticker, Type, Entry, and at least 1 Setup."); return; }
+            
             if (editId !== "") {
                 const t = trades[editId];
                 if (ext) { const ex = parseFloat(ext); trades[editId] = { ...t, exit: ex, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, pnl: ((ex - t.entry) * 100 * t.count).toFixed(2) }; }
@@ -224,8 +261,10 @@
         function closeTradeUI(i) { editTrade(i); document.getElementById('exit').focus(); }
         function removeTrade(i) { if(confirm("Purge?")) { trades.splice(i, 1); render(); } }
         function resetForm() { document.getElementById('tradeForm').reset(); document.getElementById('editId').value = ''; document.getElementById('exit').disabled = true; document.querySelectorAll('.active').forEach(b => b.classList.remove('active')); document.getElementById('submitBtn').innerText = "Open Live Trade"; document.getElementById('cancelBtn').classList.add('hidden'); }
+        
         document.querySelectorAll('.setup-btn').forEach(btn => btn.onclick = function() { this.classList.toggle('active'); });
         document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => btn.onclick = function() { if(document.getElementById('editId').value === "") { this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); } });
+        
         window.onload = () => { initCharts(); render(); document.getElementById('currentDateDisplay').innerText = new Date().toDateString(); };
     </script>
 </body>
