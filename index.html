@@ -2,35 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Obsidian Elite | High-Frequency Terminal</title>
+    <title>Obsidian Elite | Alpha Clean Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: #0a0e14; border: 1px solid #1f2937; border-radius: 12px; }
         label { color: #00f2ff; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.05em; }
-        input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
-        input:focus { border-color: #00f2ff; }
+        input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; transition: 0.2s; }
+        input:focus { border-color: #00f2ff; box-shadow: 0 0 10px rgba(0, 242, 255, 0.1); }
         
-        /* Grid Toggles */
+        /* Selection Grids */
         .grid-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 4px; }
         .grid-btn { background: #161b22; border: 1px solid #30363d; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; color: #4b5563; transition: 0.2s; }
         .grid-btn.active { background: #1e3a8a; color: #60a5fa; border-color: #60a5fa; }
         .grid-btn.type-btn.active[data-val="CALL"] { background: #064e3b; color: #4ade80; border-color: #4ade80; }
         .grid-btn.type-btn.active[data-val="PUT"] { background: #7f1d1d; color: #f87171; border-color: #f87171; }
-        .add-custom { color: #00f2ff; border: 1px dashed #00f2ff; background: transparent; }
+        
+        .custom-active { border: 1px solid #00f2ff !important; color: #00f2ff !important; background: rgba(0, 242, 255, 0.05); }
+        .add-custom-trigger { color: #00f2ff; border: 1px dashed #00f2ff; background: transparent; }
 
+        /* Toggles */
         .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; }
-        .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; }
+        .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; transition: 0.2s; }
         .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Above"] { background: #064e3b; color: #4ade80; }
         .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Below"] { background: #7f1d1d; color: #f87171; }
         .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
 
         .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; }
         .btn-close { background: linear-gradient(to bottom, #f59e0b, #d97706); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; }
-        .status-live { color: #00f2ff; animation: pulse 2s infinite; font-weight: 800; font-size: 10px; }
+        .status-live { color: #00f2ff; animation: pulse 2s infinite; font-weight: 800; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .error-glow { border: 1px solid #ef4444 !important; }
+        .error-glow { border: 1px solid #ef4444 !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
     </style>
 </head>
 <body class="p-6">
@@ -38,7 +41,7 @@
         <div class="flex justify-between items-start mb-8">
             <div>
                 <h1 class="text-3xl font-black text-cyan-400 uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
-                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Engine | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
+                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Terminal | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
             </div>
             <div class="flex gap-4">
                 <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-2xl font-black text-green-400">$0.00</p></div>
@@ -53,14 +56,21 @@
                 <div class="md:col-span-2 flex flex-col">
                     <label>Select Ticker</label>
                     <div class="grid-selector" id="tickerGrid">
-                        <div class="grid-btn" data-val="AAPL">AAPL</div><div class="grid-btn" data-val="AMD">AMD</div>
-                        <div class="grid-btn" data-val="COIN">COIN</div><div class="grid-btn" data-val="GOOG">GOOG</div>
-                        <div class="grid-btn" data-val="META">META</div><div class="grid-btn" data-val="MSFT">MSFT</div>
-                        <div class="grid-btn" data-val="MSTR">MSTR</div><div class="grid-btn" data-val="MU">MU</div>
-                        <div class="grid-btn" data-val="NFLX">NFLX</div><div class="grid-btn" data-val="NVDA">NVDA</div>
-                        <div class="grid-btn" data-val="PLTR">PLTR</div><div class="grid-btn" data-val="SPX">SPX</div>
-                        <div class="grid-btn" data-val="SPY">SPY</div><div class="grid-btn" data-val="TSLA">TSLA</div>
-                        <button type="button" class="grid-btn add-custom" onclick="addCustomTicker()">+ NEW</button>
+                        <div class="grid-btn core-ticker" data-val="AAPL">AAPL</div>
+                        <div class="grid-btn core-ticker" data-val="AMD">AMD</div>
+                        <div class="grid-btn core-ticker" data-val="COIN">COIN</div>
+                        <div class="grid-btn core-ticker" data-val="GOOG">GOOG</div>
+                        <div class="grid-btn core-ticker" data-val="META">META</div>
+                        <div class="grid-btn core-ticker" data-val="MSFT">MSFT</div>
+                        <div class="grid-btn core-ticker" data-val="MSTR">MSTR</div>
+                        <div class="grid-btn core-ticker" data-val="MU">MU</div>
+                        <div class="grid-btn core-ticker" data-val="NFLX">NFLX</div>
+                        <div class="grid-btn core-ticker" data-val="NVDA">NVDA</div>
+                        <div class="grid-btn core-ticker" data-val="PLTR">PLTR</div>
+                        <div class="grid-btn core-ticker" data-val="SPX">SPX</div>
+                        <div class="grid-btn core-ticker" data-val="SPY">SPY</div>
+                        <div class="grid-btn core-ticker" data-val="TSLA">TSLA</div>
+                        <button type="button" class="grid-btn add-custom-trigger" onclick="addCustomTicker()">+ NEW</button>
                     </div>
                 </div>
 
@@ -95,7 +105,7 @@
                 <thead class="bg-gray-900/50 uppercase">
                     <tr>
                         <th class="p-5 text-[10px] text-gray-500">Asset Details</th>
-                        <th class="p-5 text-[10px] text-gray-500">Timeline</th>
+                        <th class="p-5 text-[10px] text-gray-500">Timeline / Dur</th>
                         <th class="p-5 text-[10px] text-gray-500">Fills</th>
                         <th class="p-5 text-[10px] text-gray-500 text-right">PNL ($)</th>
                         <th class="p-5 text-[10px] text-gray-500 text-right">PNL (%)</th>
@@ -108,12 +118,12 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v8')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v9')) || [];
 
         function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false}); }
         function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
 
-        // Smart Toggle Handlers
+        // Core Interaction Handler
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('grid-btn') || e.target.classList.contains('toggle-btn')) {
                 const group = e.target.closest('.grid-selector') || e.target.closest('.toggle-group');
@@ -126,14 +136,16 @@
         });
 
         function addCustomTicker() {
-            const ticker = prompt("Enter Ticker Symbol:").toUpperCase();
-            if (ticker) {
-                const btn = document.createElement('div');
-                btn.className = 'grid-btn active';
-                btn.dataset.val = ticker;
-                btn.innerText = ticker;
-                document.getElementById('tickerGrid').insertBefore(btn, document.querySelector('.add-custom'));
-            }
+            const sym = prompt("Enter Custom Ticker:").toUpperCase();
+            if (!sym) return;
+            // Clear existing custom buttons first so only one custom is active at a time
+            document.querySelectorAll('.temp-ticker').forEach(el => el.remove());
+            
+            const btn = document.createElement('div');
+            btn.className = 'grid-btn active temp-ticker custom-active';
+            btn.dataset.val = sym;
+            btn.innerText = sym;
+            document.getElementById('tickerGrid').insertBefore(btn, document.querySelector('.add-custom-trigger'));
         }
 
         function calculateDuration(start, end) {
@@ -144,21 +156,23 @@
         }
 
         function render() {
-            localStorage.setItem('obsidian_elite_v8', JSON.stringify(trades));
+            localStorage.setItem('obsidian_elite_v9', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
             const groups = {};
+            
             trades.forEach(t => {
                 if (!groups[t.date]) groups[t.date] = []; groups[t.date].push(t);
                 if (t.status === 'OPEN') active++;
                 if (t.status === 'CLOSED') total += parseFloat(t.pnl);
             });
+
             document.getElementById('activeCount').innerText = active;
             document.getElementById('totalPnl').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits:2})}`;
             document.getElementById('totalPnl').className = `text-2xl font-black ${total >= 0 ? 'text-green-400' : 'text-red-500'}`;
 
             Object.keys(groups).sort().reverse().forEach(date => {
-                body.innerHTML += `<tr class="bg-gray-900/40"><td colspan="6" class="p-3 text-[10px] font-black text-cyan-400 uppercase tracking-widest border-l-4 border-cyan-500">${date}</td></tr>`;
+                body.innerHTML += `<tr class="bg-gray-900/40"><td colspan="6" class="p-3 text-[10px] font-black text-cyan-400 uppercase border-l-4 border-cyan-500">${date}</td></tr>`;
                 groups[date].forEach(t => {
                     const isC = t.status === 'CLOSED';
                     body.innerHTML += `
@@ -169,7 +183,7 @@
                             </td>
                             <td class="p-5">
                                 <div class="text-white text-xs font-bold">${t.entryTime} → ${t.exitTime || '--'}</div>
-                                <div class="text-cyan-500 text-[9px] font-black mt-1">DUR: ${isC ? calculateDuration(t.entryTime, t.exitTime) : '--'}</div>
+                                <div class="text-cyan-500 text-[9px] font-black mt-1 uppercase">DUR: ${isC ? calculateDuration(t.entryTime, t.exitTime) : '--'}</div>
                             </td>
                             <td class="p-5 text-white font-bold text-sm">${t.entry} → ${t.exit || '???'} <span class="text-gray-600">(${t.count}x)</span></td>
                             <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$' + parseFloat(t.pnl).toLocaleString() : '--'}</td>
@@ -183,17 +197,18 @@
         document.getElementById('tradeForm').onsubmit = (e) => {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
-            const getActive = (id) => { const el = document.querySelector(`[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
+            const getVal = (id) => { const el = document.querySelector(`[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
             const ticker = document.querySelector('#tickerGrid .active')?.dataset.val;
-            const type = getActive('optionType');
+            const type = getVal('optionType');
 
-            if (!ticker || !type) { alert("Select Ticker and Option Type!"); return; }
+            if (!ticker || !type) { alert("ERROR: Select Ticker and Option Type!"); return; }
 
+            // Closure Validation
             if(editId) {
-                const required = ['setup', 'vwap', 'ema512', 'mtf', 'pmRange', 'pdRange'];
+                const req = ['setup', 'vwap', 'ema512', 'mtf', 'pmRange', 'pdRange'];
                 let missing = false;
-                required.forEach(k => { if(!getActive(k)) { document.querySelector(`[data-id="${k}"]`).classList.add('error-glow'); missing = true; }});
-                if(missing || !document.getElementById('exit').value) { alert("Mandatory Context Missing!"); return; }
+                req.forEach(k => { if(!getVal(k)) { document.querySelector(`[data-id="${k}"]`).classList.add('error-glow'); missing = true; }});
+                if(missing || !document.getElementById('exit').value) { alert("STRICT MODE: Fill all fields to close."); return; }
             }
 
             if (!editId) {
@@ -202,7 +217,7 @@
                     stock: ticker, option: type, count: document.getElementById('count').value, 
                     entry: parseFloat(document.getElementById('entry').value), entryTime: getNYTime(), 
                     exit: null, exitTime: null, pnl: 0, pnlPct: 0,
-                    setup: getActive('setup'), vwap: getActive('vwap'), ema512: getActive('ema512'), mtf: getActive('mtf'), pmRange: getActive('pmRange'), pdRange: getActive('pdRange')
+                    setup: getVal('setup'), vwap: getVal('vwap'), ema512: getVal('ema512'), mtf: getVal('mtf'), pmRange: getVal('pmRange'), pdRange: getVal('pdRange')
                 });
             } else {
                 const idx = trades.findIndex(t => String(t.id) === String(editId));
@@ -211,8 +226,12 @@
                 trades[idx].status = 'CLOSED'; trades[idx].exit = ex; trades[idx].exitTime = getNYTime();
                 trades[idx].pnl = ((ex - en) * 100 * trades[idx].count).toFixed(2);
                 trades[idx].pnlPct = (((ex - en) / en) * 100).toFixed(2);
-                ['setup', 'vwap','ema512','mtf','pmRange','pdRange'].forEach(k => trades[idx][k] = getActive(k));
+                ['setup', 'vwap','ema512','mtf','pmRange','pdRange'].forEach(k => trades[idx][k] = getVal(k));
             }
+
+            // CLEANUP: Remove custom ticker button from grid after use
+            document.querySelectorAll('.temp-ticker').forEach(el => el.remove());
+            
             resetForm(); render();
         };
 
@@ -237,7 +256,7 @@
             document.getElementById('cancelEdit').classList.add('hidden');
         }
 
-        function remove(id) { if(confirm("Delete trade?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
+        function remove(id) { if(confirm("Permanently delete data?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
         window.onload = () => { document.getElementById('currentDateDisplay').innerText = getNYDate(); render(); };
     </script>
 </body>
