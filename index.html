@@ -194,7 +194,7 @@
                             ticks: { 
                                 color: '#ffffff', 
                                 font: { weight: 'bold', size: 9 },
-                                padding: 10 // Lifts the labels up for visibility
+                                padding: 10 
                             } 
                         }, 
                         y: { grid: { color: '#1f2937' } } 
@@ -273,8 +273,10 @@
                 if (!collapsedGroups.has(label)) {
                     groups[label].forEach(t => {
                         const isC = t.status === 'CLOSED';
+                        const dateObj = new Date(t.timestamp);
+                        const dayString = dateObj.toLocaleDateString([], {weekday: 'short', month: 'numeric', day: 'numeric'}); // Restored Day
                         body.innerHTML += `<tr class="border-b border-gray-800 hover:bg-white/5">
-                            <td class="p-4 text-gray-500">${new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'})}</td>
+                            <td class="p-4 text-gray-500">${dayString}</td>
                             <td class="p-4 font-bold text-white">${t.stock} <span class="${t.option==='CALL'?'text-green-400':'text-red-400'} text-[9px]">${t.option}</span></td>
                             <td class="p-4 text-gray-600 text-[10px]">${t.entryTime} → ${t.exitTime||'--'}</td>
                             <td class="p-4 text-white">${t.entry} → ${t.exit||'??'} (${t.count}x)</td>
