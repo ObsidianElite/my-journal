@@ -10,7 +10,6 @@
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 12px; position: relative; overflow: hidden; }
         
-        /* HIGH-INTENSITY FLUORESCENT LABELS */
         label { 
             color: #00FFCC !important; 
             text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
@@ -26,7 +25,6 @@
         input:focus { border-color: #00FFCC; box-shadow: 0 0 12px rgba(0, 255, 204, 0.2); }
         input:disabled { opacity: 0.2; cursor: not-allowed; }
         
-        /* FLUORESCENT BUTTON THEME */
         .toggle-group { display: flex; gap: 4px; background: #0a0e14; padding: 4px; border-radius: 8px; border: 1px solid #1f2937; flex-wrap: wrap; }
         
         .toggle-btn, .setup-btn { 
@@ -43,14 +41,14 @@
             box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); 
         }
 
-        /* CALL/PUT SPECIFIC ACTIVE COLORS */
         .toggle-btn.active[data-type="CALL"] { background: #4ade80 !important; border-color: #4ade80 !important; }
         .toggle-btn.active[data-type="PUT"] { background: #f87171 !important; border-color: #f87171 !important; }
         
         .btn-live { background: linear-gradient(to right, #00FFCC, #00D9FF); color: #000; padding: 14px; font-weight: 900; border-radius: 8px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; font-size: 14px; letter-spacing: 1px; transition: 0.3s; }
         .btn-live:hover { filter: brightness(1.2); box-shadow: 0 0 20px rgba(0, 255, 204, 0.4); }
 
-        .matrix-val { color: #00D9FF; font-weight: 800; font-size: 1.2rem; }
+        .matrix-val { color: #00D9FF; font-weight: 800; font-size: 1.1rem; }
+        .metric-sub { font-size: 9px; color: #4b5563; font-weight: bold; }
         thead th { color: #00FFCC !important; font-weight: 800; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid #1f2937; }
     </style>
 </head>
@@ -67,7 +65,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
             <div class="stat-card p-4 h-[250px] col-span-1 lg:col-span-1">
                 <label>Equity Curve</label>
                 <canvas id="equityChart"></canvas>
@@ -81,12 +79,29 @@
                     </div>
                 </div>
             </div>
-            <div class="stat-card p-6 flex flex-col justify-between">
+            <div class="stat-card p-4 flex flex-col justify-between">
                 <label>Efficiency Matrix</label>
-                <div class="space-y-4">
-                    <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500 text-xs font-bold uppercase">Profit Factor</span><span id="profitFactor" class="matrix-val">0.00</span></div>
-                    <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500 text-xs font-bold uppercase">Avg Win Hold</span><span id="avgWinHold" class="matrix-val">--</span></div>
-                    <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500 text-xs font-bold uppercase">Avg Loss Hold</span><span id="avgLossHold" class="matrix-val">--</span></div>
+                <div class="space-y-3">
+                    <div class="flex justify-between border-b border-gray-800 pb-1"><span class="text-gray-500 text-[10px] font-bold uppercase">Profit Factor</span><span id="profitFactor" class="matrix-val">0.00</span></div>
+                    <div class="flex justify-between border-b border-gray-800 pb-1"><span class="text-gray-500 text-[10px] font-bold uppercase">Avg Win</span><span id="avgWin" class="matrix-val text-green-400">$0</span></div>
+                    <div class="flex justify-between border-b border-gray-800 pb-1"><span class="text-gray-500 text-[10px] font-bold uppercase">Avg Loss</span><span id="avgLoss" class="matrix-val text-red-400">$0</span></div>
+                </div>
+            </div>
+            <div class="stat-card p-4 flex flex-col justify-between">
+                <label>Win/Loss Lifecycle</label>
+                <div class="grid grid-cols-1 gap-2">
+                    <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded">
+                        <div><p class="metric-sub uppercase">Daily</p><p id="dailyTrades" class="text-white font-bold text-xs">0 Trades</p></div>
+                        <span id="dailyWinRate" class="text-[#00FFCC] font-black text-lg">0%</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded">
+                        <div><p class="metric-sub uppercase">Weekly</p><p id="weeklyTrades" class="text-white font-bold text-xs">0 Trades</p></div>
+                        <span id="weeklyWinRate" class="text-[#00D9FF] font-black text-lg">0%</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded">
+                        <div><p class="metric-sub uppercase">Monthly</p><p id="monthlyTrades" class="text-white font-bold text-xs">0 Trades</p></div>
+                        <span id="monthlyWinRate" class="text-purple-400 font-black text-lg">0%</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -154,7 +169,7 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v18')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_v19')) || [];
         let equityChart, precisionChart;
 
         function initCharts() {
@@ -173,37 +188,68 @@
             });
         }
 
+        function calculateWinRate(tradeList) {
+            if (!tradeList.length) return { rate: 0, count: 0 };
+            const wins = tradeList.filter(t => parseFloat(t.pnl) >= 0).length;
+            return { rate: Math.round((wins / tradeList.length) * 100), count: tradeList.length };
+        }
+
         function updateAnalytics() {
             const closedTrades = trades.filter(t => t.status === 'CLOSED');
-            let runningPnl = 0;
-            const equityData = [0];
-            let wins = 0, totalProfit = 0, totalLoss = 0, winHold = 0, lossHold = 0;
+            const now = new Date();
+            
+            // Filters for Lifecycle
+            const daily = closedTrades.filter(t => new Date(t.timestamp).toDateString() === now.toDateString());
+            const weekly = closedTrades.filter(t => {
+                const tDate = new Date(t.timestamp);
+                const diff = (now - tDate) / (1000 * 60 * 60 * 24);
+                return diff <= 7;
+            });
+            const monthly = closedTrades.filter(t => {
+                const tDate = new Date(t.timestamp);
+                return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+            });
 
+            // Update Lifecycle UI
+            const dStat = calculateWinRate(daily);
+            document.getElementById('dailyTrades').innerText = `${dStat.count} Trades`;
+            document.getElementById('dailyWinRate').innerText = `${dStat.rate}%`;
+
+            const wStat = calculateWinRate(weekly);
+            document.getElementById('weeklyTrades').innerText = `${wStat.count} Trades`;
+            document.getElementById('weeklyWinRate').innerText = `${wStat.rate}%`;
+
+            const mStat = calculateWinRate(monthly);
+            document.getElementById('monthlyTrades').innerText = `${mStat.count} Trades`;
+            document.getElementById('monthlyWinRate').innerText = `${mStat.rate}%`;
+
+            // Standard Analytics
+            let runningPnl = 0, equityData = [0], totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
             closedTrades.reverse().forEach(t => {
                 const p = parseFloat(t.pnl);
                 runningPnl += p;
                 equityData.push(runningPnl);
-                if (p >= 0) { wins++; totalProfit += p; } else { totalLoss += Math.abs(p); }
+                if (p >= 0) { totalProfit += p; wins++; } else { totalLoss += Math.abs(p); losses++; }
             });
             closedTrades.reverse();
 
-            // Precision Update
+            // Precision & Charts
             const winRate = closedTrades.length ? Math.round((wins / closedTrades.length) * 100) : 0;
-            precisionChart.data.datasets[0].data = [wins, closedTrades.length - wins];
+            precisionChart.data.datasets[0].data = [wins, losses];
             precisionChart.update();
             document.getElementById('winRateText').innerText = winRate + '%';
-
-            // Equity Update
             equityChart.data.labels = equityData.map((_, i) => i);
             equityChart.data.datasets[0].data = equityData;
             equityChart.update();
 
-            // Matrix Update
+            // Matrix
             document.getElementById('profitFactor').innerText = totalLoss === 0 ? (totalProfit > 0 ? 'INF' : '0.00') : (totalProfit / totalLoss).toFixed(2);
+            document.getElementById('avgWin').innerText = wins ? `$${(totalProfit / wins).toFixed(0)}` : '$0';
+            document.getElementById('avgLoss').innerText = losses ? `$${(totalLoss / losses).toFixed(0)}` : '$0';
         }
 
         function render() {
-            localStorage.setItem('obsidian_elite_v18', JSON.stringify(trades));
+            localStorage.setItem('obsidian_v19', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
             
@@ -227,7 +273,6 @@
             updateAnalytics();
         }
 
-        // TICKET & SETUP SELECTION LOGIC
         document.querySelectorAll('.setup-btn').forEach(btn => btn.onclick = function() { this.classList.toggle('active'); });
         document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => {
             btn.onclick = function() {
@@ -252,10 +297,10 @@
                 const t = trades[editId];
                 if (exitVal) {
                     const ex = parseFloat(exitVal);
-                    trades[editId] = { ...t, exit: ex, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: selectedSetups, pnl: ((ex - t.entry) * 100 * t.count).toFixed(2) };
+                    trades[editId] = { ...t, exit: ex, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: selectedSetups, pnl: ((ex - t.entry) * 100 * t.count).toFixed(2), timestamp: new Date().toISOString() };
                 }
             } else {
-                trades.unshift({ stock: ticker, option: type, entry: parseFloat(entryVal), count: document.getElementById('count').value, status: 'OPEN', entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), pnl: 0, setups: selectedSetups });
+                trades.unshift({ stock: ticker, option: type, entry: parseFloat(entryVal), count: document.getElementById('count').value, status: 'OPEN', entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), pnl: 0, setups: selectedSetups, timestamp: new Date().toISOString() });
             }
             resetForm(); render();
         };
