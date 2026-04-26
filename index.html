@@ -25,30 +25,28 @@
         input:focus { border-color: #00FFCC; box-shadow: 0 0 15px rgba(0, 255, 204, 0.3); }
         input:disabled { opacity: 0.2; cursor: not-allowed; }
         
-        /* ALL BUTTONS (TICKERS, CALL/PUT, SETUPS) - FLUORESCENT THEME */
+        /* FLUORESCENT BUTTONS */
         .toggle-group { display: flex; gap: 6px; background: #0a0e14; padding: 6px; border-radius: 10px; border: 1px solid #1f2937; flex-wrap: wrap; }
         
         .toggle-btn, .setup-btn { 
-            flex: 1; min-width: 65px; text-align: center; padding: 12px 8px; 
+            flex: 1; min-width: 75px; text-align: center; padding: 12px 8px; 
             font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; 
-            /* High contrast inactive state */
             color: #00D9FF; 
             background: #0d1117; 
             border: 1px solid #00D9FF; 
             transition: all 0.2s ease-in-out;
             text-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+            text-transform: uppercase;
         }
 
-        /* HOVER EFFECT */
         .toggle-btn:hover, .setup-btn:hover {
             box-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
             background: #111827;
         }
 
-        /* ACTIVE STATE - NEON GREEN GLOW */
         .toggle-btn.active, .setup-btn.active { 
             border-color: #00FFCC !important; 
-            color: #030508 !important; /* Dark text for contrast against bright bg */
+            color: #030508 !important; 
             background: #00FFCC !important; 
             box-shadow: 0 0 20px rgba(0, 255, 204, 0.8); 
             text-shadow: none;
@@ -63,7 +61,6 @@
         
         .btn-live { background: linear-gradient(to bottom, #00FFCC, #00D9FF); color: #000; padding: 18px; font-weight: 900; border-radius: 12px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; font-size: 16px; letter-spacing: 2px; }
         
-        /* TABLE HEADERS */
         thead th { color: #00FFCC !important; text-shadow: 0 0 8px rgba(0, 255, 204, 0.4); font-weight: 800; text-transform: uppercase; font-size: 12px; }
     </style>
 </head>
@@ -85,12 +82,20 @@
                 <input type="hidden" id="editId" value="">
                 
                 <div class="col-span-2">
-                    <label>Symbol / Ticker</label>
+                    <label>Symbol Selection (Alphabetical)</label>
                     <div class="toggle-group" id="tickerSelect">
-                        <div class="toggle-btn" data-ticker="SPY">SPY</div><div class="toggle-btn" data-ticker="SPX">SPX</div>
-                        <div class="toggle-btn" data-ticker="TSLA">TSLA</div><div class="toggle-btn" data-ticker="NVDA">NVDA</div>
-                        <div class="toggle-btn" data-ticker="AAPL">AAPL</div><div class="toggle-btn" data-ticker="AMD">AMD</div>
-                        <div class="toggle-btn" data-ticker="META">META</div><div class="toggle-btn" data-ticker="QQQ">QQQ</div>
+                        <div class="toggle-btn" data-ticker="AAPL">AAPL</div>
+                        <div class="toggle-btn" data-ticker="AMD">AMD</div>
+                        <div class="toggle-btn" data-ticker="COIN">COIN</div>
+                        <div class="toggle-btn" data-ticker="META">META</div>
+                        <div class="toggle-btn" data-ticker="MSTR">MSTR</div>
+                        <div class="toggle-btn" data-ticker="MU">MU</div>
+                        <div class="toggle-btn" data-ticker="NVDA">NVDA</div>
+                        <div class="toggle-btn" data-ticker="PLTR">PLTR</div>
+                        <div class="toggle-btn" data-ticker="QQQ">QQQ</div>
+                        <div class="toggle-btn" data-ticker="SPX">SPX</div>
+                        <div class="toggle-btn" data-ticker="SPY">SPY</div>
+                        <div class="toggle-btn" data-ticker="TSLA">TSLA</div>
                     </div>
                 </div>
                 <div>
@@ -148,10 +153,10 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v16')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v17')) || [];
 
         function render() {
-            localStorage.setItem('obsidian_elite_v16', JSON.stringify(trades));
+            localStorage.setItem('obsidian_elite_v17', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
             
@@ -168,7 +173,7 @@
                     <td class="p-6 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$'+t.pnl : '--'}</td>
                     <td class="p-6 text-center"><div class="flex justify-center gap-6">
                         <button onclick="editTrade(${i})" class="text-gray-500 hover:text-[#00FFCC] text-lg">✏️</button>
-                        <button onclick="removeTrade(${i})" class="text-gray-500 hover:text-red-500 text-lg">🗑️</button>
+                        <button onclick="removeTrade(${i})" class="text-gray-400 hover:text-red-500 text-lg">🗑️</button>
                         ${!isC ? `<button onclick="closeTradeUI(${i})" class="bg-orange-500 text-black px-3 py-1 rounded text-[10px] font-black uppercase">CLOSE</button>` : ''}
                     </div></td></tr>`;
             });
@@ -176,12 +181,7 @@
             document.getElementById('totalPnl').innerText = '$' + total.toFixed(2);
         }
 
-        // Setup Selection
-        document.querySelectorAll('.setup-btn').forEach(btn => {
-            btn.onclick = function() { this.classList.toggle('active'); };
-        });
-
-        // Ticker/Type Selection
+        document.querySelectorAll('.setup-btn').forEach(btn => { btn.onclick = function() { this.classList.toggle('active'); }; });
         document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => {
             btn.onclick = function() {
                 if(document.getElementById('editId').value !== "") return; 
@@ -199,15 +199,8 @@
             const exitVal = document.getElementById('exit').value;
             const selectedSetups = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
 
-            if (editId === "" && (!ticker || !type || !entryVal)) {
-                alert("SYSTEM: Ticker, Type, and Entry Price are required.");
-                return;
-            }
-
-            if (editId !== "" && exitVal !== "" && selectedSetups.length === 0) {
-                alert("GOVERNANCE: Select at least one Setup to log exit.");
-                return;
-            }
+            if (editId === "" && (!ticker || !type || !entryVal)) { alert("SYSTEM: Entry data required."); return; }
+            if (editId !== "" && exitVal !== "" && selectedSetups.length === 0) { alert("GOVERNANCE: Setup required for exit."); return; }
 
             const tradeData = {
                 stock: ticker, option: type, count: document.getElementById('count').value,
@@ -219,8 +212,7 @@
                 trades[editId] = { ...t, ...tradeData };
                 if (exitVal) {
                     const ex = parseFloat(exitVal);
-                    trades[editId].exit = ex;
-                    trades[editId].status = 'CLOSED';
+                    trades[editId].exit = ex; trades[editId].status = 'CLOSED';
                     trades[editId].exitTime = new Date().toLocaleTimeString();
                     trades[editId].pnl = ((ex - tradeData.entry) * 100 * tradeData.count).toFixed(2);
                 }
@@ -231,10 +223,8 @@
         };
 
         function editTrade(i) {
-            const t = trades[i];
-            document.getElementById('editId').value = i;
-            document.getElementById('entry').value = t.entry;
-            document.getElementById('entry').disabled = true;
+            const t = trades[i]; document.getElementById('editId').value = i;
+            document.getElementById('entry').value = t.entry; document.getElementById('entry').disabled = true;
             document.getElementById('count').value = t.count;
             document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.ticker === t.stock));
             document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t.option));
@@ -246,7 +236,6 @@
 
         function closeTradeUI(i) { editTrade(i); document.getElementById('exit').focus(); }
         function removeTrade(i) { if(confirm("Purge record?")) { trades.splice(i, 1); render(); } }
-
         function resetForm() { 
             document.getElementById('tradeForm').reset(); document.getElementById('editId').value = ''; 
             document.getElementById('exit').disabled = true; document.getElementById('entry').disabled = false; 
@@ -255,7 +244,6 @@
             document.getElementById('cancelBtn').classList.add('hidden');
             render();
         }
-
         window.onload = () => { render(); document.getElementById('currentDateDisplay').innerText = new Date().toDateString(); };
     </script>
 </body>
