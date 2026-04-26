@@ -4,24 +4,27 @@
     <meta charset="UTF-8">
     <title>Obsidian Elite | High-Frequency Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: #0a0e14; border: 1px solid #1f2937; border-radius: 12px; }
-        label { color: #00f2ff; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.05em; }
+        
+        /* Updated Label Color for better readability */
+        label { color: #e2e8f0; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.05em; }
+        
         input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
         input:focus { border-color: #00f2ff; }
         
-        /* Grid Toggles */
         .grid-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 4px; }
-        .grid-btn { background: #161b22; border: 1px solid #30363d; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; color: #4b5563; transition: 0.2s; }
+        .grid-btn { background: #161b22; border: 1px solid #30363d; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; color: #94a3b8; transition: 0.2s; }
         .grid-btn.active { background: #1e3a8a; color: #60a5fa; border-color: #60a5fa; }
         .grid-btn.type-btn.active[data-val="CALL"] { background: #064e3b; color: #4ade80; border-color: #4ade80; }
         .grid-btn.type-btn.active[data-val="PUT"] { background: #7f1d1d; color: #f87171; border-color: #f87171; }
         .add-custom { color: #00f2ff; border: 1px dashed #00f2ff; background: transparent; }
 
         .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; }
-        .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; }
+        .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #94a3b8; }
         .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Above"] { background: #064e3b; color: #4ade80; }
         .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Below"] { background: #7f1d1d; color: #f87171; }
         .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
@@ -35,7 +38,7 @@
 </head>
 <body class="p-6">
     <div class="max-w-[1850px] mx-auto">
-        <div class="flex justify-between items-start mb-8">
+        <div class="flex justify-between items-start mb-6">
             <div>
                 <h1 class="text-3xl font-black text-cyan-400 uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
                 <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Engine | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
@@ -43,6 +46,25 @@
             <div class="flex gap-4">
                 <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-2xl font-black text-green-400">$0.00</p></div>
                 <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Active</p><p id="activeCount" class="text-2xl font-black text-cyan-400">0</p></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2 stat-card p-4 h-[300px]">
+                <canvas id="pnlChart"></canvas>
+            </div>
+            <div class="stat-card p-6 flex flex-col justify-around">
+                <div>
+                    <label>Win Ratio</label>
+                    <div class="w-full bg-gray-800 rounded-full h-2 mt-2">
+                        <div id="winRatioBar" class="bg-cyan-500 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p id="winRatioText" class="text-right text-xs mt-1 font-bold">0%</p>
+                </div>
+                <div>
+                    <label>Profit Factor</label>
+                    <p id="profitFactorText" class="text-3xl font-black text-white">0.00</p>
+                </div>
             </div>
         </div>
 
@@ -109,11 +131,64 @@
 
     <script>
         let trades = JSON.parse(localStorage.getItem('obsidian_elite_v8')) || [];
+        let pnlChart = null;
 
         function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false}); }
         function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
 
-        // Smart Toggle Handlers
+        // Chart Initialization
+        function initChart() {
+            const ctx = document.getElementById('pnlChart').getContext('2d');
+            pnlChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Daily PnL',
+                        data: [],
+                        backgroundColor: '#22d3ee',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#1f2937' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Update Stats and Chart
+        function updateAnalytics() {
+            const closedTrades = trades.filter(t => t.status === 'CLOSED');
+            const totalWins = closedTrades.filter(t => parseFloat(t.pnl) > 0).length;
+            const winRatio = closedTrades.length > 0 ? (totalWins / closedTrades.length * 100).toFixed(0) : 0;
+            
+            document.getElementById('winRatioBar').style.width = `${winRatio}%`;
+            document.getElementById('winRatioText').innerText = `${winRatio}%`;
+
+            // Profit Factor
+            const grossProfit = closedTrades.filter(t => parseFloat(t.pnl) > 0).reduce((sum, t) => sum + parseFloat(t.pnl), 0);
+            const grossLoss = Math.abs(closedTrades.filter(t => parseFloat(t.pnl) < 0).reduce((sum, t) => sum + parseFloat(t.pnl), 0));
+            const pf = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : grossProfit > 0 ? "Infinity" : "0.00";
+            document.getElementById('profitFactorText').innerText = pf;
+
+            // Chart Data
+            const dailyData = {};
+            closedTrades.forEach(t => {
+                dailyData[t.date] = (dailyData[t.date] || 0) + parseFloat(t.pnl);
+            });
+            
+            const labels = Object.keys(dailyData).sort();
+            pnlChart.data.labels = labels;
+            pnlChart.data.datasets[0].data = labels.map(l => dailyData[l]);
+            pnlChart.update();
+        }
+
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('grid-btn') || e.target.classList.contains('toggle-btn')) {
                 const group = e.target.closest('.grid-selector') || e.target.closest('.toggle-group');
@@ -148,11 +223,13 @@
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
             const groups = {};
+            
             trades.forEach(t => {
                 if (!groups[t.date]) groups[t.date] = []; groups[t.date].push(t);
                 if (t.status === 'OPEN') active++;
                 if (t.status === 'CLOSED') total += parseFloat(t.pnl);
             });
+
             document.getElementById('activeCount').innerText = active;
             document.getElementById('totalPnl').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits:2})}`;
             document.getElementById('totalPnl').className = `text-2xl font-black ${total >= 0 ? 'text-green-400' : 'text-red-500'}`;
@@ -178,6 +255,7 @@
                         </tr>`;
                 });
             });
+            updateAnalytics();
         }
 
         document.getElementById('tradeForm').onsubmit = (e) => {
@@ -188,13 +266,6 @@
             const type = getActive('optionType');
 
             if (!ticker || !type) { alert("Select Ticker and Option Type!"); return; }
-
-            if(editId) {
-                const required = ['setup', 'vwap', 'ema512', 'mtf', 'pmRange', 'pdRange'];
-                let missing = false;
-                required.forEach(k => { if(!getActive(k)) { document.querySelector(`[data-id="${k}"]`).classList.add('error-glow'); missing = true; }});
-                if(missing || !document.getElementById('exit').value) { alert("Mandatory Context Missing!"); return; }
-            }
 
             if (!editId) {
                 trades.unshift({
@@ -238,7 +309,12 @@
         }
 
         function remove(id) { if(confirm("Delete trade?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
-        window.onload = () => { document.getElementById('currentDateDisplay').innerText = getNYDate(); render(); };
+        
+        window.onload = () => { 
+            document.getElementById('currentDateDisplay').innerText = getNYDate(); 
+            initChart();
+            render(); 
+        };
     </script>
 </body>
 </html>
