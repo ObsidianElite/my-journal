@@ -38,6 +38,10 @@
             </div>
         </div>
 
+        <div class="stat-card p-6 mb-8 h-[300px]">
+            <canvas id="dailyPnlChart"></canvas>
+        </div>
+
         <div class="mb-6">
             <label>Rapid Command [Ticker Type Qty Price]</label>
             <input type="text" id="cmdInput" class="cmd-input" placeholder="e.g. TSLA C 5 1.45">
@@ -85,9 +89,38 @@
 
     <script>
         let trades = JSON.parse(localStorage.getItem('obsidian_elite_v7')) || [];
+        let pnlChart = null;
 
         function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false}); }
         function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
+
+        function initChart() {
+            const ctx = document.getElementById('dailyPnlChart').getContext('2d');
+            pnlChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Daily PnL', data: [], backgroundColor: '#00f2ff', borderRadius: 4 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: '#1f2937' }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updateChart() {
+            const dailyData = {};
+            trades.filter(t => t.status === 'CLOSED').forEach(t => {
+                dailyData[t.date] = (dailyData[t.date] || 0) + parseFloat(t.pnl);
+            });
+            const sortedDates = Object.keys(dailyData).sort();
+            pnlChart.data.labels = sortedDates;
+            pnlChart.data.datasets[0].data = sortedDates.map(d => dailyData[d]);
+            pnlChart.data.datasets[0].backgroundColor = sortedDates.map(d => dailyData[d] >= 0 ? '#4ade80' : '#f87171');
+            pnlChart.update();
+        }
 
         document.getElementById('cmdInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -153,6 +186,7 @@
                         </tr>`;
                 });
             });
+            updateChart();
         }
 
         document.getElementById('tradeForm').onsubmit = (e) => {
@@ -160,7 +194,6 @@
             const editId = document.getElementById('editId').value;
             const getT = (id) => { const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
             
-            // VALIDATION: Mandatory fields for closing
             if(editId) {
                 const required = ['vwap', 'ema512', 'mtf', 'pmRange', 'pdRange', 'pdc'];
                 let missing = false;
@@ -218,7 +251,11 @@
         }
 
         function remove(id) { if(confirm("Permanently delete execution data?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
-        window.onload = () => { document.getElementById('currentDateDisplay').innerText = getNYDate(); render(); };
+        window.onload = () => { 
+            document.getElementById('currentDateDisplay').innerText = getNYDate(); 
+            initChart();
+            render(); 
+        };
     </script>
 </body>
 </html>
