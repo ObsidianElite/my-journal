@@ -2,22 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Obsidian Elite | Professional Execution Terminal</title>
+    <title>Obsidian Elite | Command Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: #0a0e14; border: 1px solid #1f2937; border-radius: 12px; }
-        label { color: #00f2ff; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.05em; }
-        input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; transition: 0.2s; }
-        input:focus { border-color: #00f2ff; box-shadow: 0 0 10px rgba(0, 242, 255, 0.1); }
+        label { color: #00f2ff; font-weight: 800; font-size: 10px; text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.05em; }
+        input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 13px; width: 100%; outline: none; }
         
-        .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; transition: 0.3s; font-size: 14px; text-transform: uppercase; }
-        .btn-close { background: linear-gradient(to bottom, #f59e0b, #d97706); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; transition: 0.3s; font-size: 14px; text-transform: uppercase; }
+        /* Command Line Styling */
+        .cmd-input { border: 2px solid #1f2937; background: #05070a; font-size: 16px; color: #00f2ff; letter-spacing: 1px; padding: 15px; border-radius: 12px; transition: 0.3s; }
+        .cmd-input:focus { border-color: #00f2ff; box-shadow: 0 0 20px rgba(0, 242, 255, 0.15); }
+        .cmd-label { color: #6b7280; font-size: 9px; margin-left: 5px; margin-bottom: 10px; }
+
+        .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
+        .btn-close { background: linear-gradient(to bottom, #f59e0b, #d97706); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
         
-        .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; }
-        .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: all 0.2s; color: #4b5563; }
+        .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; }
+        .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; }
         .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Buy"], .toggle-btn.active[data-val="HI"], .toggle-btn.active[data-val="Above"] { background: #064e3b; color: #4ade80; }
         .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Sell"], .toggle-btn.active[data-val="LO"], .toggle-btn.active[data-val="Below"] { background: #7f1d1d; color: #f87171; }
         .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
@@ -25,8 +29,7 @@
         .status-live { color: #00f2ff; animation: pulse 2s infinite; font-weight: 800; font-size: 10px; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         .group-header { background: #111827; border-left: 4px solid #00f2ff; }
-        .edit-mode { border: 2px solid #f59e0b !important; }
-        th { font-size: 10px !important; letter-spacing: 0.1em; color: #6b7280; padding: 15px !important; }
+        th { font-size: 9px !important; letter-spacing: 0.1em; color: #6b7280; text-transform: uppercase; }
     </style>
 </head>
 <body class="p-6">
@@ -34,61 +37,63 @@
         <div class="flex justify-between items-start mb-8">
             <div>
                 <h1 class="text-3xl font-black text-cyan-400 tracking-tighter uppercase">Obsidian <span class="text-white">Elite</span></h1>
-                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Command Center | NY EST: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
+                <p class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Live Execution | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
             </div>
             <div class="flex gap-4">
-                <div class="stat-card px-8 py-3 border-cyan-500/30 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-2xl font-black">$0.00</p></div>
-                <div class="stat-card px-8 py-3 border-indigo-500/30 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Win Rate</p><p id="winRateDisplay" class="text-2xl font-black text-indigo-400">0%</p></div>
-                <div class="stat-card px-8 py-3 border-purple-500/30 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Active</p><p id="activeCount" class="text-2xl font-black text-cyan-400">0</p></div>
-                <button onclick="exportCSV()" class="bg-white text-black px-6 rounded-xl font-black text-[10px] uppercase hover:bg-cyan-400 transition">Export CSV</button>
+                <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[9px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-2xl font-black">$0.00</p></div>
+                <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[9px] font-black uppercase">Win Rate</p><p id="winRateDisplay" class="text-2xl font-black text-indigo-400">0%</p></div>
+                <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[9px] font-black uppercase">Active</p><p id="activeCount" class="text-2xl font-black text-cyan-400">0</p></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="stat-card p-6 lg:col-span-2">
-                <div class="flex justify-between mb-4"><h2 class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Equity Inclination (Last 10)</h2><span class="text-[10px] text-cyan-500 font-bold">LIVE SYNC</span></div>
-                <div class="h-[200px]"><canvas id="pnlChart"></canvas></div>
+                <div class="h-[180px]"><canvas id="pnlChart"></canvas></div>
             </div>
             <div class="stat-card p-6">
-                <h2 class="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-6">Execution Consistency</h2>
-                <div class="space-y-8 mt-4">
-                    <div><div class="flex justify-between text-[10px] font-bold mb-3"><span>Win Ratio Goal</span><span id="winBarText">0%</span></div><div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden"><div id="winBarFill" class="h-full bg-cyan-500" style="width: 0%"></div></div></div>
-                    <div><div class="flex justify-between text-[10px] font-bold mb-3"><span>Profit Factor</span><span id="pfDisplay">0.00</span></div><div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden"><div id="pfBarFill" class="h-full bg-green-500" style="width: 0%"></div></div></div>
+                <div class="space-y-6">
+                    <div><div class="flex justify-between text-[9px] font-bold mb-2"><span>Win Ratio</span><span id="winBarText">0%</span></div><div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden"><div id="winBarFill" class="h-full bg-cyan-500" style="width: 0%"></div></div></div>
+                    <div><div class="flex justify-between text-[9px] font-bold mb-2"><span>Profit Factor</span><span id="pfDisplay">0.00</span></div><div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden"><div id="pfBarFill" class="h-full bg-green-500" style="width: 0%"></div></div></div>
                 </div>
             </div>
         </div>
 
-        <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500 shadow-2xl transition-all">
+        <div class="mb-6">
+            <div class="cmd-label">ELITE COMMAND LINE: [TICKER] [C/P] [QTY] [ENTRY] — (e.g. TSLA C 5 1.50)</div>
+            <input type="text" id="cmdLine" class="w-full cmd-input" placeholder="Type command and press ENTER to fire trade...">
+        </div>
+
+        <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500 transition-all">
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-6">
                 <input type="hidden" id="editId" value="">
                 
-                <div class="flex flex-col"><label>Ticker</label><select id="stock"><option>TSLA</option><option>NVDA</option><option>AMD</option><option>COIN</option><option>MSTR</option><option>SPY</option><option>SPX</option><option>MU</option></select></div>
+                <div class="flex flex-col"><label>Ticker</label><input type="text" id="stock" placeholder="TSLA"></div>
                 <div class="flex flex-col"><label>Type</label><select id="optionType"><option value="C">CALL</option><option value="P">PUT</option></select></div>
                 <div class="flex flex-col"><label>Qty</label><input type="number" id="count" value="1"></div>
-                <div class="flex flex-col"><label>Entry Price</label><input type="number" id="entry" step="0.01" required></div>
-                <div class="flex flex-col"><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Closed Price" disabled></div>
+                <div class="flex flex-col"><label>Entry</label><input type="number" id="entry" step="0.01"></div>
+                <div class="flex flex-col"><label>Exit</label><input type="number" id="exit" step="0.01" disabled></div>
                 <div class="flex flex-col"><label>Setup</label><select id="setup"><option value="-">None</option><option>A+</option><option>B</option><option>C</option></select></div>
-                <div class="flex flex-col"><label>VWAP Hold</label><div class="toggle-group" data-id="vwap"><div class="toggle-btn" data-val="Y">Y</div><div class="toggle-btn" data-val="N">N</div></div></div>
+                <div class="flex flex-col"><label>VWAP</label><div class="toggle-group" data-id="vwap"><div class="toggle-btn" data-val="Y">Y</div><div class="toggle-btn" data-val="N">N</div></div></div>
                 
-                <div class="flex flex-col"><label>EMA 5/12</label><div class="toggle-group" data-id="ema512"><div class="toggle-btn" data-val="BUY">BUY</div><div class="toggle-btn" data-val="SELL">SELL</div></div></div>
-                <div class="flex flex-col"><label>EMA 34/50</label><div class="toggle-group" data-id="ema3450"><div class="toggle-btn" data-val="Buy">Buy</div><div class="toggle-btn" data-val="Sell">Sell</div></div></div>
-                <div class="flex flex-col"><label>MTF</label><div class="toggle-group" data-id="mtf"><div class="toggle-btn blue" data-val="H34">H34</div><div class="toggle-btn blue" data-val="21">21</div><div class="toggle-btn blue" data-val="55">55</div></div></div>
-                <div class="flex flex-col"><label>PM Range</label><div class="toggle-group" data-id="pmRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
-                <div class="flex flex-col"><label>PD Range</label><div class="toggle-group" data-id="pdRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
-                <div class="flex flex-col"><label>PDC Level</label><div class="toggle-group" data-id="pdc"><div class="toggle-btn" data-val="Above">Above</div><div class="toggle-btn" data-val="Below">Below</div></div></div>
+                <div class="flex flex-col lg:col-span-1"><label>EMA 5/12</label><div class="toggle-group" data-id="ema512"><div class="toggle-btn" data-val="BUY">BUY</div><div class="toggle-btn" data-val="SELL">SELL</div></div></div>
+                <div class="flex flex-col lg:col-span-1"><label>EMA 34/50</label><div class="toggle-group" data-id="ema3450"><div class="toggle-btn" data-val="Buy">Buy</div><div class="toggle-btn" data-val="Sell">Sell</div></div></div>
+                <div class="flex flex-col lg:col-span-1"><label>MTF</label><div class="toggle-group" data-id="mtf"><div class="toggle-btn blue" data-val="H34">H34</div><div class="toggle-btn blue" data-val="21">21</div><div class="toggle-btn blue" data-val="55">55</div></div></div>
+                <div class="flex flex-col lg:col-span-1"><label>PM Range</label><div class="toggle-group" data-id="pmRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
+                <div class="flex flex-col lg:col-span-1"><label>PD Range</label><div class="toggle-group" data-id="pdRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
+                <div class="flex flex-col lg:col-span-1"><label>PDC Level</label><div class="toggle-group" data-id="pdc"><div class="toggle-btn" data-val="Above">Above</div><div class="toggle-btn" data-val="Below">Below</div></div></div>
 
                 <div class="col-span-full mt-2 flex gap-4">
                     <button type="submit" id="submitBtn" class="btn-live">Open Live Trade</button>
-                    <button type="button" id="cancelEdit" onclick="resetForm()" class="hidden bg-gray-800 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase">Cancel Update</button>
+                    <button type="button" id="cancelEdit" onclick="resetForm()" class="hidden bg-gray-800 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase">Cancel</button>
                 </div>
             </form>
         </div>
 
         <div class="stat-card overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-900/50 uppercase font-black">
+            <table class="w-full text-left">
+                <thead class="bg-gray-900/50">
                     <tr>
-                        <th class="p-5">Asset</th><th class="p-5">Timeline / Duration</th><th class="p-5">Fills</th><th class="p-5">Context</th><th class="p-5 text-right">PNL ($)</th><th class="p-5 text-right">PNL (%)</th><th class="p-5 text-center">Manage</th>
+                        <th class="p-5">Asset</th><th class="p-5">Timeline / Dur</th><th class="p-5">Fills</th><th class="p-5">Context</th><th class="p-5 text-right">PNL ($)</th><th class="p-5 text-right">PNL (%)</th><th class="p-5 text-center">Manage</th>
                     </tr>
                 </thead>
                 <tbody id="tradeBody"></tbody>
@@ -97,14 +102,34 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_live_v3')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_final')) || [];
         let pnlChart;
 
         function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'}); }
-        function getNYDate() { 
-            const d = new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
+        function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
+
+        // COMMAND LINE PARSER
+        document.getElementById('cmdLine').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const val = this.value.toUpperCase().split(' ');
+                if (val.length >= 4) {
+                    const ticker = val[0];
+                    const type = val[1].startsWith('C') ? 'C' : 'P';
+                    const qty = val[2];
+                    const price = val[3];
+                    
+                    document.getElementById('stock').value = ticker;
+                    document.getElementById('optionType').value = type;
+                    document.getElementById('count').value = qty;
+                    document.getElementById('entry').value = price;
+                    
+                    document.getElementById('tradeForm').dispatchEvent(new Event('submit'));
+                    this.value = '';
+                    this.style.borderColor = '#00f2ff';
+                    setTimeout(() => this.style.borderColor = '#1f2937', 500);
+                }
+            }
+        });
 
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -121,43 +146,36 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { grid: { color: '#1f2937' }, ticks: { color: '#6b7280', font: { size: 10 } } }, x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 10 } } } }
+                    scales: { y: { grid: { color: '#161b22' }, ticks: { color: '#4b5563', font: { size: 9 } } }, x: { grid: { display: false }, ticks: { color: '#4b5563', font: { size: 9 } } } }
                 }
             });
         }
 
         function updateAnalytics() {
-            const today = getNYDate();
-            let total = 0, wins = 0, closedCount = 0, grossWin = 0, grossLoss = 0;
+            let total = 0, wins = 0, closed = 0, grossWin = 0, grossLoss = 0;
             const dailyData = {};
-
             trades.forEach(t => {
                 if(t.status === 'CLOSED') {
                     const val = parseFloat(t.pnl);
-                    total += val;
-                    closedCount++;
+                    total += val; closed++;
                     if (val > 0) { wins++; grossWin += val; } else { grossLoss += Math.abs(val); }
                     if (!dailyData[t.date]) dailyData[t.date] = 0;
                     dailyData[t.date] += val;
                 }
             });
-
-            document.getElementById('totalPnl').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('totalPnl').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits:2})}`;
             document.getElementById('totalPnl').className = `text-2xl font-black ${total >= 0 ? 'text-green-400' : 'text-red-500'}`;
-            
-            const winRate = closedCount > 0 ? (wins / closedCount * 100) : 0;
-            document.getElementById('winRateDisplay').innerText = `${winRate.toFixed(0)}%`;
-            document.getElementById('winBarFill').style.width = `${winRate}%`;
-            document.getElementById('winBarText').innerText = `${winRate.toFixed(0)}%`;
-            
+            const wr = closed > 0 ? (wins/closed*100) : 0;
+            document.getElementById('winRateDisplay').innerText = `${wr.toFixed(0)}%`;
+            document.getElementById('winBarFill').style.width = `${wr}%`;
+            document.getElementById('winBarText').innerText = `${wr.toFixed(0)}%`;
             const pf = grossLoss === 0 ? grossWin : (grossWin / grossLoss);
             document.getElementById('pfDisplay').innerText = pf.toFixed(2);
-            document.getElementById('pfBarFill').style.width = `${Math.min(pf * 20, 100)}%`;
-
-            const sortedDates = Object.keys(dailyData).sort().slice(-10);
-            pnlChart.data.labels = sortedDates.map(d => d.split('-').slice(1).join('/'));
-            pnlChart.data.datasets[0].data = sortedDates.map(d => dailyData[d]);
-            pnlChart.data.datasets[0].backgroundColor = sortedDates.map(d => dailyData[d] >= 0 ? '#10b981' : '#ef4444');
+            document.getElementById('pfBarFill').style.width = `${Math.min(pf*20, 100)}%`;
+            const sorted = Object.keys(dailyData).sort().slice(-10);
+            pnlChart.data.labels = sorted.map(d => d.substring(5));
+            pnlChart.data.datasets[0].data = sorted.map(d => dailyData[d]);
+            pnlChart.data.datasets[0].backgroundColor = sorted.map(d => dailyData[d] >= 0 ? '#10b981' : '#ef4444');
             pnlChart.update();
         }
 
@@ -165,69 +183,33 @@
             if (!start || !end) return "--";
             const s = start.split(':'), e = end.split(':');
             const diff = (parseInt(e[0])*3600 + parseInt(e[1])*60 + parseInt(e[2])) - (parseInt(s[0])*3600 + parseInt(s[1])*60 + parseInt(s[2]));
-            if (diff < 0) return "--";
-            const m = Math.floor(diff/60), sec = diff%60;
-            return `${m}m ${sec}s`;
+            return diff < 0 ? "--" : `${Math.floor(diff/60)}m ${diff%60}s`;
         }
 
         function render() {
-            localStorage.setItem('obsidian_live_v3', JSON.stringify(trades));
+            localStorage.setItem('obsidian_elite_final', JSON.stringify(trades));
             const body = document.getElementById('tradeBody');
             body.innerHTML = '';
             const today = getNYDate();
             let activeCount = 0;
-
             const groups = {};
-            trades.forEach(t => {
-                if (!groups[t.date]) groups[t.date] = [];
-                groups[t.date].push(t);
-                if (t.status === 'OPEN') activeCount++;
-            });
+            trades.forEach(t => { if (!groups[t.date]) groups[t.date] = []; groups[t.date].push(t); if(t.status === 'OPEN') activeCount++; });
             document.getElementById('activeCount').innerText = activeCount;
 
             Object.keys(groups).sort().reverse().forEach(date => {
                 const isToday = date === today;
-                body.innerHTML += `<tr class="group-header"><td colspan="7" class="p-3 text-[10px] font-black text-cyan-400 uppercase tracking-widest">${date} ${isToday ? '— LIVE SESSION' : '— 🔒 LOCKED'}</td></tr>`;
-                
+                body.innerHTML += `<tr class="group-header"><td colspan="7" class="p-3 text-[9px] font-black text-cyan-400 uppercase tracking-widest">${date} ${isToday ? '— ACTIVE SESSION' : '— 🔒'}</td></tr>`;
                 groups[date].forEach(t => {
-                    const isClosed = t.status === 'CLOSED';
-                    const duration = isClosed ? calculateDuration(t.entryTime, t.exitTime) : '--';
+                    const isC = t.status === 'CLOSED';
                     body.innerHTML += `
-                        <tr class="border-b border-gray-800 hover:bg-white/5 transition">
-                            <td class="p-5">
-                                <div class="text-lg font-bold ${t.option === 'C' ? 'text-green-500' : 'text-red-500'}">${t.stock} ${t.option}</div>
-                                <div class="${isClosed ? 'text-gray-500' : 'status-live'} uppercase font-black">${t.status}</div>
-                            </td>
-                            <td class="p-5">
-                                <div class="text-white text-xs font-bold">${t.entryTime} → ${t.exitTime || '??'}</div>
-                                <div class="text-cyan-500 text-[10px] font-black uppercase mt-1">Dur: ${duration}</div>
-                            </td>
-                            <td class="p-5 text-white font-bold text-sm">
-                                ${t.entry} → ${t.exit || '???'} <span class="text-gray-600">(${t.count}x)</span>
-                            </td>
-                            <td class="p-5">
-                                <div class="flex flex-wrap gap-1">
-                                    ${t.ema512 ? `<span class="text-[8px] font-black px-2 py-0.5 rounded ${t.ema512 === 'BUY' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">${t.ema512}</span>` : ''}
-                                    ${t.mtf ? `<span class="text-[8px] font-black px-2 py-0.5 rounded bg-blue-900 text-blue-300">${t.mtf}</span>` : ''}
-                                    <span class="text-[8px] font-black px-2 py-0.5 rounded bg-gray-800 text-gray-400 uppercase">${t.setup || '-'}</span>
-                                </div>
-                            </td>
-                            <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">
-                                ${isClosed ? '$' + parseFloat(t.pnl).toLocaleString() : '--'}
-                            </td>
-                            <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">
-                                ${isClosed ? (t.pnlPct || '0') + '%' : '--'}
-                            </td>
-                            <td class="p-5 text-center">
-                                ${!isClosed ? `
-                                    <button onclick="prepareClose('${t.id}')" class="bg-orange-500 text-white px-4 py-2 rounded-lg font-black text-[9px] uppercase hover:bg-white hover:text-orange-500 transition">Close Trade</button>
-                                ` : isToday ? `
-                                    <div class="flex justify-center gap-3">
-                                        <button onclick="prepareClose('${t.id}')" class="text-yellow-500 text-lg">✏️</button>
-                                        <button onclick="remove('${t.id}')" class="text-red-500 text-lg">🗑</button>
-                                    </div>
-                                ` : `<span class="text-gray-600 text-lg">🔒</span>`}
-                            </td>
+                        <tr class="border-b border-gray-800/50 hover:bg-white/5 transition">
+                            <td class="p-5"><div class="text-lg font-bold ${t.option === 'C' ? 'text-green-500' : 'text-red-500'}">${t.stock} ${t.option}</div><div class="${isC ? 'text-gray-500' : 'status-live'} uppercase font-black">${t.status}</div></td>
+                            <td class="p-5"><div class="text-white text-xs font-bold">${t.entryTime} → ${t.exitTime || '--'}</div><div class="text-cyan-500 text-[9px] font-black uppercase mt-1">DUR: ${isC ? calculateDuration(t.entryTime, t.exitTime) : '--'}</div></td>
+                            <td class="p-5 text-white font-bold text-sm">${t.entry} → ${t.exit || '???'} <span class="text-gray-600">(${t.count}x)</span></td>
+                            <td class="p-5"><div class="flex gap-1">${t.ema512 ? `<span class="text-[8px] font-black px-2 py-0.5 rounded bg-gray-800 text-cyan-400">${t.ema512}</span>` : ''}<span class="text-[8px] font-black px-2 py-0.5 rounded bg-blue-900/30 text-blue-400 uppercase">${t.setup || '-'}</span></div></td>
+                            <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? '$' + parseFloat(t.pnl).toLocaleString() : '--'}</td>
+                            <td class="p-5 text-right font-black ${parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500'}">${isC ? t.pnlPct + '%' : '--'}</td>
+                            <td class="p-5 text-center">${!isC ? `<button onclick="prepareClose('${t.id}')" class="bg-orange-500 text-white px-3 py-1.5 rounded font-black text-[9px] uppercase">Close</button>` : isToday ? `<button onclick="prepareClose('${t.id}')" class="text-yellow-500 mr-2">✏️</button><button onclick="remove('${t.id}')" class="text-red-500">🗑</button>` : '🔒'}</td>
                         </tr>`;
                 });
             });
@@ -237,38 +219,24 @@
         document.getElementById('tradeForm').onsubmit = (e) => {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
-            const getToggleVal = (id) => {
-                const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`);
-                return el ? el.dataset.val : null;
-            };
+            const getT = (id) => { const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
 
             if (!editId) {
-                const newTrade = {
+                trades.unshift({
                     id: Date.now(), date: getNYDate(), status: 'OPEN',
-                    stock: document.getElementById('stock').value,
-                    option: document.getElementById('optionType').value,
-                    count: document.getElementById('count').value,
-                    entry: document.getElementById('entry').value,
+                    stock: document.getElementById('stock').value, option: document.getElementById('optionType').value,
+                    count: document.getElementById('count').value, entry: document.getElementById('entry').value,
                     entryTime: getNYTime(), exit: null, exitTime: null, pnl: 0, pnlPct: 0,
-                    setup: document.getElementById('setup').value,
-                    vwap: getToggleVal('vwap'), ema512: getToggleVal('ema512'),
-                    ema3450: getToggleVal('ema3450'), mtf: getToggleVal('mtf'),
-                    pmRange: getToggleVal('pmRange'), pdRange: getToggleVal('pdRange'), pdc: getToggleVal('pdc')
-                };
-                trades.unshift(newTrade);
+                    setup: document.getElementById('setup').value, vwap: getT('vwap'), ema512: getT('ema512'), ema3450: getT('ema3450'), mtf: getT('mtf'), pmRange: getT('pmRange'), pdRange: getT('pdRange'), pdc: getT('pdc')
+                });
             } else {
                 const idx = trades.findIndex(t => String(t.id) === String(editId));
-                const exitPrice = document.getElementById('exit').value;
-                const entryPrice = trades[idx].entry;
-                trades[idx].status = 'CLOSED';
-                trades[idx].exit = exitPrice;
-                trades[idx].exitTime = trades[idx].exitTime || getNYTime();
-                trades[idx].pnl = ((exitPrice - entryPrice) * 100 * trades[idx].count).toFixed(2);
-                trades[idx].pnlPct = (( (exitPrice - entryPrice) / entryPrice ) * 100).toFixed(2);
-                // Save tech context
-                ['setup','vwap','ema512','ema3450','mtf','pmRange','pdRange','pdc'].forEach(k => {
-                    trades[idx][k] = k === 'setup' ? document.getElementById('setup').value : getToggleVal(k);
-                });
+                const ex = document.getElementById('exit').value;
+                const en = trades[idx].entry;
+                trades[idx].status = 'CLOSED'; trades[idx].exit = ex; trades[idx].exitTime = trades[idx].exitTime || getNYTime();
+                trades[idx].pnl = ((ex - en) * 100 * trades[idx].count).toFixed(2);
+                trades[idx].pnlPct = (((ex - en) / en) * 100).toFixed(2);
+                ['setup','vwap','ema512','ema3450','mtf','pmRange','pdRange','pdc'].forEach(k => { trades[idx][k] = k==='setup'?document.getElementById('setup').value:getT(k); });
             }
             resetForm(); render();
         };
@@ -281,28 +249,21 @@
             document.getElementById('count').value = t.count;
             document.getElementById('entry').value = t.entry;
             document.getElementById('setup').value = t.setup || '-';
-            
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            ['vwap', 'ema512', 'ema3450', 'mtf', 'pmRange', 'pdRange', 'pdc'].forEach(key => {
-                if(t[key]) {
-                    const btn = document.querySelector(`.toggle-group[data-id="${key}"] .toggle-btn[data-val="${t[key]}"]`);
-                    if(btn) btn.classList.add('active');
-                }
+            ['vwap', 'ema512', 'ema3450', 'mtf', 'pmRange', 'pdRange', 'pdc'].forEach(k => {
+                if(t[k]) { const btn = document.querySelector(`.toggle-group[data-id="${k}"] .toggle-btn[data-val="${t[k]}"]`); if(btn) btn.classList.add('active'); }
             });
-
             document.getElementById('exit').disabled = false;
             document.getElementById('exit').focus();
             document.getElementById('formContainer').classList.add('edit-mode');
             document.getElementById('submitBtn').innerText = "Finalize Execution";
             document.getElementById('submitBtn').className = "btn-close";
             document.getElementById('cancelEdit').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function resetForm() {
             document.getElementById('tradeForm').reset();
-            document.getElementById('editId').value = "";
-            document.getElementById('exit').disabled = true;
+            document.getElementById('editId').value = ""; document.getElementById('exit').disabled = true;
             document.getElementById('formContainer').classList.remove('edit-mode');
             document.getElementById('submitBtn').innerText = "Open Live Trade";
             document.getElementById('submitBtn').className = "btn-live";
@@ -310,17 +271,7 @@
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
         }
 
-        function remove(id) { if(confirm("Delete record?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
-        
-        function exportCSV() {
-            let csv = "Date,Ticker,Type,Qty,Entry,EntryTime,Exit,ExitTime,Duration,PNL,PNL%\n";
-            trades.forEach(t => {
-                const dur = calculateDuration(t.entryTime, t.exitTime);
-                csv += `${t.date},${t.stock},${t.option},${t.count},${t.entry},${t.entryTime},${t.exit || ''},${t.exitTime || ''},${dur},${t.pnl},${t.pnlPct}%\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `Obsidian_Elite_Live_v3.csv`; a.click();
-        }
+        function remove(id) { if(confirm("Delete?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
 
         window.onload = () => {
             document.getElementById('currentDateDisplay').innerText = getNYDate();
