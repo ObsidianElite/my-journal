@@ -27,9 +27,17 @@
         
         .toggle-group { display: flex; gap: 4px; background: #0a0e14; padding: 4px; border-radius: 8px; border: 1px solid #1f2937; flex-wrap: wrap; }
         
-        .toggle-btn, .setup-btn { 
+        .toggle-btn { 
             flex: 1; min-width: 60px; text-align: center; padding: 8px 4px; 
             font-size: 10px; font-weight: 800; border-radius: 4px; cursor: pointer; 
+            color: #00D9FF; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s;
+            text-transform: uppercase;
+        }
+
+        /* INCREASED FONT SIZE FOR SETUP BUTTONS */
+        .setup-btn { 
+            flex: 1; min-width: 80px; text-align: center; padding: 10px 6px; 
+            font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer; 
             color: #00D9FF; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s;
             text-transform: uppercase;
         }
@@ -133,14 +141,21 @@
                 
                 <div class="col-span-full border-t border-gray-800 pt-4">
                     <label>Execution Setups (Mandatory: Min 1 selection to Enter)</label>
-                    <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
-                        <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div><div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
-                        <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div><div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
-                        <div class="setup-btn" data-val="PM HI break">PM HI break</div><div class="setup-btn" data-val="PM low break">PM low break</div>
-                        <div class="setup-btn" data-val="PD CL Bounce">PD CL Bounce</div><div class="setup-btn" data-val="PD CL Fail">PD CL Fail</div>
-                        <div class="setup-btn" data-val="PD HI Brko">PD HI Brko</div><div class="setup-btn" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
-                        <div class="setup-btn" data-val="34/50 MTF Bnc">34/50 MTF Bnc</div><div class="setup-btn" data-val="34/50 MTF Rej">34/50 MTF Rej</div>
-                        <div class="setup-btn" data-val="50/55 MTF Bnc">50/55 MTF Bnc</div><div class="setup-btn" data-val="50/55 MTF Rej">50/55 MTF Rej</div>
+                    <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                        <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div>
+                        <div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
+                        <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div>
+                        <div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
+                        <div class="setup-btn" data-val="PM HI break">PM HI break</div>
+                        <div class="setup-btn" data-val="PM low break">PM low break</div>
+                        <div class="setup-btn" data-val="PD CL Bounce">PD CL Bounce</div>
+                        <div class="setup-btn" data-val="PD CL Fail">PD CL Fail</div>
+                        <div class="setup-btn" data-val="PD HI Brko">PD HI Brko</div>
+                        <div class="setup-btn" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
+                        <div class="setup-btn" data-val="MTF 34/50 Bnc">MTF 34/50 Bnc</div>
+                        <div class="setup-btn" data-val="MTF 34/50 Rej">MTF 34/50 Rej</div>
+                        <div class="setup-btn" data-val="MTF 50/55 Bnc">MTF 50/55 Bnc</div>
+                        <div class="setup-btn" data-val="MTF 50/55 Rej">MTF 50/55 Rej</div>
                     </div>
                 </div>
 
@@ -169,7 +184,7 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_v20')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_v21')) || [];
         let equityChart, precisionChart;
 
         function initCharts() {
@@ -233,7 +248,7 @@
         }
 
         function render() {
-            localStorage.setItem('obsidian_v20', JSON.stringify(trades));
+            localStorage.setItem('obsidian_v21', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
             trades.forEach((t, i) => {
@@ -273,7 +288,6 @@
             const exitVal = document.getElementById('exit').value;
             const selectedSetups = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
 
-            // MANDATORY CHECK FOR NEW TRADE
             if (editId === "") {
                 if (!ticker || !type || !entryVal) { alert("Ticker, Type, and Entry required."); return; }
                 if (selectedSetups.length === 0) { alert("MANDATORY: Select at least 1 Execution Setup to open a live trade."); return; }
@@ -285,7 +299,7 @@
                     const ex = parseFloat(exitVal);
                     trades[editId] = { ...t, exit: ex, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: selectedSetups, pnl: ((ex - t.entry) * 100 * t.count).toFixed(2), timestamp: new Date().toISOString() };
                 } else {
-                    trades[editId] = { ...t, setups: selectedSetups }; // Allow updating setups without closing
+                    trades[editId] = { ...t, setups: selectedSetups }; 
                 }
             } else {
                 trades.unshift({ stock: ticker, option: type, entry: parseFloat(entryVal), count: document.getElementById('count').value, status: 'OPEN', entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), pnl: 0, setups: selectedSetups, timestamp: new Date().toISOString() });
