@@ -5,12 +5,12 @@
     <title>Obsidian Elite | Quant Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 12px; position: relative; overflow: hidden; }
         
-        /* ULTRA-GLOW LABELS */
         label, .section-label { 
             color: #00FFCC !important; 
             text-shadow: 0 0 10px rgba(0, 255, 204, 0.8), 0 0 20px rgba(0, 255, 204, 0.4); 
@@ -126,24 +126,25 @@
                 <div class="col-span-2">
                     <label>Symbol Selection</label>
                     <div class="toggle-group" id="tickerSelect">
-                        <div class="toggle-btn" style="--brand-color: #666666; color: #fff;" data-ticker="AAPL">AAPL</div>
-                        <div class="toggle-btn" style="--brand-color: #ED1C24; color: #ED1C24;" data-ticker="AMD">AMD</div>
-                        <div class="toggle-btn" style="--brand-color: #0052FF; color: #0052FF;" data-ticker="COIN">COIN</div>
-                        <div class="toggle-btn" style="--brand-color: #0668E1; color: #0668E1;" data-ticker="META">META</div>
-                        <div class="toggle-btn" style="--brand-color: #701CC4; color: #701CC4;" data-ticker="MSTR">MSTR</div>
-                        <div class="toggle-btn" style="--brand-color: #0050AA; color: #0050AA;" data-ticker="MU">MU</div>
-                        <div class="toggle-btn" style="--brand-color: #76B900; color: #76B900;" data-ticker="NVDA">NVDA</div>
-                        <div class="toggle-btn" style="--brand-color: #ffffff; color: #F0F0F0;" data-ticker="PLTR">PLTR</div>
-                        <div class="toggle-btn" style="--brand-color: #00D9FF; color: #00D9FF;" data-ticker="QQQ">QQQ</div>
-                        <div class="toggle-btn" style="--brand-color: #FFD700; color: #FFD700;" data-ticker="SPX">SPX</div>
-                        <div class="toggle-btn" style="--brand-color: #00FFCC; color: #00FFCC;" data-ticker="SPY">SPY</div>
-                        <div class="toggle-btn" style="--brand-color: #E81828; color: #E81828;" data-ticker="TSLA">TSLA</div>
+                        <div class="toggle-btn" data-ticker="AAPL">AAPL</div>
+                        <div class="toggle-btn" data-ticker="AMD">AMD</div>
+                        <div class="toggle-btn" data-ticker="COIN">COIN</div>
+                        <div class="toggle-btn" data-ticker="META">META</div>
+                        <div class="toggle-btn" data-ticker="MSTR">MSTR</div>
+                        <div class="toggle-btn" data-ticker="MU">MU</div>
+                        <div class="toggle-btn" data-ticker="NVDA">NVDA</div>
+                        <div class="toggle-btn" data-ticker="PLTR">PLTR</div>
+                        <div class="toggle-btn" data-ticker="QQQ">QQQ</div>
+                        <div class="toggle-btn" data-ticker="SPX">SPX</div>
+                        <div class="toggle-btn" data-ticker="SPY">SPY</div>
+                        <div class="toggle-btn" data-ticker="TSLA">TSLA</div>
                     </div>
                 </div>
-                <div><label>Contract Type</label><div class="toggle-group" id="typeSelect"><div class="toggle-btn" data-type="CALL" style="--brand-color: #4ade80; color: #4ade80;">CALL</div><div class="toggle-btn" data-type="PUT" style="--brand-color: #f87171; color: #f87171;">PUT</div></div></div>
+                <div><label>Contract Type</label><div class="toggle-group" id="typeSelect"><div class="toggle-btn" data-type="CALL">CALL</div><div class="toggle-btn" data-type="PUT">PUT</div></div></div>
                 <div><label>Qty</label><input type="number" id="count" value="1" min="1"></div>
                 <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
+                
                 <div class="col-span-full border-t border-gray-800 pt-4">
                     <label>Execution Setups</label>
                     <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -174,6 +175,9 @@
     </div>
 
     <script>
+        // Register the DataLabels plugin
+        Chart.register(ChartDataLabels);
+
         let trades = JSON.parse(localStorage.getItem('obsidian_elite_v3')) || [];
         let equityChart, precisionChart, tickerChart;
         const collapsedGroups = new Set();
@@ -184,23 +188,36 @@
                     { type: 'line', label: 'Equity', data: [], borderColor: '#00FFCC', tension: 0.4, borderWidth: 2, pointRadius: 3, fill: true, backgroundColor: 'rgba(0, 255, 204, 0.05)', order: 1 },
                     { type: 'bar', label: 'Daily', data: [], backgroundColor: [], barPercentage: 0.6, order: 2 }
                 ]}, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#4b5563', font: { size: 9 } } }, y: { grid: { color: '#1f2937' } } } } 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, datalabels: { display: false } }, 
+                    scales: { x: { grid: { display: false }, ticks: { color: '#4b5563', font: { size: 9 } } }, y: { grid: { color: '#1f2937' } } } 
+                } 
             });
             
-            precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Win', 'Loss'], datasets: [{ data: [0, 0], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '80%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+            precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Win', 'Loss'], datasets: [{ data: [0, 0], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '80%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } } } });
 
-            // INITIALIZE TICKER CHART
+            // TICKER CHART - CONFIGURED TO VERTICAL WITH LABELS
             tickerChart = new Chart(document.getElementById('tickerChart').getContext('2d'), {
                 type: 'bar',
                 data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4 }] },
                 options: {
-                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 9 },
+                            formatter: (value) => value !== 0 ? '$' + Math.round(value) : ''
+                        }
+                    },
                     scales: {
-                        x: { grid: { color: '#1f2937' }, ticks: { color: '#4b5563', font: { size: 9 } } },
-                        y: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: 'bold', size: 10 } } }
+                        x: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: 'bold', size: 10 } } },
+                        y: { grid: { color: '#1f2937' }, ticks: { color: '#4b5563', font: { size: 9 } } }
                     }
                 }
             });
@@ -222,19 +239,15 @@
             document.getElementById('monthlyWinRate').innerText = (monthly.length ? Math.round((monthly.filter(t => parseFloat(t.pnl) >= 0).length / monthly.length) * 100) : 0) + '%';
             document.getElementById('monthlyTrades').innerText = monthly.length + ' Trades';
 
-            // TICKER PERFORMANCE CALCULATION
+            // TICKER PERFORMANCE (X: TICKER, Y: PRICE/PNL)
             let tickerPnl = {};
-            closed.forEach(t => {
-                tickerPnl[t.stock] = (tickerPnl[t.stock] || 0) + parseFloat(t.pnl);
-            });
-            const tLabels = Object.keys(tickerPnl);
-            const tData = Object.values(tickerPnl);
-            tickerChart.data.labels = tLabels;
-            tickerChart.data.datasets[0].data = tData;
-            tickerChart.data.datasets[0].backgroundColor = tData.map(v => v >= 0 ? 'rgba(74, 222, 128, 0.6)' : 'rgba(248, 113, 113, 0.6)');
+            closed.forEach(t => { tickerPnl[t.stock] = (tickerPnl[t.stock] || 0) + parseFloat(t.pnl); });
+            tickerChart.data.labels = Object.keys(tickerPnl);
+            tickerChart.data.datasets[0].data = Object.values(tickerPnl);
+            tickerChart.data.datasets[0].backgroundColor = Object.values(tickerPnl).map(v => v >= 0 ? 'rgba(74, 222, 128, 0.6)' : 'rgba(248, 113, 113, 0.6)');
             tickerChart.update();
 
-            // DAILY PERFORMANCE CALCULATION
+            // DAILY PERFORMANCE
             let dailyTotals = {};
             closed.forEach(t => {
                 const dateKey = new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'});
