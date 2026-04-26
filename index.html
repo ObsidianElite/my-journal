@@ -12,18 +12,18 @@
         input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
         input:focus { border-color: #00f2ff; }
         
-        /* Grid Toggles */
         .grid-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 4px; }
         .grid-btn { background: #161b22; border: 1px solid #30363d; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; color: #4b5563; transition: 0.2s; }
         .grid-btn.active { background: #1e3a8a; color: #60a5fa; border-color: #60a5fa; }
         .grid-btn.type-btn.active[data-val="CALL"] { background: #064e3b; color: #4ade80; border-color: #4ade80; }
         .grid-btn.type-btn.active[data-val="PUT"] { background: #7f1d1d; color: #f87171; border-color: #f87171; }
         .add-custom { color: #00f2ff; border: 1px dashed #00f2ff; background: transparent; }
+        .temp-ticker { border-color: #00f2ff !important; color: #00f2ff !important; }
 
         .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; }
         .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #4b5563; }
-        .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Above"] { background: #064e3b; color: #4ade80; }
-        .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Below"] { background: #7f1d1d; color: #f87171; }
+        .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Above"], .toggle-btn.active[data-val="HI"] { background: #064e3b; color: #4ade80; }
+        .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Below"], .toggle-btn.active[data-val="LO"] { background: #7f1d1d; color: #f87171; }
         .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
 
         .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; }
@@ -73,7 +73,7 @@
                 </div>
 
                 <div class="flex flex-col"><label>Qty</label><input type="number" id="count" value="1"></div>
-                <div class="flex flex-col"><label>Entry Price</label><input type="number" id="entry" step="0.01" required placeholder="0.00"></div>
+                <div class="flex flex-col"><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
                 <div class="flex flex-col"><label>Exit Price</label><input type="number" id="exit" step="0.01" disabled placeholder="Locked"></div>
 
                 <div class="flex flex-col"><label>Setup</label><div class="grid-selector" data-id="setup"><div class="grid-btn" data-val="A+">A+</div><div class="grid-btn" data-val="B">B</div><div class="grid-btn" data-val="C">C</div></div></div>
@@ -113,7 +113,6 @@
         function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false}); }
         function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
 
-        // Smart Toggle Handlers
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('grid-btn') || e.target.classList.contains('toggle-btn')) {
                 const group = e.target.closest('.grid-selector') || e.target.closest('.toggle-group');
@@ -128,8 +127,9 @@
         function addCustomTicker() {
             const ticker = prompt("Enter Ticker Symbol:").toUpperCase();
             if (ticker) {
+                document.querySelectorAll('.temp-ticker').forEach(el => el.remove());
                 const btn = document.createElement('div');
-                btn.className = 'grid-btn active';
+                btn.className = 'grid-btn active temp-ticker';
                 btn.dataset.val = ticker;
                 btn.innerText = ticker;
                 document.getElementById('tickerGrid').insertBefore(btn, document.querySelector('.add-custom'));
@@ -184,34 +184,40 @@
             e.preventDefault();
             const editId = document.getElementById('editId').value;
             const getActive = (id) => { const el = document.querySelector(`[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
-            const ticker = document.querySelector('#tickerGrid .active')?.dataset.val;
-            const type = getActive('optionType');
-
-            if (!ticker || !type) { alert("Select Ticker and Option Type!"); return; }
-
-            if(editId) {
-                const required = ['setup', 'vwap', 'ema512', 'mtf', 'pmRange', 'pdRange'];
-                let missing = false;
-                required.forEach(k => { if(!getActive(k)) { document.querySelector(`[data-id="${k}"]`).classList.add('error-glow'); missing = true; }});
-                if(missing || !document.getElementById('exit').value) { alert("Mandatory Context Missing!"); return; }
-            }
 
             if (!editId) {
+                const ticker = document.querySelector('#tickerGrid .active')?.dataset.val;
+                const type = getActive('optionType');
+                const entry = document.getElementById('entry').value;
+
+                if (!ticker || !type || !entry) { alert("Select Ticker, Option Type, and Entry Price!"); return; }
+
                 trades.unshift({
                     id: Date.now(), date: getNYDate(), status: 'OPEN',
                     stock: ticker, option: type, count: document.getElementById('count').value, 
-                    entry: parseFloat(document.getElementById('entry').value), entryTime: getNYTime(), 
+                    entry: parseFloat(entry), entryTime: getNYTime(), 
                     exit: null, exitTime: null, pnl: 0, pnlPct: 0,
                     setup: getActive('setup'), vwap: getActive('vwap'), ema512: getActive('ema512'), mtf: getActive('mtf'), pmRange: getActive('pmRange'), pdRange: getActive('pdRange')
                 });
+                
+                // Clear any custom temp ticker buttons after opening
+                document.querySelectorAll('.temp-ticker').forEach(el => el.remove());
+
             } else {
                 const idx = trades.findIndex(t => String(t.id) === String(editId));
                 const ex = parseFloat(document.getElementById('exit').value);
                 const en = trades[idx].entry;
+                
+                const required = ['setup', 'vwap', 'ema512', 'mtf', 'pmRange', 'pdRange'];
+                let missing = false;
+                required.forEach(k => { if(!getActive(k)) { document.querySelector(`[data-id="${k}"]`).classList.add('error-glow'); missing = true; }});
+                
+                if(missing || isNaN(ex)) { alert("Mandatory Context and Exit Price Missing!"); return; }
+
                 trades[idx].status = 'CLOSED'; trades[idx].exit = ex; trades[idx].exitTime = getNYTime();
                 trades[idx].pnl = ((ex - en) * 100 * trades[idx].count).toFixed(2);
                 trades[idx].pnlPct = (((ex - en) / en) * 100).toFixed(2);
-                ['setup', 'vwap','ema512','mtf','pmRange','pdRange'].forEach(k => trades[idx][k] = getActive(k));
+                required.forEach(k => trades[idx][k] = getActive(k));
             }
             resetForm(); render();
         };
