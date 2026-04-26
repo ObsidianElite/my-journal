@@ -10,6 +10,7 @@
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 12px; position: relative; overflow: hidden; }
         
+        /* ULTRA-GLOW LABELS */
         label, .section-label { 
             color: #00FFCC !important; 
             text-shadow: 0 0 10px rgba(0, 255, 204, 0.8), 0 0 20px rgba(0, 255, 204, 0.4); 
@@ -90,12 +91,14 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-            <div class="stat-card p-4 h-[250px] col-span-1 lg:col-span-1"><label>Daily Performance Curve</label><canvas id="equityChart"></canvas></div>
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-6">
+            <div class="stat-card p-4 h-[250px]"><label>Daily Performance</label><canvas id="equityChart"></canvas></div>
+            
             <div class="stat-card p-4 h-[250px] flex flex-col items-center justify-center">
-                <label>Execution Precision</label>
+                <label>Precision</label>
                 <div class="relative w-32 h-32"><canvas id="precisionChart"></canvas><div class="absolute inset-0 flex items-center justify-center"><span id="winRateText" class="text-xl font-black text-[#00FFCC]">0%</span></div></div>
             </div>
+
             <div class="stat-card p-4 flex flex-col justify-between">
                 <label>Efficiency Matrix</label>
                 <div class="space-y-3">
@@ -104,14 +107,17 @@
                     <div class="flex justify-between border-b border-gray-800 pb-1"><span class="metric-sub">Avg Loss</span><span id="avgLoss" class="matrix-val text-red-400">$0</span></div>
                 </div>
             </div>
+
             <div class="stat-card p-4 flex flex-col justify-between">
-                <label>Win/Loss Lifecycle</label>
+                <label>Lifecycle</label>
                 <div class="grid grid-cols-1 gap-2">
                     <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded"><div><p class="metric-sub">Daily</p><p id="dailyTrades" class="text-white font-bold text-xs">0 Trades</p></div><span id="dailyWinRate" class="text-[#00FFCC] font-black text-lg">0%</span></div>
                     <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded"><div><p class="metric-sub">Weekly</p><p id="weeklyTrades" class="text-white font-bold text-xs">0 Trades</p></div><span id="weeklyWinRate" class="text-[#00D9FF] font-black text-lg">0%</span></div>
                     <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded"><div><p class="metric-sub">Monthly</p><p id="monthlyTrades" class="text-white font-bold text-xs">0 Trades</p></div><span id="monthlyWinRate" class="text-purple-400 font-black text-lg">0%</span></div>
                 </div>
             </div>
+
+            <div class="stat-card p-4 h-[250px]"><label>Ticker Breakdown</label><canvas id="tickerChart"></canvas></div>
         </div>
 
         <div id="formContainer" class="stat-card p-6 mb-6 border-t-2 border-t-[#00FFCC]">
@@ -169,55 +175,35 @@
 
     <script>
         let trades = JSON.parse(localStorage.getItem('obsidian_elite_v3')) || [];
-        let equityChart, precisionChart;
+        let equityChart, precisionChart, tickerChart;
         const collapsedGroups = new Set();
 
         function initCharts() {
             equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { 
-                data: { 
-                    labels: [], 
-                    datasets: [
-                        { 
-                            type: 'line',
-                            label: 'Equity Curve', 
-                            data: [], 
-                            borderColor: '#00FFCC', 
-                            tension: 0.4, 
-                            borderWidth: 2, 
-                            pointRadius: 3,
-                            pointBackgroundColor: '#00FFCC',
-                            fill: true, 
-                            backgroundColor: 'rgba(0, 255, 204, 0.05)',
-                            order: 1
-                        },
-                        {
-                            type: 'bar',
-                            label: 'Daily PnL',
-                            data: [],
-                            backgroundColor: [],
-                            barPercentage: 0.6,
-                            order: 2
-                        }
-                    ] 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { 
-                        x: { grid: { display: false }, ticks: { color: '#4b5563', font: { size: 9 } } }, 
-                        y: { grid: { color: '#1f2937' } } 
-                    } 
-                } 
+                data: { labels: [], datasets: [
+                    { type: 'line', label: 'Equity', data: [], borderColor: '#00FFCC', tension: 0.4, borderWidth: 2, pointRadius: 3, fill: true, backgroundColor: 'rgba(0, 255, 204, 0.05)', order: 1 },
+                    { type: 'bar', label: 'Daily', data: [], backgroundColor: [], barPercentage: 0.6, order: 2 }
+                ]}, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#4b5563', font: { size: 9 } } }, y: { grid: { color: '#1f2937' } } } } 
             });
             
             precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Win', 'Loss'], datasets: [{ data: [0, 0], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '80%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-        }
 
-        function calculateWinRate(list) {
-            if (!list.length) return { rate: 0, count: 0 };
-            const wins = list.filter(t => parseFloat(t.pnl) >= 0).length;
-            return { rate: Math.round((wins / list.length) * 100), count: list.length };
+            // INITIALIZE TICKER CHART
+            tickerChart = new Chart(document.getElementById('tickerChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4 }] },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1f2937' }, ticks: { color: '#4b5563', font: { size: 9 } } },
+                        y: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: 'bold', size: 10 } } }
+                    }
+                }
+            });
         }
 
         function updateAnalytics() {
@@ -229,34 +215,39 @@
             const weekly = closed.filter(t => (now - new Date(t.timestamp)) / (1000 * 60 * 60 * 24) <= 7);
             const monthly = closed.filter(t => new Date(t.timestamp).getMonth() === now.getMonth());
 
-            document.getElementById('dailyWinRate').innerText = calculateWinRate(daily).rate + '%';
+            document.getElementById('dailyWinRate').innerText = (daily.length ? Math.round((daily.filter(t => parseFloat(t.pnl) >= 0).length / daily.length) * 100) : 0) + '%';
             document.getElementById('dailyTrades').innerText = daily.length + ' Trades';
-            document.getElementById('weeklyWinRate').innerText = calculateWinRate(weekly).rate + '%';
+            document.getElementById('weeklyWinRate').innerText = (weekly.length ? Math.round((weekly.filter(t => parseFloat(t.pnl) >= 0).length / weekly.length) * 100) : 0) + '%';
             document.getElementById('weeklyTrades').innerText = weekly.length + ' Trades';
-            document.getElementById('monthlyWinRate').innerText = calculateWinRate(monthly).rate + '%';
+            document.getElementById('monthlyWinRate').innerText = (monthly.length ? Math.round((monthly.filter(t => parseFloat(t.pnl) >= 0).length / monthly.length) * 100) : 0) + '%';
             document.getElementById('monthlyTrades').innerText = monthly.length + ' Trades';
 
-            // CONSOLIDATE DAILY DATA FOR MIXED CHART
+            // TICKER PERFORMANCE CALCULATION
+            let tickerPnl = {};
+            closed.forEach(t => {
+                tickerPnl[t.stock] = (tickerPnl[t.stock] || 0) + parseFloat(t.pnl);
+            });
+            const tLabels = Object.keys(tickerPnl);
+            const tData = Object.values(tickerPnl);
+            tickerChart.data.labels = tLabels;
+            tickerChart.data.datasets[0].data = tData;
+            tickerChart.data.datasets[0].backgroundColor = tData.map(v => v >= 0 ? 'rgba(74, 222, 128, 0.6)' : 'rgba(248, 113, 113, 0.6)');
+            tickerChart.update();
+
+            // DAILY PERFORMANCE CALCULATION
             let dailyTotals = {};
             closed.forEach(t => {
                 const dateKey = new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'});
                 dailyTotals[dateKey] = (dailyTotals[dateKey] || 0) + parseFloat(t.pnl);
             });
-
             const labels = Object.keys(dailyTotals);
             const barData = Object.values(dailyTotals);
-            const barColors = barData.map(v => v >= 0 ? 'rgba(74, 222, 128, 0.5)' : 'rgba(248, 113, 113, 0.5)');
-            
             let cumulative = 0;
-            const eqData = barData.map(v => {
-                cumulative += v;
-                return cumulative;
-            });
-
+            const eqData = barData.map(v => { cumulative += v; return cumulative; });
             equityChart.data.labels = labels;
             equityChart.data.datasets[0].data = eqData;
             equityChart.data.datasets[1].data = barData;
-            equityChart.data.datasets[1].backgroundColor = barColors;
+            equityChart.data.datasets[1].backgroundColor = barData.map(v => v >= 0 ? 'rgba(74, 222, 128, 0.5)' : 'rgba(248, 113, 113, 0.5)');
             equityChart.update();
 
             // SUMMARY METRICS
@@ -265,7 +256,6 @@
                 const p = parseFloat(t.pnl);
                 if (p >= 0) { totalProfit += p; wins++; } else { totalLoss += Math.abs(p); losses++; }
             });
-
             precisionChart.data.datasets[0].data = [wins, losses]; precisionChart.update();
             document.getElementById('winRateText').innerText = closed.length ? Math.round((wins / closed.length) * 100) + '%' : '0%';
             document.getElementById('profitFactor').innerText = totalLoss === 0 ? (totalProfit > 0 ? 'INF' : '0.00') : (totalProfit / totalLoss).toFixed(2);
@@ -281,7 +271,6 @@
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             const now = new Date();
             const groups = { 'Daily': [], 'Weekly': [], 'Monthly': [] };
-            
             trades.forEach((t, i) => {
                 const date = new Date(t.timestamp); const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
                 t.idx = i;
@@ -289,7 +278,6 @@
                 else if (diff <= 7) groups['Weekly'].push(t);
                 else groups['Monthly'].push(t);
             });
-
             let active = 0;
             Object.keys(groups).forEach(label => {
                 if (!groups[label].length) return;
@@ -323,9 +311,7 @@
             const type = document.querySelector('#typeSelect .active')?.dataset.type;
             const ent = document.getElementById('entry').value; const ext = document.getElementById('exit').value;
             const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
-
             if (editId === "" && (!tick || !type || !ent || set.length === 0)) { alert("Selection Required: Ticker, Type, Entry, and at least 1 Setup."); return; }
-            
             if (editId !== "") {
                 const t = trades[editId];
                 if (ext) { const ex = parseFloat(ext); trades[editId] = { ...t, exit: ex, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, pnl: ((ex - t.entry) * 100 * t.count).toFixed(2) }; }
@@ -349,7 +335,6 @@
         
         document.querySelectorAll('.setup-btn').forEach(btn => btn.onclick = function() { this.classList.toggle('active'); });
         document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => btn.onclick = function() { if(document.getElementById('editId').value === "") { this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); } });
-        
         window.onload = () => { initCharts(); render(); document.getElementById('currentDateDisplay').innerText = new Date().toDateString(); };
     </script>
 </body>
