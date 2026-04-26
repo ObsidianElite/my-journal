@@ -10,7 +10,6 @@
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 12px; position: relative; overflow: hidden; }
         
-        /* ULTRA-GLOW LABELS FOR READABILITY */
         label, .section-label { 
             color: #00FFCC !important; 
             text-shadow: 0 0 10px rgba(0, 255, 204, 0.8), 0 0 20px rgba(0, 255, 204, 0.4); 
@@ -22,7 +21,6 @@
             letter-spacing: 0.15em; 
         }
 
-        /* GLOW FOR MATRIX & LIFECYCLE CATEGORIES */
         .metric-sub { 
             font-size: 10px; 
             color: #00FFCC !important; 
@@ -37,7 +35,6 @@
         
         .toggle-group { display: flex; gap: 4px; background: #0a0e14; padding: 4px; border-radius: 8px; border: 1px solid #1f2937; flex-wrap: wrap; }
         
-        /* TICKER BUTTONS WITH BRAND COLORS */
         .toggle-btn { 
             flex: 1; min-width: 60px; text-align: center; padding: 8px 4px; 
             font-size: 10px; font-weight: 800; border-radius: 4px; cursor: pointer; 
@@ -177,7 +174,46 @@
         const collapsedGroups = new Set();
 
         function initCharts() {
-            equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Equity', data: [], borderColor: '#00FFCC', tension: 0.4, borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0, 255, 204, 0.05)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1f2937' } } } } });
+            // UPDATED EQUITY CHART TO MIXED TYPE (LINE + BAR)
+            equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { 
+                data: { 
+                    labels: [], 
+                    datasets: [
+                        { 
+                            type: 'line',
+                            label: 'Equity Curve', 
+                            data: [], 
+                            borderColor: '#00FFCC', 
+                            tension: 0.4, 
+                            borderWidth: 2, 
+                            pointRadius: 0, 
+                            fill: true, 
+                            backgroundColor: 'rgba(0, 255, 204, 0.05)',
+                            order: 1
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Trade PnL',
+                            data: [],
+                            backgroundColor: [],
+                            borderColor: '#1f2937',
+                            borderWidth: 1,
+                            barPercentage: 0.5,
+                            order: 2
+                        }
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        x: { display: false }, 
+                        y: { grid: { color: '#1f2937' } } 
+                    } 
+                } 
+            });
+            
             precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Win', 'Loss'], datasets: [{ data: [0, 0], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '80%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
@@ -201,15 +237,28 @@
             document.getElementById('monthlyWinRate').innerText = calculateWinRate(monthly).rate + '%';
             document.getElementById('monthlyTrades').innerText = monthly.length + ' Trades';
 
-            let runningPnl = 0, eqData = [0], totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
+            let runningPnl = 0, eqData = [0], barData = [0], barColors = ['transparent'], totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
+            
             closed.slice().reverse().forEach(t => {
-                const p = parseFloat(t.pnl); runningPnl += p; eqData.push(runningPnl);
+                const p = parseFloat(t.pnl); 
+                runningPnl += p; 
+                eqData.push(runningPnl);
+                barData.push(p);
+                barColors.push(p >= 0 ? 'rgba(74, 222, 128, 0.4)' : 'rgba(248, 113, 113, 0.4)');
+                
                 if (p >= 0) { totalProfit += p; wins++; } else { totalLoss += Math.abs(p); losses++; }
             });
 
             precisionChart.data.datasets[0].data = [wins, losses]; precisionChart.update();
             document.getElementById('winRateText').innerText = closed.length ? Math.round((wins / closed.length) * 100) + '%' : '0%';
-            equityChart.data.labels = eqData.map((_, i) => i); equityChart.data.datasets[0].data = eqData; equityChart.update();
+            
+            // UPDATE BOTH LINE AND BAR DATASETS
+            equityChart.data.labels = eqData.map((_, i) => i); 
+            equityChart.data.datasets[0].data = eqData; 
+            equityChart.data.datasets[1].data = barData;
+            equityChart.data.datasets[1].backgroundColor = barColors;
+            equityChart.update();
+            
             document.getElementById('profitFactor').innerText = totalLoss === 0 ? (totalProfit > 0 ? 'INF' : '0.00') : (totalProfit / totalLoss).toFixed(2);
             document.getElementById('avgWin').innerText = wins ? `$${(totalProfit / wins).toFixed(0)}` : '$0';
             document.getElementById('avgLoss').innerText = losses ? `$${(totalLoss / losses).toFixed(0)}` : '$0';
