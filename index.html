@@ -13,6 +13,7 @@
         label { color: #94a3b8; font-weight: 800; font-size: 10px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.1em; }
         input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
         input:focus { border-color: #00f2ff; }
+        input:disabled { opacity: 0.4; cursor: not-allowed; background-color: #030508; }
         .gauge-container { position: relative; height: 140px; width: 140px; }
         .gauge-value { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; color: #00f2ff; text-shadow: 0 0 10px rgba(0, 242, 255, 0.5); }
         .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
@@ -74,7 +75,7 @@
                     </div>
                 </div>
                 <div><label>Qty</label><input type="number" id="count" value="1" min="1"></div>
-                <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="Required" required></div>
+                <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="Required"></div>
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
                 
                 <div class="col-span-full grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 border-t border-gray-800 pt-6">
@@ -105,7 +106,7 @@
     </div>
 
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v10')) || [];
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v11')) || [];
         let pnlChart, winLossChart;
 
         function initCharts() {
@@ -140,7 +141,7 @@
         }
 
         function render() {
-            localStorage.setItem('obsidian_elite_v10', JSON.stringify(trades));
+            localStorage.setItem('obsidian_elite_v11', JSON.stringify(trades));
             const body = document.getElementById('tradeBody'); body.innerHTML = '';
             let total = 0, active = 0;
             trades.forEach((t, i) => {
@@ -164,6 +165,8 @@
 
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.onclick = function() {
+                if(this.closest('#tickerSelect') && document.getElementById('editId').value !== "") return; // Lock ticker on edit
+                if(this.closest('#typeSelect') && document.getElementById('editId').value !== "") return; // Lock type on edit
                 this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
             };
@@ -176,22 +179,22 @@
             const type = document.querySelector('#typeSelect .active')?.dataset.type;
             const entryVal = document.getElementById('entry').value;
             const exitVal = document.getElementById('exit').value;
-
             const getV = (id) => document.querySelector(`.toggle-group[data-id="${id}"] .active`)?.dataset.val;
 
-            // 1. Mandatory Entry Validation
-            if (!ticker || !type || !entryVal) {
-                alert("STRICT GOVERNANCE: Ticker, Type, and Entry Price are mandatory.");
-                return;
-            }
-
-            // 2. Mandatory Exit Validation (Only if attempting to close/finalize)
-            if (editId !== "" && exitVal !== "") {
+            // 1. ENTRY MODE VALIDATION (Only for NEW Trades)
+            if (editId === "") {
+                if (!ticker || !type || !entryVal) {
+                    alert("STRICT GOVERNANCE: Ticker, Type, and Entry Price are mandatory to open a position.");
+                    return;
+                }
+            } 
+            // 2. EXIT MODE VALIDATION (Only when CLOSING an existing trade)
+            else if (exitVal !== "") {
                 const setup = document.getElementById('setup').value;
                 const contexts = ['vwap', 'ema5', 'mtf', 'pmRange', 'pdRange', 'pdc'];
-                const missingContexts = contexts.filter(id => !getV(id));
-                if (!setup || setup === "" || missingContexts.length > 0) {
-                    alert(`MANDATORY EXIT DATA MISSING:\n- Setup selection required\n- All technical context toggles must be active (${missingContexts.join(', ').toUpperCase()})`);
+                const missing = contexts.filter(id => !getV(id));
+                if (!setup || setup === "" || missing.length > 0) {
+                    alert(`MANDATORY EXIT DATA MISSING:\n- Setup required\n- All Context Toggles required (${missing.join(', ').toUpperCase()})`);
                     return;
                 }
             }
@@ -223,25 +226,44 @@
         function editTrade(i) {
             const t = trades[i];
             document.getElementById('editId').value = i;
+            
+            // Set and Lock Entry Data
             document.getElementById('entry').value = t.entry;
+            document.getElementById('entry').disabled = true;
             document.getElementById('count').value = t.count;
-            document.getElementById('setup').value = t.setup;
+            
+            // Activate existing Ticker/Type buttons
+            document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.ticker === t.stock);
+            });
+            document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.type === t.option);
+            });
+
             document.getElementById('exit').disabled = false;
-            document.getElementById('submitBtn').innerText = "Update Record";
+            document.getElementById('submitBtn').innerText = "Finalize Record";
             document.getElementById('cancelBtn').classList.remove('hidden');
         }
+
         function closeTradeUI(i) { editTrade(i); document.getElementById('exit').focus(); }
         function removeTrade(i) { if(confirm("Delete?")) { trades.splice(i, 1); render(); } }
+
         function resetForm() { 
             document.getElementById('tradeForm').reset(); 
             document.getElementById('editId').value = ''; 
             document.getElementById('exit').disabled = true; 
+            document.getElementById('entry').disabled = false; 
             document.getElementById('submitBtn').innerText = "Open Live Trade";
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('cancelBtn').classList.add('hidden');
             render(); 
         }
-        window.onload = () => { initCharts(); render(); document.getElementById('currentDateDisplay').innerText = new Date().toISOString().split('T')[0]; };
+
+        window.onload = () => { 
+            initCharts(); 
+            render(); 
+            document.getElementById('currentDateDisplay').innerText = new Date().toISOString().split('T')[0]; 
+        };
     </script>
 </body>
 </html>
