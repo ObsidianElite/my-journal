@@ -10,7 +10,18 @@
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 12px; position: relative; overflow: hidden; }
         
-        label { color: #00FFCC !important; text-shadow: 0 0 10px rgba(0, 255, 204, 0.5); font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.1em; }
+        /* HIGH-INTENSITY GLOW LABELS */
+        label { 
+            color: #00FFCC !important; 
+            text-shadow: 0 0 12px rgba(0, 255, 204, 0.9), 0 0 4px rgba(0, 255, 204, 0.5); 
+            font-weight: 800; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            margin-bottom: 10px; 
+            display: block; 
+            letter-spacing: 0.15em; 
+        }
+
         input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; font-size: 14px; width: 100%; outline: none; }
         input:focus { border-color: #00FFCC; box-shadow: 0 0 12px rgba(0, 255, 204, 0.2); }
         input:disabled { opacity: 0.2; cursor: not-allowed; }
@@ -51,14 +62,24 @@
         
         .matrix-val { color: #00D9FF; font-weight: 800; font-size: 1.1rem; }
         .metric-sub { font-size: 9px; color: #4b5563; font-weight: bold; }
-        thead th { color: #00FFCC !important; font-weight: 800; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid #1f2937; }
+        
+        /* GLOWING TABLE HEADERS */
+        thead th { 
+            color: #00FFCC !important; 
+            text-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
+            font-weight: 800; 
+            text-transform: uppercase; 
+            font-size: 11px; 
+            border-bottom: 1px solid #1f2937; 
+            padding: 1rem;
+        }
     </style>
 </head>
 <body class="p-4 lg:p-8">
     <div class="max-w-[1800px] mx-auto">
         <div class="flex justify-between items-end mb-6">
             <div>
-                <h1 class="text-3xl font-black text-[#00FFCC] uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
+                <h1 class="text-3xl font-black text-[#00FFCC] uppercase tracking-tighter" style="text-shadow: 0 0 15px rgba(0, 255, 204, 0.5);">Obsidian <span class="text-white">Elite</span></h1>
                 <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Terminal | <span id="currentDateDisplay" class="text-[#00FFCC]"></span></p>
             </div>
             <div class="flex gap-6">
@@ -117,7 +138,7 @@
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
                 
                 <div class="col-span-full border-t border-gray-800 pt-4">
-                    <label>Execution Setups (Mandatory: Min 1 selection to Enter)</label>
+                    <label>Execution Setups (Mandatory)</label>
                     <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                         <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div><div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
                         <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div><div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
@@ -138,7 +159,7 @@
         <div class="stat-card overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead class="bg-gray-900/50">
-                    <tr><th class="p-4">Day / Date</th><th class="p-4">Asset</th><th class="p-4">Timeline</th><th class="p-4">Fills</th><th class="p-4">Setup Logic</th><th class="p-4 text-right">PNL</th><th class="p-4 text-center">Manage</th></tr>
+                    <tr><th>Day / Date</th><th>Asset</th><th>Timeline</th><th>Fills</th><th>Setup Logic</th><th class="text-right">PNL</th><th class="text-center">Manage</th></tr>
                 </thead>
                 <tbody id="tradeBody"></tbody>
             </table>
