@@ -91,7 +91,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-            <div class="stat-card p-4 h-[250px] col-span-1 lg:col-span-1"><label>Equity Curve</label><canvas id="equityChart"></canvas></div>
+            <div class="stat-card p-4 h-[250px] col-span-1 lg:col-span-1"><label>Daily Performance Curve</label><canvas id="equityChart"></canvas></div>
             <div class="stat-card p-4 h-[250px] flex flex-col items-center justify-center">
                 <label>Execution Precision</label>
                 <div class="relative w-32 h-32"><canvas id="precisionChart"></canvas><div class="absolute inset-0 flex items-center justify-center"><span id="winRateText" class="text-xl font-black text-[#00FFCC]">0%</span></div></div>
@@ -138,9 +138,8 @@
                 <div><label>Qty</label><input type="number" id="count" value="1" min="1"></div>
                 <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
-                
                 <div class="col-span-full border-t border-gray-800 pt-4">
-                    <label>Execution Setups (Mandatory)</label>
+                    <label>Execution Setups</label>
                     <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                         <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div><div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
                         <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div><div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
@@ -174,7 +173,6 @@
         const collapsedGroups = new Set();
 
         function initCharts() {
-            // UPDATED EQUITY CHART TO MIXED TYPE (LINE + BAR)
             equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { 
                 data: { 
                     labels: [], 
@@ -186,19 +184,18 @@
                             borderColor: '#00FFCC', 
                             tension: 0.4, 
                             borderWidth: 2, 
-                            pointRadius: 0, 
+                            pointRadius: 3,
+                            pointBackgroundColor: '#00FFCC',
                             fill: true, 
                             backgroundColor: 'rgba(0, 255, 204, 0.05)',
                             order: 1
                         },
                         {
                             type: 'bar',
-                            label: 'Trade PnL',
+                            label: 'Daily PnL',
                             data: [],
                             backgroundColor: [],
-                            borderColor: '#1f2937',
-                            borderWidth: 1,
-                            barPercentage: 0.5,
+                            barPercentage: 0.6,
                             order: 2
                         }
                     ] 
@@ -208,7 +205,7 @@
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false } }, 
                     scales: { 
-                        x: { display: false }, 
+                        x: { grid: { display: false }, ticks: { color: '#4b5563', font: { size: 9 } } }, 
                         y: { grid: { color: '#1f2937' } } 
                     } 
                 } 
@@ -224,8 +221,10 @@
         }
 
         function updateAnalytics() {
-            const closed = trades.filter(t => t.status === 'CLOSED');
+            const closed = trades.filter(t => t.status === 'CLOSED').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
             const now = new Date();
+            
+            // ANALYTICS BOXES
             const daily = closed.filter(t => new Date(t.timestamp).toDateString() === now.toDateString());
             const weekly = closed.filter(t => (now - new Date(t.timestamp)) / (1000 * 60 * 60 * 24) <= 7);
             const monthly = closed.filter(t => new Date(t.timestamp).getMonth() === now.getMonth());
@@ -237,31 +236,42 @@
             document.getElementById('monthlyWinRate').innerText = calculateWinRate(monthly).rate + '%';
             document.getElementById('monthlyTrades').innerText = monthly.length + ' Trades';
 
-            let runningPnl = 0, eqData = [0], barData = [0], barColors = ['transparent'], totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
+            // CONSOLIDATE DAILY DATA FOR MIXED CHART
+            let dailyTotals = {};
+            closed.forEach(t => {
+                const dateKey = new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'});
+                dailyTotals[dateKey] = (dailyTotals[dateKey] || 0) + parseFloat(t.pnl);
+            });
+
+            const labels = Object.keys(dailyTotals);
+            const barData = Object.values(dailyTotals);
+            const barColors = barData.map(v => v >= 0 ? 'rgba(74, 222, 128, 0.5)' : 'rgba(248, 113, 113, 0.5)');
             
-            closed.slice().reverse().forEach(t => {
-                const p = parseFloat(t.pnl); 
-                runningPnl += p; 
-                eqData.push(runningPnl);
-                barData.push(p);
-                barColors.push(p >= 0 ? 'rgba(74, 222, 128, 0.4)' : 'rgba(248, 113, 113, 0.4)');
-                
+            let cumulative = 0;
+            const eqData = barData.map(v => {
+                cumulative += v;
+                return cumulative;
+            });
+
+            equityChart.data.labels = labels;
+            equityChart.data.datasets[0].data = eqData;
+            equityChart.data.datasets[1].data = barData;
+            equityChart.data.datasets[1].backgroundColor = barColors;
+            equityChart.update();
+
+            // SUMMARY METRICS
+            let totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
+            closed.forEach(t => {
+                const p = parseFloat(t.pnl);
                 if (p >= 0) { totalProfit += p; wins++; } else { totalLoss += Math.abs(p); losses++; }
             });
 
             precisionChart.data.datasets[0].data = [wins, losses]; precisionChart.update();
             document.getElementById('winRateText').innerText = closed.length ? Math.round((wins / closed.length) * 100) + '%' : '0%';
-            
-            // UPDATE BOTH LINE AND BAR DATASETS
-            equityChart.data.labels = eqData.map((_, i) => i); 
-            equityChart.data.datasets[0].data = eqData; 
-            equityChart.data.datasets[1].data = barData;
-            equityChart.data.datasets[1].backgroundColor = barColors;
-            equityChart.update();
-            
             document.getElementById('profitFactor').innerText = totalLoss === 0 ? (totalProfit > 0 ? 'INF' : '0.00') : (totalProfit / totalLoss).toFixed(2);
             document.getElementById('avgWin').innerText = wins ? `$${(totalProfit / wins).toFixed(0)}` : '$0';
             document.getElementById('avgLoss').innerText = losses ? `$${(totalLoss / losses).toFixed(0)}` : '$0';
+            document.getElementById('totalPnl').innerText = '$' + (totalProfit - totalLoss).toFixed(2);
         }
 
         function toggleGroup(id) { collapsedGroups.has(id) ? collapsedGroups.delete(id) : collapsedGroups.add(id); render(); }
@@ -280,14 +290,14 @@
                 else groups['Monthly'].push(t);
             });
 
-            let total = 0, active = 0;
+            let active = 0;
             Object.keys(groups).forEach(label => {
                 if (!groups[label].length) return;
                 body.innerHTML += `<tr class="group-header" onclick="toggleGroup('${label}')"><td colspan="7" class="p-3 text-[10px] font-black text-[#00FFCC]">${label} (${groups[label].length}) ${collapsedGroups.has(label) ? '▶' : '▼'}</td></tr>`;
                 if (!collapsedGroups.has(label)) {
                     groups[label].forEach(t => {
                         const isC = t.status === 'CLOSED'; const frozen = new Date(t.timestamp).toDateString() !== now.toDateString();
-                        if (!isC) active++; else total += parseFloat(t.pnl);
+                        if (!isC) active++;
                         body.innerHTML += `<tr class="border-b border-gray-800/50 hover:bg-white/5">
                             <td class="p-4 text-gray-400 font-bold">${new Date(t.timestamp).toLocaleDateString([], {weekday:'short', month:'numeric', day:'numeric'})}</td>
                             <td class="p-4 font-bold text-white">${t.stock} <span class="${t.option==='CALL'?'text-[#00FFCC]':'text-red-400'} text-[9px]">${t.option}</span></td>
@@ -303,7 +313,7 @@
                     });
                 }
             });
-            document.getElementById('activeCount').innerText = active; document.getElementById('totalPnl').innerText = '$' + total.toFixed(2);
+            document.getElementById('activeCount').innerText = active;
             updateAnalytics();
         }
 
