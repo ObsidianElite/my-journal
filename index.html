@@ -24,6 +24,7 @@
         .hidden-row { display: none; }
         th { font-size: 11px !important; letter-spacing: 0.1em; }
         .locked-badge { color: #4b5563; font-size: 16px; cursor: not-allowed; opacity: 0.5; }
+        .edit-mode { border: 2px solid #eab308 !important; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
     </style>
 </head>
 <body class="p-6">
@@ -58,8 +59,10 @@
             </div>
         </div>
 
-        <div class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500 shadow-2xl">
+        <div id="formContainer" class="stat-card p-8 mb-10 border-t-4 border-t-cyan-500 shadow-2xl transition-all duration-300">
+            <h3 id="formTitle" class="text-[10px] font-black uppercase text-cyan-500 mb-4 tracking-widest">New Execution Record</h3>
             <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-8">
+                <input type="hidden" id="editId" value="">
                 <div class="flex flex-col"><label>Date</label><input type="date" id="date" required></div>
                 <div class="flex flex-col"><label>Ticker</label><select id="stock"><option>TSLA</option><option>NVDA</option><option>AMD</option><option>COIN</option><option>MSTR</option><option>SPY</option><option>SPX</option><option>MU</option></select></div>
                 <div class="flex flex-col"><label>Type</label><select id="optionType"><option value="C">CALL</option><option value="P">PUT</option></select></div>
@@ -74,7 +77,10 @@
                 <div class="flex flex-col"><label>PM Range</label><div class="toggle-group" data-id="pmRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
                 <div class="flex flex-col"><label>PD Range</label><div class="toggle-group" data-id="pdRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
                 <div class="flex flex-col"><label>PDC Level</label><div class="toggle-group" data-id="pdc"><div class="toggle-btn" data-val="Above">Above</div><div class="toggle-btn" data-val="Below">Below</div></div></div>
-                <div class="col-span-full mt-2"><button type="submit" class="btn-record">Record Daily Execution</button></div>
+                <div class="col-span-full mt-2 flex gap-4">
+                    <button type="submit" id="submitBtn" class="btn-record">Record Daily Execution</button>
+                    <button type="button" id="cancelEdit" class="hidden bg-gray-800 text-white px-8 py-4 rounded-xl font-black text-xs uppercase hover:bg-red-500 transition">Cancel</button>
+                </div>
             </form>
         </div>
 
@@ -127,7 +133,12 @@
         }
 
         function updateAnalytics() {
-            if (!trades.length) return;
+            if (!trades.length) {
+                document.getElementById('totalPnl').innerText = '$0.00';
+                document.getElementById('winRateDisplay').innerText = '0%';
+                document.getElementById('tradeCount').innerText = '0';
+                return;
+            };
             let total = 0, wins = 0, grossWin = 0, grossLoss = 0;
             const dailyData = {};
             trades.forEach(t => {
@@ -152,24 +163,6 @@
             pnlChart.data.datasets[0].data = dailyValues;
             pnlChart.data.datasets[0].backgroundColor = dailyValues.map(v => v >= 0 ? '#10b981' : '#ef4444');
             pnlChart.update();
-        }
-
-        function toggleGroup(date) {
-            const rows = document.querySelectorAll(`[data-date-group="${date}"]`);
-            const icon = document.getElementById(`icon-${date}`);
-            rows.forEach(row => row.classList.toggle('hidden-row'));
-            icon.innerText = rows[0].classList.contains('hidden-row') ? '▶' : '▼';
-        }
-
-        function toggleAllGroups(collapse) {
-            const headers = document.querySelectorAll('.group-header');
-            headers.forEach(header => {
-                const date = header.getAttribute('onclick').match(/'([^']+)'/)[1];
-                const rows = document.querySelectorAll(`[data-date-group="${date}"]`);
-                const icon = document.getElementById(`icon-${date}`);
-                if (collapse) { rows.forEach(r => r.classList.add('hidden-row')); icon.innerText = '▶'; } 
-                else { rows.forEach(r => r.classList.remove('hidden-row')); icon.innerText = '▼'; }
-            });
         }
 
         function render() {
@@ -208,8 +201,11 @@
                             <td class="p-5"><span class="bg-blue-900/40 text-blue-300 px-3 py-1.5 rounded text-[11px] font-black">${t.setup}</span></td>
                             <td class="p-5 text-right pnl-text ${pnlCol}">$${parseFloat(t.pnl).toLocaleString()}</td>
                             <td class="p-5 text-right pnl-text ${pnlCol}">${pct}%</td>
-                            <td class="p-5 text-center">
-                                ${isToday ? `<button onclick="remove('${t.id}')" class="text-red-500 hover:text-white text-lg">🗑</button>` : `<span class="locked-badge" title="Historical data is locked">🔒</span>`}
+                            <td class="p-5 text-center flex justify-center gap-4">
+                                ${isToday ? `
+                                    <button onclick="startEdit('${t.id}')" class="text-yellow-500 hover:text-white text-lg" title="Edit Entry">✏️</button>
+                                    <button onclick="remove('${t.id}')" class="text-red-500 hover:text-white text-lg" title="Delete Entry">🗑</button>
+                                ` : `<span class="locked-badge" title="Historical data is locked">🔒</span>`}
                             </td>
                         </tr>`;
                 });
@@ -217,28 +213,111 @@
             updateAnalytics();
         }
 
+        function startEdit(id) {
+            const t = trades.find(tr => String(tr.id) === String(id));
+            if (!t) return;
+            
+            document.getElementById('editId').value = t.id;
+            document.getElementById('date').value = t.date;
+            document.getElementById('stock').value = t.stock;
+            document.getElementById('optionType').value = t.option;
+            document.getElementById('count').value = t.count;
+            document.getElementById('entry').value = t.entry;
+            document.getElementById('exit').value = t.exit;
+            document.getElementById('setup').value = t.setup;
+
+            // Reset toggles then set active
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            ['vwap', 'ema512', 'ema3450', 'mtf', 'pmRange', 'pdRange', 'pdc'].forEach(key => {
+                if (t[key]) {
+                    const btn = document.querySelector(`.toggle-group[data-id="${key}"] .toggle-btn[data-val="${t[key]}"]`);
+                    if (btn) btn.classList.add('active');
+                }
+            });
+
+            document.getElementById('formContainer').classList.add('edit-mode');
+            document.getElementById('formTitle').innerText = "UPDATING EXECUTION RECORD";
+            document.getElementById('submitBtn').innerText = "SAVE CHANGES";
+            document.getElementById('cancelEdit').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function stopEdit() {
+            document.getElementById('tradeForm').reset();
+            document.getElementById('editId').value = "";
+            document.getElementById('date').value = getNYDate();
+            document.getElementById('formContainer').classList.remove('edit-mode');
+            document.getElementById('formTitle').innerText = "New Execution Record";
+            document.getElementById('submitBtn').innerText = "Record Daily Execution";
+            document.getElementById('cancelEdit').classList.add('hidden');
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        document.getElementById('cancelEdit').onclick = stopEdit;
+
         document.getElementById('tradeForm').onsubmit = (e) => {
             e.preventDefault();
+            const editId = document.getElementById('editId').value;
             const entry = parseFloat(document.getElementById('entry').value);
             const exit = parseFloat(document.getElementById('exit').value);
             const count = parseInt(document.getElementById('count').value);
             const dateVal = document.getElementById('date').value;
+            
             const getOptionalToggle = (id) => {
                 const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`);
                 return el ? el.dataset.val : null;
             };
+
             const pnlVal = (exit - entry) * 100 * count;
             const pnlPercent = ((exit - entry) / entry * 100).toFixed(2);
-            trades.unshift({
-                id: Date.now(), date: dateVal, day: new Date(dateVal.replace(/-/g, '/')).toLocaleDateString('en-US', { weekday: 'long' }),
-                stock: document.getElementById('stock').value, option: document.getElementById('optionType').value,
-                count, entry, exit, vwap: getOptionalToggle('vwap'), ema512: getOptionalToggle('ema512'), ema3450: getOptionalToggle('ema3450'),
-                mtf: getOptionalToggle('mtf'), pmRange: getOptionalToggle('pmRange'), pdRange: getOptionalToggle('pdRange'),
-                pdc: getOptionalToggle('pdc'), setup: document.getElementById('setup').value, pnl: pnlVal.toFixed(2), pnlPct: pnlPercent
-            });
-            render(); e.target.reset(); document.getElementById('date').value = getNYDate();
-            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            
+            const newTrade = {
+                id: editId || Date.now(), 
+                date: dateVal, 
+                day: new Date(dateVal.replace(/-/g, '/')).toLocaleDateString('en-US', { weekday: 'long' }),
+                stock: document.getElementById('stock').value, 
+                option: document.getElementById('optionType').value,
+                count, entry, exit, 
+                vwap: getOptionalToggle('vwap'), 
+                ema512: getOptionalToggle('ema512'), 
+                ema3450: getOptionalToggle('ema3450'),
+                mtf: getOptionalToggle('mtf'), 
+                pmRange: getOptionalToggle('pmRange'), 
+                pdRange: getOptionalToggle('pdRange'),
+                pdc: getOptionalToggle('pdc'), 
+                setup: document.getElementById('setup').value, 
+                pnl: pnlVal.toFixed(2), 
+                pnlPct: pnlPercent
+            };
+
+            if (editId) {
+                const index = trades.findIndex(t => String(t.id) === String(editId));
+                trades[index] = newTrade;
+            } else {
+                trades.unshift(newTrade);
+            }
+
+            render();
+            stopEdit();
         };
+
+        function toggleGroup(date) {
+            const rows = document.querySelectorAll(`[data-date-group="${date}"]`);
+            const icon = document.getElementById(`icon-${date}`);
+            rows.forEach(row => row.classList.toggle('hidden-row'));
+            icon.innerText = rows[0].classList.contains('hidden-row') ? '▶' : '▼';
+        }
+
+        function toggleAllGroups(collapse) {
+            const headers = document.querySelectorAll('.group-header');
+            headers.forEach(header => {
+                const date = header.getAttribute('onclick').match(/'([^']+)'/)[1];
+                const rows = document.querySelectorAll(`[data-date-group="${date}"]`);
+                const icon = document.getElementById(`icon-${date}`);
+                if (collapse) { rows.forEach(r => r.classList.add('hidden-row')); icon.innerText = '▶'; } 
+                else { rows.forEach(r => r.classList.remove('hidden-row')); icon.innerText = '▼'; }
+            });
+        }
 
         function remove(id) { if(confirm("Delete trade?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
         function exportCSV() {
