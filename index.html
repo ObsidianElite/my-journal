@@ -17,6 +17,9 @@
         label { color: #00f2ff; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 6px; display: block; }
         input, select { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
         .btn-record { background: linear-gradient(to bottom, #00a3ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 12px; width: 100%; transition: 0.3s; font-size: 14px; }
+        .group-header { background: #111827; cursor: pointer; transition: 0.2s; border-left: 4px solid #00f2ff; }
+        .group-header:hover { background: #1f2937; }
+        .hidden-row { display: none; }
     </style>
 </head>
 <body class="p-6">
@@ -73,10 +76,26 @@
             </form>
         </div>
 
+        <div class="flex justify-end gap-4 mb-4">
+            <button onclick="toggleAllGroups(true)" class="text-[10px] font-black uppercase text-cyan-400 hover:text-white transition">↑ Collapse All History</button>
+            <button onclick="toggleAllGroups(false)" class="text-[10px] font-black uppercase text-gray-500 hover:text-white transition">↓ Expand All</button>
+        </div>
+
         <div class="stat-card overflow-hidden">
-            <table class="w-full text-left">
+            <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-900/50 text-[10px] text-gray-500 uppercase font-black">
-                    <tr><th class="p-4">Date/Day</th><th class="p-4">Ticker</th><th class="p-4">Dir</th><th class="p-4">Fills</th><th class="p-4">VWAP</th><th class="p-4">5/12</th><th class="p-4">34/50</th><th class="p-4">MTF</th><th class="p-4">Setup</th><th class="p-4 text-right">PNL ($)</th><th class="p-4 text-right">PNL (%)</th><th class="p-4 text-center">Manage</th></tr>
+                    <tr>
+                        <th class="p-4">Asset Info</th>
+                        <th class="p-4">Fills</th>
+                        <th class="p-4">VWAP</th>
+                        <th class="p-4">5/12</th>
+                        <th class="p-4">34/50</th>
+                        <th class="p-4">MTF</th>
+                        <th class="p-4">Setup</th>
+                        <th class="p-4 text-right">PNL ($)</th>
+                        <th class="p-4 text-right">PNL (%)</th>
+                        <th class="p-4 text-center">Manage</th>
+                    </tr>
                 </thead>
                 <tbody id="tradeBody" class="font-bold text-[12px]"></tbody>
             </table>
@@ -87,6 +106,7 @@
         let trades = JSON.parse(localStorage.getItem('obsidian_intel_v8')) || [];
         let pnlChart;
 
+        // Toggle Buttons logic
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const isActive = this.classList.contains('active');
@@ -118,7 +138,6 @@
             if (!trades.length) return;
             let total = 0, wins = 0, grossWin = 0, grossLoss = 0;
             const dailyData = {};
-            
             trades.forEach(t => {
                 const val = parseFloat(t.pnl);
                 total += val;
@@ -126,52 +145,96 @@
                 if (!dailyData[t.date]) dailyData[t.date] = 0;
                 dailyData[t.date] += val;
             });
-
             const sortedDates = Object.keys(dailyData).sort().slice(-7);
             const dailyValues = sortedDates.map(date => dailyData[date]);
-
             document.getElementById('totalPnl').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
             document.getElementById('totalPnl').className = `text-2xl font-black ${total >= 0 ? 'text-green-400' : 'text-red-500'}`;
             document.getElementById('winRateDisplay').innerText = `${((wins/trades.length)*100).toFixed(0)}%`;
             document.getElementById('tradeCount').innerText = trades.length;
             document.getElementById('winBarFill').style.width = `${((wins/trades.length)*100)}%`;
             document.getElementById('winBarText').innerText = `${((wins/trades.length)*100).toFixed(0)}%`;
-            
             const pf = grossLoss === 0 ? grossWin : (grossWin / grossLoss);
             document.getElementById('pfDisplay').innerText = pf.toFixed(2);
             document.getElementById('pfBarFill').style.width = `${Math.min(pf * 25, 100)}%`;
-
             pnlChart.data.labels = sortedDates.map(d => d.split('-').slice(1).join('/'));
             pnlChart.data.datasets[0].data = dailyValues;
             pnlChart.data.datasets[0].backgroundColor = dailyValues.map(v => v >= 0 ? '#10b981' : '#ef4444');
             pnlChart.update();
         }
 
+        function toggleGroup(date) {
+            const rows = document.querySelectorAll(`[data-date-group="${date}"]`);
+            const icon = document.getElementById(`icon-${date}`);
+            rows.forEach(row => row.classList.toggle('hidden-row'));
+            icon.innerText = rows[0].classList.contains('hidden-row') ? '▶' : '▼';
+        }
+
+        function toggleAllGroups(collapse) {
+            const headers = document.querySelectorAll('.group-header');
+            headers.forEach(header => {
+                const date = header.getAttribute('onclick').match(/'([^']+)'/)[1];
+                const rows = document.querySelectorAll(`[data-date-group="${date}"]`);
+                const icon = document.getElementById(`icon-${date}`);
+                if (collapse) {
+                    rows.forEach(r => r.classList.add('hidden-row'));
+                    icon.innerText = '▶';
+                } else {
+                    rows.forEach(r => r.classList.remove('hidden-row'));
+                    icon.innerText = '▼';
+                }
+            });
+        }
+
         function render() {
             localStorage.setItem('obsidian_intel_v8', JSON.stringify(trades));
             const body = document.getElementById('tradeBody');
             body.innerHTML = '';
-            trades.forEach((t) => {
-                const pnlCol = parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500';
-                
-                // CRITICAL FIX: Calculate percentage on the fly if missing
-                const pct = t.pnlPct || (( (t.exit - t.entry) / t.entry ) * 100).toFixed(2);
+            
+            const today = getNYDate();
+            const groups = {};
+            trades.forEach(t => {
+                if (!groups[t.date]) groups[t.date] = [];
+                groups[t.date].push(t);
+            });
+
+            const sortedDates = Object.keys(groups).sort().reverse();
+
+            sortedDates.forEach(date => {
+                const dayName = groups[date][0].day;
+                const dailyTotal = groups[date].reduce((sum, t) => sum + parseFloat(t.pnl), 0);
+                const isToday = date === today;
 
                 body.innerHTML += `
-                    <tr class="border-b border-gray-800 hover:bg-white/5 transition">
-                        <td class="p-4 text-gray-500 text-[11px]">${t.date}<br><span class="text-white">${t.day}</span></td>
-                        <td class="p-4 text-cyan-400 text-lg">${t.stock}</td>
-                        <td class="p-4 ${t.option === 'C' ? 'text-green-500' : 'text-red-500'}">${t.option === 'C' ? 'CALL' : 'PUT'}</td>
-                        <td class="p-4 text-white">${t.entry} → ${t.exit} <span class="text-gray-600">(${t.count}x)</span></td>
-                        <td class="p-4 text-gray-400">${t.vwap || '-'}</td>
-                        <td class="p-4">${t.ema512 ? `<span class="px-2 py-1 rounded text-[10px] ${t.ema512 === 'BUY' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">${t.ema512}</span>` : '-'}</td>
-                        <td class="p-4">${t.ema3450 ? `<span class="px-2 py-1 rounded text-[10px] ${t.ema3450 === 'Buy' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">${t.ema3450}</span>` : '-'}</td>
-                        <td class="p-4 text-blue-400">${t.mtf || '-'}</td>
-                        <td class="p-4"><span class="bg-blue-900/40 text-blue-300 px-2 py-1 rounded text-[10px]">${t.setup}</span></td>
-                        <td class="p-4 text-right text-lg ${pnlCol}">$${parseFloat(t.pnl).toLocaleString()}</td>
-                        <td class="p-4 text-right text-lg ${pnlCol}">${pct}%</td>
-                        <td class="p-4 text-center"><button onclick="remove('${t.id}')" class="text-red-500 hover:text-white">🗑</button></td>
+                    <tr class="group-header" onclick="toggleGroup('${date}')">
+                        <td colspan="7" class="p-3 text-[10px] font-black uppercase tracking-widest text-cyan-400">
+                            <span id="icon-${date}" class="mr-2">${isToday ? '▼' : '▶'}</span> ${date} — ${dayName}
+                        </td>
+                        <td class="p-3 text-right text-[10px] font-black ${dailyTotal >= 0 ? 'text-green-400' : 'text-red-500'}">
+                            DAY NET: $${dailyTotal.toLocaleString()}
+                        </td>
+                        <td colspan="2"></td>
                     </tr>`;
+
+                groups[date].forEach(t => {
+                    const pnlCol = parseFloat(t.pnl) >= 0 ? 'text-green-400' : 'text-red-500';
+                    const pct = t.pnlPct || (((t.exit - t.entry) / t.entry) * 100).toFixed(2);
+                    body.innerHTML += `
+                        <tr data-date-group="${date}" class="border-b border-gray-800 hover:bg-white/5 transition ${isToday ? '' : 'hidden-row'}">
+                            <td class="p-4">
+                                <div class="text-cyan-400 text-lg">${t.stock}</div>
+                                <div class="${t.option === 'C' ? 'text-green-500' : 'text-red-500'} text-[10px] uppercase">${t.option === 'C' ? 'CALL' : 'PUT'}</div>
+                            </td>
+                            <td class="p-4 text-white">${t.entry} → ${t.exit} <span class="text-gray-600">(${t.count}x)</span></td>
+                            <td class="p-4 text-gray-400">${t.vwap || '-'}</td>
+                            <td class="p-4">${t.ema512 ? `<span class="px-2 py-1 rounded text-[10px] ${t.ema512 === 'BUY' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">${t.ema512}</span>` : '-'}</td>
+                            <td class="p-4">${t.ema3450 ? `<span class="px-2 py-1 rounded text-[10px] ${t.ema3450 === 'Buy' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">${t.ema3450}</span>` : '-'}</td>
+                            <td class="p-4 text-blue-400">${t.mtf || '-'}</td>
+                            <td class="p-4"><span class="bg-blue-900/40 text-blue-300 px-2 py-1 rounded text-[10px]">${t.setup}</span></td>
+                            <td class="p-4 text-right text-lg ${pnlCol}">$${parseFloat(t.pnl).toLocaleString()}</td>
+                            <td class="p-4 text-right text-lg ${pnlCol}">${pct}%</td>
+                            <td class="p-4 text-center"><button onclick="remove('${t.id}')" class="text-red-500 hover:text-white">🗑</button></td>
+                        </tr>`;
+                });
             });
             updateAnalytics();
         }
@@ -182,15 +245,12 @@
             const exit = parseFloat(document.getElementById('exit').value);
             const count = parseInt(document.getElementById('count').value);
             const dateVal = document.getElementById('date').value;
-            
             const getOptionalToggle = (id) => {
                 const el = document.querySelector(`.toggle-group[data-id="${id}"] .active`);
                 return el ? el.dataset.val : null;
             };
-
             const pnlVal = (exit - entry) * 100 * count;
             const pnlPercent = ((exit - entry) / entry * 100).toFixed(2);
-
             trades.unshift({
                 id: Date.now(), date: dateVal, day: new Date(dateVal.replace(/-/g, '/')).toLocaleDateString('en-US', { weekday: 'long' }),
                 stock: document.getElementById('stock').value, option: document.getElementById('optionType').value,
@@ -198,7 +258,6 @@
                 mtf: getOptionalToggle('mtf'), pmRange: getOptionalToggle('pmRange'), pdRange: getOptionalToggle('pdRange'),
                 pdc: getOptionalToggle('pdc'), setup: document.getElementById('setup').value, pnl: pnlVal.toFixed(2), pnlPct: pnlPercent
             });
-            
             render(); e.target.reset(); document.getElementById('date').value = getNYDate();
             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
         };
