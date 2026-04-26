@@ -10,11 +10,12 @@
         body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
         .stat-card { background: #0a0e14; border: 1px solid #1f2937; border-radius: 12px; }
         
-        /* Updated Label Color for better readability */
-        label { color: #e2e8f0; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.05em; }
+        /* High-contrast labels */
+        label { color: #ffffff; font-weight: 800; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.05em; }
         
         input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
         input:focus { border-color: #00f2ff; }
+        input:disabled { opacity: 0.5; cursor: not-allowed; background-color: #161b22; }
         
         .grid-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 4px; }
         .grid-btn { background: #161b22; border: 1px solid #30363d; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; text-align: center; color: #94a3b8; transition: 0.2s; }
@@ -25,15 +26,15 @@
 
         .toggle-group { display: flex; gap: 4px; background: #161b22; padding: 4px; border-radius: 8px; border: 1px solid #30363d; }
         .toggle-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; color: #94a3b8; }
-        .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"], .toggle-btn.active[data-val="Above"] { background: #064e3b; color: #4ade80; }
-        .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"], .toggle-btn.active[data-val="Below"] { background: #7f1d1d; color: #f87171; }
+        .toggle-btn.active[data-val="Y"], .toggle-btn.active[data-val="BUY"] { background: #064e3b; color: #4ade80; }
+        .toggle-btn.active[data-val="N"], .toggle-btn.active[data-val="SELL"] { background: #7f1d1d; color: #f87171; }
         .toggle-btn.active.blue { background: #1e3a8a; color: #60a5fa; }
 
         .btn-live { background: linear-gradient(to bottom, #00f2ff, #0077ff); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; }
         .btn-close { background: linear-gradient(to bottom, #f59e0b, #d97706); color: white; padding: 14px; font-weight: 800; border-radius: 10px; width: 100%; text-transform: uppercase; }
         .status-live { color: #00f2ff; animation: pulse 2s infinite; font-weight: 800; font-size: 10px; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .error-glow { border: 1px solid #ef4444 !important; }
+        .error-glow { border: 2px solid #ef4444 !important; }
     </style>
 </head>
 <body class="p-6">
@@ -74,7 +75,7 @@
                 
                 <div class="md:col-span-2 flex flex-col">
                     <label>Select Ticker</label>
-                    <div class="grid-selector" id="tickerGrid">
+                    <div class="grid-selector" id="tickerGrid" data-id="ticker">
                         <div class="grid-btn" data-val="AAPL">AAPL</div><div class="grid-btn" data-val="AMD">AMD</div>
                         <div class="grid-btn" data-val="COIN">COIN</div><div class="grid-btn" data-val="GOOG">GOOG</div>
                         <div class="grid-btn" data-val="META">META</div><div class="grid-btn" data-val="MSFT">MSFT</div>
@@ -105,9 +106,9 @@
                 <div class="flex flex-col"><label>PM Range</label><div class="toggle-group" data-id="pmRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
                 <div class="flex flex-col"><label>PD Range</label><div class="toggle-group" data-id="pdRange"><div class="toggle-btn" data-val="HI">HI</div><div class="toggle-btn" data-val="LO">LO</div></div></div>
 
-                <div class="col-span-full mt-4">
+                <div class="col-span-full mt-4 flex gap-4">
                     <button type="submit" id="submitBtn" class="btn-live">Record Daily Execution</button>
-                    <button type="button" id="cancelEdit" onclick="resetForm()" class="hidden bg-gray-800 px-8 py-3 rounded-xl font-black text-xs uppercase ml-4">Cancel</button>
+                    <button type="button" id="cancelEdit" onclick="resetForm()" class="hidden bg-gray-800 px-8 py-3 rounded-xl font-black text-xs uppercase">Cancel</button>
                 </div>
             </form>
         </div>
@@ -136,23 +137,13 @@
         function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false}); }
         function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
 
-        // Chart Initialization
         function initChart() {
             const ctx = document.getElementById('pnlChart').getContext('2d');
             pnlChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Daily PnL',
-                        data: [],
-                        backgroundColor: '#22d3ee',
-                        borderRadius: 5
-                    }]
-                },
+                data: { labels: [], datasets: [{ label: 'Daily PnL', data: [], backgroundColor: '#22d3ee', borderRadius: 5 }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     scales: {
                         y: { beginAtZero: true, grid: { color: '#1f2937' }, ticks: { color: '#94a3b8' } },
                         x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
@@ -162,46 +153,38 @@
             });
         }
 
-        // Update Stats and Chart
         function updateAnalytics() {
-            const closedTrades = trades.filter(t => t.status === 'CLOSED');
-            const totalWins = closedTrades.filter(t => parseFloat(t.pnl) > 0).length;
-            const winRatio = closedTrades.length > 0 ? (totalWins / closedTrades.length * 100).toFixed(0) : 0;
-            
+            const closed = trades.filter(t => t.status === 'CLOSED');
+            const wins = closed.filter(t => parseFloat(t.pnl) > 0).length;
+            const winRatio = closed.length > 0 ? (wins / closed.length * 100).toFixed(0) : 0;
             document.getElementById('winRatioBar').style.width = `${winRatio}%`;
             document.getElementById('winRatioText').innerText = `${winRatio}%`;
 
-            // Profit Factor
-            const grossProfit = closedTrades.filter(t => parseFloat(t.pnl) > 0).reduce((sum, t) => sum + parseFloat(t.pnl), 0);
-            const grossLoss = Math.abs(closedTrades.filter(t => parseFloat(t.pnl) < 0).reduce((sum, t) => sum + parseFloat(t.pnl), 0));
-            const pf = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : grossProfit > 0 ? "Infinity" : "0.00";
-            document.getElementById('profitFactorText').innerText = pf;
+            const grossP = closed.filter(t => parseFloat(t.pnl) > 0).reduce((s, t) => s + parseFloat(t.pnl), 0);
+            const grossL = Math.abs(closed.filter(t => parseFloat(t.pnl) < 0).reduce((s, t) => s + parseFloat(t.pnl), 0));
+            document.getElementById('profitFactorText').innerText = grossL > 0 ? (grossP / grossL).toFixed(2) : (grossP > 0 ? "INF" : "0.00");
 
-            // Chart Data
-            const dailyData = {};
-            closedTrades.forEach(t => {
-                dailyData[t.date] = (dailyData[t.date] || 0) + parseFloat(t.pnl);
-            });
-            
-            const labels = Object.keys(dailyData).sort();
+            const daily = {};
+            closed.forEach(t => daily[t.date] = (daily[t.date] || 0) + parseFloat(t.pnl));
+            const labels = Object.keys(daily).sort();
             pnlChart.data.labels = labels;
-            pnlChart.data.datasets[0].data = labels.map(l => dailyData[l]);
+            pnlChart.data.datasets[0].data = labels.map(l => daily[l]);
             pnlChart.update();
         }
 
+        // Global click handler for all buttons
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('grid-btn') || e.target.classList.contains('toggle-btn')) {
-                const group = e.target.closest('.grid-selector') || e.target.closest('.toggle-group');
-                if (group) {
-                    group.querySelectorAll('.grid-btn, .toggle-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    group.classList.remove('error-glow');
-                }
+            const btn = e.target.closest('.grid-btn, .toggle-btn');
+            if (btn && !btn.classList.contains('add-custom')) {
+                const group = btn.closest('.grid-selector, .toggle-group');
+                group.querySelectorAll('.grid-btn, .toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                group.classList.remove('error-glow');
             }
         });
 
         function addCustomTicker() {
-            const ticker = prompt("Enter Ticker Symbol:").toUpperCase();
+            const ticker = prompt("Ticker:").toUpperCase();
             if (ticker) {
                 const btn = document.createElement('div');
                 btn.className = 'grid-btn active';
@@ -211,21 +194,16 @@
             }
         }
 
-        function calculateDuration(start, end) {
-            if (!start || !end) return "--";
-            const s = start.split(':'), e = end.split(':');
-            const diff = (parseInt(e[0])*3600 + parseInt(e[1])*60 + parseInt(e[2])) - (parseInt(s[0])*3600 + parseInt(s[1])*60 + parseInt(s[2]));
-            return diff < 0 ? "--" : `${Math.floor(diff/60)}m ${diff%60}s`;
-        }
-
         function render() {
             localStorage.setItem('obsidian_elite_v8', JSON.stringify(trades));
-            const body = document.getElementById('tradeBody'); body.innerHTML = '';
+            const body = document.getElementById('tradeBody'); 
+            body.innerHTML = '';
             let total = 0, active = 0;
             const groups = {};
             
             trades.forEach(t => {
-                if (!groups[t.date]) groups[t.date] = []; groups[t.date].push(t);
+                if (!groups[t.date]) groups[t.date] = [];
+                groups[t.date].push(t);
                 if (t.status === 'OPEN') active++;
                 if (t.status === 'CLOSED') total += parseFloat(t.pnl);
             });
@@ -235,7 +213,7 @@
             document.getElementById('totalPnl').className = `text-2xl font-black ${total >= 0 ? 'text-green-400' : 'text-red-500'}`;
 
             Object.keys(groups).sort().reverse().forEach(date => {
-                body.innerHTML += `<tr class="bg-gray-900/40"><td colspan="6" class="p-3 text-[10px] font-black text-cyan-400 uppercase tracking-widest border-l-4 border-cyan-500">${date}</td></tr>`;
+                body.innerHTML += `<tr class="bg-gray-900/40"><td colspan="6" class="p-3 text-[10px] font-black text-cyan-400 uppercase border-l-4 border-cyan-500">${date}</td></tr>`;
                 groups[date].forEach(t => {
                     const isC = t.status === 'CLOSED';
                     body.innerHTML += `
@@ -258,57 +236,91 @@
             updateAnalytics();
         }
 
+        function calculateDuration(s, e) {
+            const start = s.split(':'), end = e.split(':');
+            const diff = (parseInt(end[0])*3600 + parseInt(end[1])*60 + parseInt(end[2])) - (parseInt(start[0])*3600 + parseInt(start[1])*60 + parseInt(start[2]));
+            return diff < 0 ? "--" : `${Math.floor(diff/60)}m ${diff%60}s`;
+        }
+
         document.getElementById('tradeForm').onsubmit = (e) => {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
-            const getActive = (id) => { const el = document.querySelector(`[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
-            const ticker = document.querySelector('#tickerGrid .active')?.dataset.val;
-            const type = getActive('optionType');
+            const getVal = (id) => { const el = document.querySelector(`[data-id="${id}"] .active`); return el ? el.dataset.val : null; };
+            
+            const ticker = getVal('ticker');
+            const type = getVal('optionType');
 
-            if (!ticker || !type) { alert("Select Ticker and Option Type!"); return; }
+            if (!ticker || !type) { alert("Ticker/Type required"); return; }
 
             if (!editId) {
+                // New Trade
                 trades.unshift({
                     id: Date.now(), date: getNYDate(), status: 'OPEN',
                     stock: ticker, option: type, count: document.getElementById('count').value, 
                     entry: parseFloat(document.getElementById('entry').value), entryTime: getNYTime(), 
-                    exit: null, exitTime: null, pnl: 0, pnlPct: 0,
-                    setup: getActive('setup'), vwap: getActive('vwap'), ema512: getActive('ema512'), mtf: getActive('mtf'), pmRange: getActive('pmRange'), pdRange: getActive('pdRange')
+                    exit: null, exitTime: null, pnl: 0, pnlPct: 0
                 });
             } else {
+                // Closing Trade - Check Mandatory
+                const mandatory = ['setup', 'vwap', 'ema512', 'mtf', 'pmRange', 'pdRange'];
+                let missing = false;
+                mandatory.forEach(key => {
+                    if (!getVal(key)) {
+                        document.querySelector(`[data-id="${key}"]`).classList.add('error-glow');
+                        missing = true;
+                    }
+                });
+
+                const exitVal = parseFloat(document.getElementById('exit').value);
+                if (missing || isNaN(exitVal)) { alert("Enter Exit Price and all Technical Context!"); return; }
+
                 const idx = trades.findIndex(t => String(t.id) === String(editId));
-                const ex = parseFloat(document.getElementById('exit').value);
-                const en = trades[idx].entry;
-                trades[idx].status = 'CLOSED'; trades[idx].exit = ex; trades[idx].exitTime = getNYTime();
-                trades[idx].pnl = ((ex - en) * 100 * trades[idx].count).toFixed(2);
-                trades[idx].pnlPct = (((ex - en) / en) * 100).toFixed(2);
-                ['setup', 'vwap','ema512','mtf','pmRange','pdRange'].forEach(k => trades[idx][k] = getActive(k));
+                const entryVal = trades[idx].entry;
+                
+                trades[idx].status = 'CLOSED';
+                trades[idx].exit = exitVal;
+                trades[idx].exitTime = getNYTime();
+                trades[idx].pnl = ((exitVal - entryVal) * 100 * trades[idx].count).toFixed(2);
+                trades[idx].pnlPct = (((exitVal - entryVal) / entryVal) * 100).toFixed(2);
+                mandatory.forEach(key => trades[idx][key] = getVal(key));
             }
-            resetForm(); render();
+            
+            resetForm(); 
+            render();
         };
 
         function prepareClose(id) {
+            resetForm();
             const t = trades.find(tr => String(tr.id) === String(id));
             document.getElementById('editId').value = t.id;
+            
+            // Highlight existing ticker and type
+            document.querySelectorAll(`#tickerGrid [data-val="${t.stock}"], [data-id="optionType"] [data-val="${t.option}"]`)
+                .forEach(el => el.classList.add('active'));
+
             document.getElementById('entry').value = t.entry;
+            document.getElementById('count').value = t.count;
             document.getElementById('exit').disabled = false;
             document.getElementById('exit').focus();
+            
             document.getElementById('submitBtn').innerText = "Finalize Exit (Mandatory Fields)";
             document.getElementById('submitBtn').className = "btn-close";
             document.getElementById('cancelEdit').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function resetForm() {
             document.getElementById('tradeForm').reset();
             document.querySelectorAll('.active').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.error-glow').forEach(g => g.classList.remove('error-glow'));
-            document.getElementById('editId').value = ""; document.getElementById('exit').disabled = true;
+            document.getElementById('editId').value = "";
+            document.getElementById('exit').disabled = true;
             document.getElementById('submitBtn').innerText = "Record Daily Execution";
             document.getElementById('submitBtn').className = "btn-live";
             document.getElementById('cancelEdit').classList.add('hidden');
         }
 
-        function remove(id) { if(confirm("Delete trade?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
+        function remove(id) { if(confirm("Delete?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
         
         window.onload = () => { 
             document.getElementById('currentDateDisplay').innerText = getNYDate(); 
