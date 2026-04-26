@@ -30,7 +30,7 @@
         <div class="flex justify-between items-start mb-8">
             <div>
                 <h1 class="text-3xl font-black text-cyan-400 uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
-                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Active Trader Pro Sync | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
+                <p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">Execution Engine | NY: <span id="currentDateDisplay" class="text-cyan-400"></span></p>
             </div>
             <div class="flex gap-4">
                 <div class="stat-card px-8 py-3 text-center"><p class="text-gray-500 text-[10px] font-black uppercase">Net P&L</p><p id="totalPnl" class="text-2xl font-black text-green-400">$0.00</p></div>
@@ -38,8 +38,42 @@
             </div>
         </div>
 
-        <div class="stat-card p-6 mb-8 h-[300px]">
-            <canvas id="dailyPnlChart"></canvas>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="stat-card p-6 h-[300px]">
+                <label>Equity Growth</label>
+                <canvas id="dailyPnlChart"></canvas>
+            </div>
+            <div class="stat-card p-6 h-[300px] flex flex-col items-center">
+                <label class="w-full">Win/Loss Distribution</label>
+                <div class="relative h-full w-full flex items-center justify-center">
+                    <canvas id="winLossChart"></canvas>
+                    <div class="absolute text-center">
+                        <p id="winRatioPercent" class="text-3xl font-black">0%</p>
+                        <p class="text-[9px] text-gray-500 uppercase">Success</p>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card p-6 h-[300px] flex flex-col justify-between">
+                <label>Efficiency Matrix</label>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-end border-b border-gray-800 pb-2">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold">Profit Factor</span>
+                        <span id="profitFactor" class="text-xl font-black text-cyan-400">0.00</span>
+                    </div>
+                    <div class="flex justify-between items-end border-b border-gray-800 pb-2">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold">Avg Win Duration</span>
+                        <span id="avgWinTime" class="text-sm font-black text-green-400">--</span>
+                    </div>
+                    <div class="flex justify-between items-end border-b border-gray-800 pb-2">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold">Avg Loss Duration</span>
+                        <span id="avgLossTime" class="text-sm font-black text-red-500">--</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold">Best Trade</span>
+                        <span id="bestTrade" class="text-sm font-black text-green-400">$0</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="mb-6">
@@ -90,15 +124,16 @@
     <script>
         let trades = JSON.parse(localStorage.getItem('obsidian_elite_v7')) || [];
         let pnlChart = null;
+        let winLossChart = null;
 
         function getNYTime() { return new Date().toLocaleTimeString("en-US", {timeZone: "America/New_York", hour12: false}); }
         function getNYDate() { return new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).toISOString().split('T')[0]; }
 
-        function initChart() {
-            const ctx = document.getElementById('dailyPnlChart').getContext('2d');
-            pnlChart = new Chart(ctx, {
+        function initCharts() {
+            const ctxPnL = document.getElementById('dailyPnlChart').getContext('2d');
+            pnlChart = new Chart(ctxPnL, {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Daily PnL', data: [], backgroundColor: '#00f2ff', borderRadius: 4 }] },
+                data: { labels: [], datasets: [{ data: [], backgroundColor: '#00f2ff', borderRadius: 4 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
@@ -108,18 +143,62 @@
                     plugins: { legend: { display: false } }
                 }
             });
+
+            const ctxWL = document.getElementById('winLossChart').getContext('2d');
+            winLossChart = new Chart(ctxWL, {
+                type: 'doughnut',
+                data: { labels: ['Wins', 'Losses'], datasets: [{ data: [0, 0], backgroundColor: ['#4ade80', '#f87171'], borderWidth: 0, cutout: '85%' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
         }
 
-        function updateChart() {
+        function updateAnalytics() {
+            const closed = trades.filter(t => t.status === 'CLOSED');
             const dailyData = {};
-            trades.filter(t => t.status === 'CLOSED').forEach(t => {
-                dailyData[t.date] = (dailyData[t.date] || 0) + parseFloat(t.pnl);
+            let wins = 0, losses = 0, winTime = 0, lossTime = 0, grossP = 0, grossL = 0, maxWin = 0;
+
+            closed.forEach(t => {
+                const pnl = parseFloat(t.pnl);
+                dailyData[t.date] = (dailyData[t.date] || 0) + pnl;
+                
+                const dur = parseDurationToSeconds(t.entryTime, t.exitTime);
+                if (pnl >= 0) { 
+                    wins++; winTime += dur; grossP += pnl; 
+                    if(pnl > maxWin) maxWin = pnl;
+                } else { 
+                    losses++; lossTime += dur; grossL += Math.abs(pnl); 
+                }
             });
+
+            // 1. Update Bar Chart
             const sortedDates = Object.keys(dailyData).sort();
             pnlChart.data.labels = sortedDates;
             pnlChart.data.datasets[0].data = sortedDates.map(d => dailyData[d]);
             pnlChart.data.datasets[0].backgroundColor = sortedDates.map(d => dailyData[d] >= 0 ? '#4ade80' : '#f87171');
             pnlChart.update();
+
+            // 2. Update Doughnut
+            winLossChart.data.datasets[0].data = [wins, losses];
+            winLossChart.update();
+            const ratio = closed.length > 0 ? Math.round((wins / closed.length) * 100) : 0;
+            document.getElementById('winRatioPercent').innerText = ratio + '%';
+
+            // 3. Update Matrix
+            document.getElementById('profitFactor').innerText = grossL > 0 ? (grossP / grossL).toFixed(2) : (grossP > 0 ? "INF" : "0.00");
+            document.getElementById('avgWinTime').innerText = wins > 0 ? formatSeconds(winTime / wins) : "--";
+            document.getElementById('avgLossTime').innerText = losses > 0 ? formatSeconds(lossTime / losses) : "--";
+            document.getElementById('bestTrade').innerText = '$' + maxWin.toLocaleString();
+        }
+
+        function parseDurationToSeconds(start, end) {
+            const s = start.split(':'), e = end.split(':');
+            return (parseInt(e[0])*3600 + parseInt(e[1])*60 + parseInt(e[2])) - (parseInt(s[0])*3600 + parseInt(s[1])*60 + parseInt(s[2]));
+        }
+
+        function formatSeconds(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}m ${s}s`;
         }
 
         document.getElementById('cmdInput').addEventListener('keypress', function(e) {
@@ -146,9 +225,8 @@
 
         function calculateDuration(start, end) {
             if (!start || !end) return "--";
-            const s = start.split(':'), e = end.split(':');
-            const diff = (parseInt(e[0])*3600 + parseInt(e[1])*60 + parseInt(e[2])) - (parseInt(s[0])*3600 + parseInt(s[1])*60 + parseInt(s[2]));
-            return diff < 0 ? "--" : `${Math.floor(diff/60)}m ${diff%60}s`;
+            const diff = parseDurationToSeconds(start, end);
+            return diff < 0 ? "--" : formatSeconds(diff);
         }
 
         function render() {
@@ -186,7 +264,7 @@
                         </tr>`;
                 });
             });
-            updateChart();
+            updateAnalytics();
         }
 
         document.getElementById('tradeForm').onsubmit = (e) => {
@@ -253,7 +331,7 @@
         function remove(id) { if(confirm("Permanently delete execution data?")) { trades = trades.filter(t => String(t.id) !== String(id)); render(); } }
         window.onload = () => { 
             document.getElementById('currentDateDisplay').innerText = getNYDate(); 
-            initChart();
+            initCharts();
             render(); 
         };
     </script>
