@@ -25,7 +25,6 @@
         
         .toggle-group { display: flex; gap: 4px; background: #0a0e14; padding: 4px; border-radius: 8px; border: 1px solid #1f2937; flex-wrap: wrap; }
         
-        /* RESTORED ALL 12 TICKER BUTTONS WITH UNIQUE BRAND COLORS */
         .toggle-btn { flex: 1; min-width: 55px; text-align: center; padding: 6px 2px; font-size: 9px; font-weight: 800; border-radius: 4px; cursor: pointer; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s; text-transform: uppercase; }
         .toggle-btn:hover { box-shadow: inset 0 0 8px var(--brand-color); border-color: var(--brand-color); }
         .toggle-btn.active { 
@@ -35,14 +34,12 @@
             box-shadow: 0 0 15px var(--brand-color); 
         }
 
-        /* RESTORED EXECUTION SETUP BUTTONS & FLUORESCENT STYLING */
         .setup-btn { 
             flex: 1; min-width: 80px; text-align: center; padding: 10px 6px; 
             font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer; 
             color: #00D9FF; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s;
             text-transform: uppercase;
         }
-        /* Fluorescent Selection Logic: Becomes Black on Aqua when active */
         .setup-btn.active { 
             border-color: #00FFCC !important; 
             color: #000 !important; 
@@ -50,14 +47,20 @@
             box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); 
         }
 
-        /* CONTRACT TYPE COLORS */
         .toggle-btn.active[data-type="CALL"] { background: #4ade80 !important; border-color: #4ade80 !important; }
         .toggle-btn.active[data-type="PUT"] { background: #f87171 !important; border-color: #f87171 !important; }
         
         .btn-live { background: linear-gradient(to right, #00FFCC, #00D9FF); color: #000; padding: 14px; font-weight: 900; border-radius: 8px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; font-size: 14px; letter-spacing: 1px; }
         .group-header { background: #111827; cursor: pointer; user-select: none; border-left: 4px solid #00FFCC; }
-        .matrix-val { color: #00D9FF; font-weight: 800; font-size: 1.1rem; }
         thead th { color: #00FFCC !important; font-weight: 800; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid #1f2937; padding: 1rem; }
+
+        /* New Matrix Table Styles */
+        .matrix-box { background: #06090c; border: 1px solid #1f2937; border-radius: 8px; padding: 12px; }
+        .matrix-title { color: #00FFCC; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
+        .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .matrix-label { color: #4b5563; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        .matrix-val { color: #fff; font-size: 14px; font-weight: 800; }
+        .matrix-wl { color: #00FFCC; font-size: 14px; font-weight: 800; text-align: right; }
     </style>
 </head>
 <body class="p-4 lg:p-8">
@@ -87,7 +90,7 @@
                 <input type="hidden" id="editId" value="">
                 
                 <div class="col-span-2">
-                    <label>Symbol Selection (Alphabetical)</label>
+                    <label>Symbol Selection</label>
                     <div class="toggle-group" id="tickerSelect">
                         <div class="toggle-btn" style="--brand-color: #666666; color: #fff;" data-ticker="AAPL">AAPL</div>
                         <div class="toggle-btn" style="--brand-color: #ED1C24; color: #ED1C24;" data-ticker="AMD">AMD</div>
@@ -117,7 +120,7 @@
                 <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
                 
                 <div class="col-span-full border-t border-gray-800 pt-4">
-                    <label>Execution Setup (Fluorescent Selection Mandatory to Close)</label>
+                    <label>Execution Setup</label>
                     <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                         <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div>
                         <div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
@@ -143,6 +146,30 @@
             </form>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="matrix-box">
+                <div class="matrix-title">Daily Matrix</div>
+                <div class="matrix-grid">
+                    <div><p class="matrix-label">Trades</p><p id="dMatrixCount" class="matrix-val">0</p></div>
+                    <div class="text-right"><p class="matrix-label">W / L</p><p id="dMatrixWL" class="matrix-wl">0 - 0</p></div>
+                </div>
+            </div>
+            <div class="matrix-box">
+                <div class="matrix-title">Weekly Matrix</div>
+                <div class="matrix-grid">
+                    <div><p class="matrix-label">Trades</p><p id="wMatrixCount" class="matrix-val">0</p></div>
+                    <div class="text-right"><p class="matrix-label">W / L</p><p id="wMatrixWL" class="matrix-wl">0 - 0</p></div>
+                </div>
+            </div>
+            <div class="matrix-box">
+                <div class="matrix-title">Monthly Matrix</div>
+                <div class="matrix-grid">
+                    <div><p class="matrix-label">Trades</p><p id="mMatrixCount" class="matrix-val">0</p></div>
+                    <div class="text-right"><p class="matrix-label">W / L</p><p id="mMatrixWL" class="matrix-wl">0 - 0</p></div>
+                </div>
+            </div>
+        </div>
+
         <div class="stat-card overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead class="bg-gray-900/50">
@@ -154,7 +181,6 @@
     </div>
 
     <script>
-        // --- CUSTOM WICK PLUGIN ---
         const wickPlugin = {
             id: 'wickPlugin',
             afterDatasetsDraw(chart) {
@@ -196,7 +222,47 @@
 
         function updateAnalytics() {
             const closed = trades.filter(t => t.status === 'CLOSED').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-            // 1. TICKER CANDLES
+            const now = new Date();
+            
+            let matrix = {
+                d: { t: 0, w: 0, l: 0 },
+                w: { t: 0, w: 0, l: 0 },
+                m: { t: 0, w: 0, l: 0 }
+            };
+
+            let netTotal = 0;
+            closed.forEach(t => {
+                const p = parseFloat(t.pnl);
+                netTotal += p;
+                
+                const date = new Date(t.timestamp);
+                const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+                // Helper logic for Matrix counts
+                const recordTrade = (mObj) => {
+                    mObj.t++;
+                    if (p >= 0) mObj.w++; else mObj.l++;
+                };
+
+                if (date.toDateString() === now.toDateString()) recordTrade(matrix.d);
+                if (diffDays <= 7) recordTrade(matrix.w);
+                if (diffDays <= 30) recordTrade(matrix.m);
+            });
+
+            // Update Matrix UI
+            document.getElementById('dMatrixCount').innerText = matrix.d.t;
+            document.getElementById('dMatrixWL').innerText = `${matrix.d.w} - ${matrix.d.l}`;
+            document.getElementById('wMatrixCount').innerText = matrix.w.t;
+            document.getElementById('wMatrixWL').innerText = `${matrix.w.w} - ${matrix.w.l}`;
+            document.getElementById('mMatrixCount').innerText = matrix.m.t;
+            document.getElementById('mMatrixWL').innerText = `${matrix.m.w} - ${matrix.m.l}`;
+
+            // P&L Logic Fix
+            document.getElementById('totalPnl').innerText = '$' + netTotal.toFixed(2);
+            document.getElementById('totalPnl').className = `text-3xl font-black ${netTotal >= 0 ? 'text-green-400' : 'text-red-500'}`;
+            document.getElementById('activeCount').innerText = trades.filter(t => t.status === 'OPEN').length;
+
+            // Chart Updates
             let tickers = {};
             closed.forEach(t => {
                 if (!tickers[t.stock]) tickers[t.stock] = { close: 0, high: -Infinity, low: Infinity };
@@ -212,7 +278,6 @@
             tickerChart.data.datasets[0].wicks = tLabels.map(k => ({ h: tickers[k].high, l: tickers[k].low }));
             tickerChart.update();
 
-            // 2. DAILY CANDLES
             let daily = {};
             closed.forEach(t => {
                 const dateKey = new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'});
@@ -232,18 +297,9 @@
             equityChart.data.datasets[1].wicks = dLabels.map(k => ({ h: daily[k].high, l: daily[k].low }));
             equityChart.update();
 
-            // 3. STATS
-            let totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
-            closed.forEach(t => {
-                const p = parseFloat(t.pnl);
-                if (p >= 0) { totalProfit += p; wins++; } else { totalLoss += Math.abs(p); losses++; }
-            });
-            precisionChart.data.datasets[0].data = [wins, losses]; precisionChart.update();
+            let wins = closed.filter(t => parseFloat(t.pnl) >= 0).length;
+            precisionChart.data.datasets[0].data = [wins, closed.length - wins]; precisionChart.update();
             document.getElementById('winRateText').innerText = closed.length ? Math.round((wins / closed.length) * 100) + '%' : '0%';
-            document.getElementById('profitFactor').innerText = totalLoss === 0 ? 'INF' : (totalProfit / totalLoss).toFixed(2);
-            document.getElementById('avgWin').innerText = wins ? `$${Math.round(totalProfit / wins)}` : '$0';
-            document.getElementById('avgLoss').innerText = losses ? `$${Math.round(totalLoss / losses)}` : '$0';
-            document.getElementById('totalPnl').innerText = '$' + (totalProfit - totalLoss).toFixed(2);
         }
 
         function toggleGroup(id) { collapsedGroups.has(id) ? collapsedGroups.delete(id) : collapsedGroups.add(id); render(); }
@@ -265,7 +321,7 @@
                 body.innerHTML += `<tr class="group-header" onclick="toggleGroup('${label}')"><td colspan="7" class="p-3 text-[10px] font-black text-[#00FFCC]">${label} (${groups[label].length}) ${collapsedGroups.has(label) ? '▶' : '▼'}</td></tr>`;
                 if (!collapsedGroups.has(label)) {
                     groups[label].forEach(t => {
-                        const isC = t.status === 'CLOSED'; const frozen = new Date(t.timestamp).toDateString() !== now.toDateString();
+                        const isC = t.status === 'CLOSED';
                         body.innerHTML += `<tr class="border-b border-gray-800 hover:bg-white/5">
                             <td class="p-4 text-gray-500">${new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'})}</td>
                             <td class="p-4 font-bold text-white">${t.stock} <span class="${t.option==='CALL'?'text-green-400':'text-red-400'} text-[9px]">${t.option}</span></td>
@@ -296,7 +352,7 @@
                 if (!isNaN(ext)) { trades[editId] = { ...t, exit: ext, status: 'CLOSED', exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, pnl: ((ext - t.entry) * 100 * t.count).toFixed(2) }; }
                 else trades[editId].setups = set;
             } else {
-                trades.unshift({ stock: tick, option: type, entry: ent, count: count, status: 'OPEN', entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, timestamp: new Date().toISOString() });
+                trades.unshift({ stock: tick, option: type, entry: ent, count: count, status: 'OPEN', entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), setups: set, timestamp: new Date().toISOString(), pnl: 0 });
             }
             resetForm(); render();
         };
