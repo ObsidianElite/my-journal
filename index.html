@@ -46,8 +46,6 @@
 
         input:disabled { opacity: 0.2; cursor: not-allowed; }
 
-        input.locked { opacity: 0.5; cursor: not-allowed; border-color: #f59e0b; }
-
         
 
         .toggle-group { display: flex; gap: 4px; background: #0a0e14; padding: 4px; border-radius: 8px; border: 1px solid #1f2937; flex-wrap: wrap; }
@@ -71,8 +69,6 @@
             box-shadow: 0 0 15px var(--brand-color); 
 
         }
-
-        .toggle-btn.locked { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
 
 
@@ -116,8 +112,6 @@
 
         .btn-live { background: linear-gradient(to right, #00FFCC, #00D9FF); color: #000; padding: 14px; font-weight: 900; border-radius: 8px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; font-size: 14px; letter-spacing: 1px; }
 
-        .btn-live:disabled { opacity: 0.3; cursor: not-allowed; }
-
         .group-header { background: #111827; cursor: pointer; user-select: none; border-left: 4px solid #00FFCC; }
 
         .matrix-val { color: #00D9FF; font-weight: 800; font-size: 1.1rem; }
@@ -135,16 +129,6 @@
         .stats-table td { padding: 12px; border-bottom: 1px solid #1f2937; font-size: 12px; }
 
         .stats-table tr:hover { background: rgba(255,255,255,0.02); }
-
-        
-
-        /* Close row styling */
-
-        .close-row { background: #0a0e14; border: 1px solid #1f2937; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
-
-        .close-row-header { color: #00FFCC; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
-
-        .required-indicator { color: #f87171; font-size: 10px; margin-left: 4px; }
 
     </style>
 
@@ -194,7 +178,7 @@
 
 
 
-        <!-- Statistics Table -->
+        <!-- NEW: Statistics Table -->
 
         <div class="stat-card p-6 mb-6">
 
@@ -286,13 +270,11 @@
 
                 <input type="hidden" id="editId" value="">
 
-                <input type="hidden" id="isEditMode" value="false">
-
                 
 
                 <div class="col-span-2">
 
-                    <label>Symbol Selection (Alphabetical) <span class="required-indicator">*</span></label>
+                    <label>Symbol Selection (Alphabetical)</label>
 
                     <div class="toggle-group" id="tickerSelect">
 
@@ -322,7 +304,7 @@
 
                     </div>
 
-                    <!-- Dynamic Stock Entry -->
+                    <!-- NEW: Dynamic Stock Entry -->
 
                     <div class="mt-3">
 
@@ -338,31 +320,7 @@
 
                 <div>
 
-                    <label>Day <span class="required-indicator">*</span></label>
-
-                    <select id="daySelect" class="bg-[#0d1117] border border-[#30363d] text-white p-2.5 rounded-md font-bold text-sm w-full">
-
-                        <option value="">Select Day</option>
-
-                        <option value="Monday">Monday</option>
-
-                        <option value="Tuesday">Tuesday</option>
-
-                        <option value="Wednesday">Wednesday</option>
-
-                        <option value="Thursday">Thursday</option>
-
-                        <option value="Friday">Friday</option>
-
-                    </select>
-
-                </div>
-
-
-
-                <div>
-
-                    <label>Contract Type <span class="required-indicator">*</span></label>
+                    <label>Contract Type</label>
 
                     <div class="toggle-group" id="typeSelect">
 
@@ -376,15 +334,17 @@
 
 
 
-                <div><label>Qty <span class="required-indicator">*</span></label><input type="number" id="count" value="1" min="1"></div>
+                <div><label>Qty</label><input type="number" id="count" value="1" min="1"></div>
 
-                <div><label>Entry Price <span class="required-indicator">*</span></label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
+                <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
+
+                <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
 
                 
 
                 <div class="col-span-full border-t border-gray-800 pt-4">
 
-                    <label>Execution Setup (Select At Least 1) <span class="required-indicator">*</span></label>
+                    <label>Execution Setup (Fluorescent Selection Mandatory to Close)</label>
 
                     <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
 
@@ -422,13 +382,13 @@
 
 
 
-                <!-- Close Rows Container (shown only when closing trades) -->
+                <!-- NEW: Partial close quantity -->
 
-                <div id="closeRowsContainer" class="col-span-full hidden border-t border-gray-800 pt-4">
+                <div id="partialCloseContainer" class="hidden">
 
-                    <label>Close Positions (First Row Required)</label>
+                    <label>Close Qty</label>
 
-                    <div id="closeRows"></div>
+                    <input type="number" id="closeQty" value="1" min="1">
 
                 </div>
 
@@ -454,7 +414,7 @@
 
                 <thead class="bg-gray-900/50">
 
-                    <tr><th>Day</th><th>Date</th><th>Asset</th><th>Timeline</th><th>Fills</th><th>Setup Logic</th><th class="text-right">PNL</th><th class="text-center">Manage</th></tr>
+                    <tr><th>Day / Date</th><th>Asset</th><th>Timeline</th><th>Fills</th><th>Setup Logic</th><th class="text-right">PNL</th><th class="text-center">Manage</th></tr>
 
                 </thead>
 
@@ -662,7 +622,7 @@
 
             
 
-            // Update period statistics
+            // NEW: Update period statistics
 
             updatePeriodStats();
 
@@ -670,7 +630,7 @@
 
 
 
-        // Function to update period statistics
+        // NEW: Function to update period statistics
 
         function updatePeriodStats() {
 
@@ -778,17 +738,15 @@
 
                 if (!groups[label].length) return;
 
-                body.innerHTML += `<tr class="group-header" onclick="toggleGroup('${label}')"><td colspan="8" class="p-3 text-[10px] font-black text-[#00FFCC]">${label} (${groups[label].length}) ${collapsedGroups.has(label) ? '▶' : '▼'}</td></tr>`;
+                body.innerHTML += `<tr class="group-header" onclick="toggleGroup('${label}')"><td colspan="7" class="p-3 text-[10px] font-black text-[#00FFCC]">${label} (${groups[label].length}) ${collapsedGroups.has(label) ? '▶' : '▼'}</td></tr>`;
 
                 if (!collapsedGroups.has(label)) {
 
                     groups[label].forEach(t => {
 
-                        const isC = t.status === 'CLOSED';
+                        const isC = t.status === 'CLOSED'; const frozen = new Date(t.timestamp).toDateString() !== now.toDateString();
 
                         body.innerHTML += `<tr class="border-b border-gray-800 hover:bg-white/5">
-
-                            <td class="p-4 text-[#00D9FF] font-bold">${t.day || '--'}</td>
 
                             <td class="p-4 text-gray-500">${new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'})}</td>
 
@@ -804,7 +762,9 @@
 
                             <td class="p-4 text-center">
 
-                                ${!isC ? `<button onclick="editTrade(${t.idx})" class="bg-orange-600 text-black px-3 py-1 rounded font-bold text-[10px]">CLOSE</button>` : `<button onclick="removeTrade(${t.idx})">🗑️</button>`}
+                                <button onclick="editTrade(${t.idx})" class="mr-2">✏️</button>
+
+                                ${!isC ? `<button onclick="editTrade(${t.idx})" class="bg-orange-600 text-black px-2 rounded font-bold text-[9px]">CLOSE</button>` : `<button onclick="removeTrade(${t.idx})">🗑️</button>`}
 
                             </td></tr>`;
 
@@ -820,233 +780,119 @@
 
 
 
-        // Generate close rows based on quantity
-
-        function generateCloseRows(qty) {
-
-            const container = document.getElementById('closeRows');
-
-            container.innerHTML = '';
-
-            
-
-            for (let i = 0; i < qty; i++) {
-
-                const isRequired = i === 0;
-
-                container.innerHTML += `
-
-                    <div class="close-row">
-
-                        <div class="close-row-header">Position ${i + 1} of ${qty} ${isRequired ? '<span class="required-indicator">* REQUIRED</span>' : '(Optional)'}</div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                            <div>
-
-                                <label style="font-size: 9px;">Exit Price ${isRequired ? '<span class="required-indicator">*</span>' : ''}</label>
-
-                                <input type="number" class="close-exit-price" data-row="${i}" step="0.01" placeholder="0.00" ${isRequired ? 'required' : ''}>
-
-                            </div>
-
-                            <div class="md:col-span-2">
-
-                                <label style="font-size: 9px;">Execution Setup (Optional)</label>
-
-                                <div class="toggle-group close-setup-group" data-row="${i}">
-
-                                    <div class="setup-btn" data-val="5/12 CURL" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">5/12 CURL</div>
-
-                                    <div class="setup-btn" data-val="5/12 REJECT" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">5/12 REJECT</div>
-
-                                    <div class="setup-btn" data-val="34/50 Bounce" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">34/50 Bounce</div>
-
-                                    <div class="setup-btn" data-val="34/50 Reject" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">34/50 Reject</div>
-
-                                    <div class="setup-btn" data-val="PM HI break" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">PM HI break</div>
-
-                                    <div class="setup-btn" data-val="PM low break" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">PM low break</div>
-
-                                    <div class="setup-btn" data-val="PD CL Bounce" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">PD CL Bounce</div>
-
-                                    <div class="setup-btn" data-val="PD CL Fail" style="font-size: 9px; padding: 6px 4px; min-width: 60px;">PD CL Fail</div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            }
-
-            
-
-            // Attach click handlers to close row setup buttons
-
-            document.querySelectorAll('.close-setup-group .setup-btn').forEach(btn => {
-
-                btn.onclick = function() { this.classList.toggle('active'); };
-
-            });
-
-        }
-
-
-
         document.getElementById('tradeForm').onsubmit = (e) => {
 
-            e.preventDefault();
-
-            const editId = document.getElementById('editId').value;
-
-            const isEditMode = document.getElementById('isEditMode').value === 'true';
+            e.preventDefault(); const editId = document.getElementById('editId').value;
 
             
 
-            if (isEditMode) {
+            // Get ticker from either selected button or custom input
 
-                // CLOSING TRADE LOGIC
+            let tick = document.querySelector('#tickerSelect .active')?.dataset.ticker;
+
+            const customTick = document.getElementById('customStock').value.trim().toUpperCase();
+
+            if (customTick) tick = customTick;
+
+            
+
+            const type = document.querySelector('#typeSelect .active')?.dataset.type;
+
+            const ent = parseFloat(document.getElementById('entry').value);
+
+            const ext = parseFloat(document.getElementById('exit').value);
+
+            const count = parseInt(document.getElementById('count').value);
+
+            const closeQty = parseInt(document.getElementById('closeQty').value) || count;
+
+            const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
+
+            
+
+            if (editId !== "") {
 
                 const t = trades[editId];
 
-                const closeRowsData = [];
+                if (!isNaN(ext)) { 
 
-                
+                    // PARTIAL CLOSE LOGIC
 
-                // Collect data from each close row
+                    const qtyToClose = Math.min(closeQty, t.count);
 
-                document.querySelectorAll('.close-exit-price').forEach((input, i) => {
+                    const remainingQty = t.count - qtyToClose;
 
-                    const exitPrice = parseFloat(input.value);
+                    const pnl = ((ext - t.entry) * 100 * qtyToClose).toFixed(2);
 
-                    if (!isNaN(exitPrice) && exitPrice > 0) {
+                    
 
-                        const setupGroup = document.querySelector(`.close-setup-group[data-row="${i}"]`);
+                    if (remainingQty > 0) {
 
-                        const setups = Array.from(setupGroup.querySelectorAll('.active')).map(b => b.dataset.val);
+                        // Create closed trade for partial amount
 
-                        closeRowsData.push({ exitPrice, setups });
+                        trades.push({
+
+                            stock: t.stock,
+
+                            option: t.option,
+
+                            entry: t.entry,
+
+                            exit: ext,
+
+                            count: qtyToClose,
+
+                            status: 'CLOSED',
+
+                            entryTime: t.entryTime,
+
+                            exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+
+                            setups: set,
+
+                            pnl: pnl,
+
+                            timestamp: t.timestamp
+
+                        });
+
+                        // Update original trade with remaining quantity
+
+                        trades[editId].count = remainingQty;
+
+                    } else {
+
+                        // Close entire position
+
+                        trades[editId] = { 
+
+                            ...t, 
+
+                            exit: ext, 
+
+                            status: 'CLOSED', 
+
+                            exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+
+                            setups: set, 
+
+                            pnl: pnl 
+
+                        };
 
                     }
 
-                });
-
-                
-
-                // Validate first row is filled
-
-                if (closeRowsData.length === 0) {
-
-                    alert('Please fill at least the first exit price (required).');
-
-                    return;
-
                 }
 
-                
-
-                // Process each close
-
-                closeRowsData.forEach(closeData => {
-
-                    const pnl = ((closeData.exitPrice - t.entry) * 100).toFixed(2);
-
-                    trades.push({
-
-                        stock: t.stock,
-
-                        option: t.option,
-
-                        day: t.day,
-
-                        entry: t.entry,
-
-                        exit: closeData.exitPrice,
-
-                        count: 1,
-
-                        status: 'CLOSED',
-
-                        entryTime: t.entryTime,
-
-                        exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-
-                        setups: closeData.setups.length > 0 ? closeData.setups : t.setups,
-
-                        pnl: pnl,
-
-                        timestamp: t.timestamp
-
-                    });
-
-                });
-
-                
-
-                // Update or remove original trade
-
-                const remainingQty = t.count - closeRowsData.length;
-
-                if (remainingQty > 0) {
-
-                    trades[editId].count = remainingQty;
-
-                } else {
-
-                    trades.splice(editId, 1);
-
-                }
+                else trades[editId].setups = set;
 
             } else {
-
-                // NEW TRADE LOGIC
-
-                let tick = document.querySelector('#tickerSelect .active')?.dataset.ticker;
-
-                const customTick = document.getElementById('customStock').value.trim().toUpperCase();
-
-                if (customTick) tick = customTick;
-
-                
-
-                const type = document.querySelector('#typeSelect .active')?.dataset.type;
-
-                const day = document.getElementById('daySelect').value;
-
-                const ent = parseFloat(document.getElementById('entry').value);
-
-                const count = parseInt(document.getElementById('count').value);
-
-                const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
-
-                
-
-                // Validation
-
-                if (!tick) { alert('Please select a symbol'); return; }
-
-                if (!type) { alert('Please select contract type (CALL/PUT)'); return; }
-
-                if (!day) { alert('Please select a day'); return; }
-
-                if (isNaN(ent) || ent <= 0) { alert('Please enter a valid entry price'); return; }
-
-                if (set.length === 0) { alert('Please select at least one execution setup'); return; }
-
-                
 
                 trades.unshift({ 
 
                     stock: tick, 
 
-                    option: type,
-
-                    day: day,
+                    option: type, 
 
                     entry: ent, 
 
@@ -1064,8 +910,6 @@
 
             }
 
-            
-
             resetForm(); render();
 
         };
@@ -1074,169 +918,85 @@
 
         function editTrade(i) {
 
-            const t = trades[i];
+            const t = trades[i]; 
 
-            if (t.status !== 'OPEN') return;
+            document.getElementById('editId').value = i; 
 
-            
+            document.getElementById('entry').value = t.entry; 
 
-            document.getElementById('editId').value = i;
+            document.getElementById('count').value = t.count; 
 
-            document.getElementById('isEditMode').value = 'true';
-
-            
-
-            // Lock entry fields
-
-            document.getElementById('entry').value = t.entry;
-
-            document.getElementById('entry').classList.add('locked');
-
-            document.getElementById('entry').disabled = true;
+            document.getElementById('exit').disabled = false;
 
             
 
-            document.getElementById('count').value = t.count;
+            // Show partial close controls if editing open trade
 
-            document.getElementById('count').classList.add('locked');
+            const partialContainer = document.getElementById('partialCloseContainer');
 
-            document.getElementById('count').disabled = true;
+            if (t.status === 'OPEN') {
 
-            
+                partialContainer.classList.remove('hidden');
 
-            document.getElementById('daySelect').value = t.day;
+                document.getElementById('closeQty').value = 1;
 
-            document.getElementById('daySelect').classList.add('locked');
+                document.getElementById('closeQty').max = t.count;
 
-            document.getElementById('daySelect').disabled = true;
+            } else {
 
-            
+                partialContainer.classList.add('hidden');
 
-            document.getElementById('customStock').disabled = true;
-
-            
-
-            // Lock ticker and type selection
-
-            document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => {
-
-                b.classList.toggle('active', b.dataset.ticker === t.stock);
-
-                b.classList.add('locked');
-
-            });
+            }
 
             
 
-            document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => {
+            document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.ticker === t.stock));
 
-                b.classList.toggle('active', b.dataset.type === t.option);
+            document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t.option));
 
-                b.classList.add('locked');
+            document.querySelectorAll('.setup-btn').forEach(btn => btn.classList.toggle('active', t.setups?.includes(btn.dataset.val)));
 
-            });
-
-            
-
-            // Hide entry setup grid
-
-            document.getElementById('setupGrid').parentElement.style.display = 'none';
-
-            
-
-            // Show close rows
-
-            document.getElementById('closeRowsContainer').classList.remove('hidden');
-
-            generateCloseRows(t.count);
-
-            
-
-            document.getElementById('submitBtn').innerText = "Close Trade(s)";
+            document.getElementById('submitBtn').innerText = "Update Record"; 
 
             document.getElementById('cancelBtn').classList.remove('hidden');
 
         }
 
-
+        
 
         function removeTrade(i) { if(confirm("Delete?")) { trades.splice(i, 1); render(); } }
 
+        
 
+        function resetForm() { 
 
-        function resetForm() {
+            document.getElementById('tradeForm').reset(); 
 
-            document.getElementById('tradeForm').reset();
+            document.getElementById('editId').value = ''; 
 
-            document.getElementById('editId').value = '';
+            document.getElementById('exit').disabled = true; 
 
-            document.getElementById('isEditMode').value = 'false';
+            document.getElementById('partialCloseContainer').classList.add('hidden');
 
-            
+            document.querySelectorAll('.active').forEach(b => b.classList.remove('active')); 
 
-            // Unlock all fields
+            document.getElementById('submitBtn').innerText = "Open Live Trade"; 
 
-            document.getElementById('entry').classList.remove('locked');
-
-            document.getElementById('entry').disabled = false;
-
-            document.getElementById('count').classList.remove('locked');
-
-            document.getElementById('count').disabled = false;
-
-            document.getElementById('daySelect').classList.remove('locked');
-
-            document.getElementById('daySelect').disabled = false;
-
-            document.getElementById('customStock').disabled = false;
-
-            
-
-            document.querySelectorAll('.toggle-btn').forEach(b => {
-
-                b.classList.remove('active', 'locked');
-
-            });
-
-            
-
-            document.querySelectorAll('.setup-btn').forEach(b => {
-
-                b.classList.remove('active');
-
-            });
-
-            
-
-            // Show entry setup, hide close rows
-
-            document.getElementById('setupGrid').parentElement.style.display = 'block';
-
-            document.getElementById('closeRowsContainer').classList.add('hidden');
-
-            
-
-            document.getElementById('submitBtn').innerText = "Open Live Trade";
-
-            document.getElementById('cancelBtn').classList.add('hidden');
+            document.getElementById('cancelBtn').classList.add('hidden'); 
 
         }
 
-
-
-        // Setup button handlers
+        
 
         document.querySelectorAll('.setup-btn').forEach(btn => btn.onclick = function() { this.classList.toggle('active'); });
 
-        
+        document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => btn.onclick = function() { 
 
-        document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => btn.onclick = function() {
+            this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active')); 
 
-            if (this.classList.contains('locked')) return;
+            this.classList.add('active'); 
 
-            this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-
-            this.classList.add('active');
+            // Clear custom stock input when preset is selected
 
             if (this.parentElement.id === 'tickerSelect') {
 
@@ -1246,7 +1006,9 @@
 
         });
 
+        
 
+        // Clear ticker selection when custom stock is entered
 
         document.getElementById('customStock').oninput = function() {
 
@@ -1258,29 +1020,9 @@
 
         };
 
+        
 
-
-        window.onload = () => { 
-
-            initCharts(); 
-
-            render(); 
-
-            document.getElementById('currentDateDisplay').innerText = new Date().toDateString();
-
-            // Set current day
-
-            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-            const today = days[new Date().getDay()];
-
-            if (today !== 'Saturday' && today !== 'Sunday') {
-
-                document.getElementById('daySelect').value = today;
-
-            }
-
-        };
+        window.onload = () => { initCharts(); render(); document.getElementById('currentDateDisplay').innerText = new Date().toDateString(); };
 
     </script>
 
