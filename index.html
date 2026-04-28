@@ -761,7 +761,18 @@
                 </div>
 
                 <div id="closeRowsContainer" class="col-span-full hidden border-t border-gray-800 pt-4">
-                    <label>📍 Close Positions (First Row Required)</label>
+                    <div class="mb-4">
+                        <label>📍 How Many Contracts Are You Closing? <span class="text-red-400">*</span></label>
+                        <div class="flex items-center gap-4 mt-2">
+                            <input type="number" id="closingQty" min="1" value="1" class="max-w-[200px]">
+                            <button type="button" onclick="updateCloseRows()" class="btn-secondary py-2 px-6">
+                                Update Rows
+                            </button>
+                            <span class="text-sm text-gray-400">
+                                Available: <span id="availableQty" class="text-[#00FFCC] font-bold">0</span> contracts
+                            </span>
+                        </div>
+                    </div>
                     <div id="closeRows" class="mt-4"></div>
                 </div>
 
@@ -1568,7 +1579,7 @@
                 container.innerHTML += `
                     <div class="glass-card p-4 mb-3">
                         <div class="text-[#00FFCC] font-bold text-xs mb-3">
-                            Position ${i + 1} of ${qty} ${isRequired ? '<span class="text-red-400">* REQUIRED</span>' : '(Optional)'}
+                            Contract ${i + 1} of ${qty} ${isRequired ? '<span class="text-red-400">* REQUIRED</span>' : '(Optional)'}
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
@@ -1593,6 +1604,25 @@
                     this.classList.toggle('active');
                 };
             });
+        }
+
+        // Update Close Rows based on closing quantity
+        function updateCloseRows() {
+            const closingQty = parseInt(document.getElementById('closingQty').value);
+            const availableQty = parseInt(document.getElementById('availableQty').innerText);
+
+            if (isNaN(closingQty) || closingQty < 1) {
+                alert('Please enter a valid quantity (minimum 1)');
+                return;
+            }
+
+            if (closingQty > availableQty) {
+                alert(`You can't close more than ${availableQty} contracts`);
+                document.getElementById('closingQty').value = availableQty;
+                return;
+            }
+
+            generateCloseRows(closingQty);
         }
 
         // Form Submission
