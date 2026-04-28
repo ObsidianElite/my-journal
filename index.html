@@ -1,1 +1,1031 @@
+<!DOCTYPE html>
 
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Obsidian Elite | Quant Terminal</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+        body { background-color: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
+
+        .stat-card { background: linear-gradient(145deg, #0a0e14 0%, #06090c 100%); border: 1px solid #1f2937; border-radius: 12px; position: relative; overflow: hidden; }
+
+        
+
+        label { 
+
+            color: #00FFCC !important; 
+
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.8); 
+
+            font-weight: 800; font-size: 11px; text-transform: uppercase; 
+
+            margin-bottom: 8px; display: block; letter-spacing: 0.1em; 
+
+        }
+
+
+
+        .metric-sub { font-size: 10px; color: #00FFCC !important; font-weight: 800; text-transform: uppercase; }
+
+        input { background-color: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; font-size: 14px; width: 100%; outline: none; }
+
+        input:focus { border-color: #00FFCC; }
+
+        input:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        
+
+        .toggle-group { display: flex; gap: 4px; background: #0a0e14; padding: 4px; border-radius: 8px; border: 1px solid #1f2937; flex-wrap: wrap; }
+
+        
+
+        /* RESTORED ALL 12 TICKER BUTTONS WITH UNIQUE BRAND COLORS */
+
+        .toggle-btn { flex: 1; min-width: 55px; text-align: center; padding: 6px 2px; font-size: 14px; font-weight: 800; border-radius: 4px; cursor: pointer; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s; text-transform: uppercase; }
+
+        .toggle-btn:hover { box-shadow: inset 0 0 8px var(--brand-color); border-color: var(--brand-color); }
+
+        .toggle-btn.active { 
+
+            background: var(--brand-color) !important; 
+
+            color: #fff !important; 
+
+            border-color: #fff !important; 
+
+            box-shadow: 0 0 15px var(--brand-color); 
+
+        }
+
+
+
+        /* RESTORED EXECUTION SETUP BUTTONS & FLUORESCENT STYLING */
+
+        .setup-btn { 
+
+            flex: 1; min-width: 80px; text-align: center; padding: 10px 6px; 
+
+            font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer; 
+
+            color: #00D9FF; background: #0d1117; border: 1px solid #1f2937; transition: 0.2s;
+
+            text-transform: uppercase;
+
+        }
+
+        /* Fluorescent Selection Logic: Becomes Black on Aqua when active */
+
+        .setup-btn.active { 
+
+            border-color: #00FFCC !important; 
+
+            color: #000 !important; 
+
+            background: #00FFCC !important; 
+
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); 
+
+        }
+
+
+
+        /* CONTRACT TYPE COLORS */
+
+        .toggle-btn.active[data-type="CALL"] { background: #4ade80 !important; border-color: #4ade80 !important; }
+
+        .toggle-btn.active[data-type="PUT"] { background: #f87171 !important; border-color: #f87171 !important; }
+
+        
+
+        .btn-live { background: linear-gradient(to right, #00FFCC, #00D9FF); color: #000; padding: 14px; font-weight: 900; border-radius: 8px; width: 100%; text-transform: uppercase; cursor: pointer; border: none; font-size: 14px; letter-spacing: 1px; }
+
+        .group-header { background: #111827; cursor: pointer; user-select: none; border-left: 4px solid #00FFCC; }
+
+        .matrix-val { color: #00D9FF; font-weight: 800; font-size: 1.1rem; }
+
+        thead th { color: #00FFCC !important; font-weight: 800; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid #1f2937; padding: 1rem; }
+
+        
+
+        /* Stats table styling */
+
+        .stats-table { width: 100%; border-collapse: collapse; }
+
+        .stats-table th { color: #00FFCC; font-weight: 800; text-transform: uppercase; font-size: 10px; padding: 12px; border-bottom: 1px solid #1f2937; text-align: left; }
+
+        .stats-table td { padding: 12px; border-bottom: 1px solid #1f2937; font-size: 12px; }
+
+        .stats-table tr:hover { background: rgba(255,255,255,0.02); }
+
+    </style>
+
+</head>
+
+<body class="p-4 lg:p-8">
+
+    <div class="max-w-[1800px] mx-auto">
+
+        <div class="flex justify-between items-end mb-6">
+
+            <div>
+
+                <h1 class="text-3xl font-black text-[#00FFCC] uppercase tracking-tighter">Obsidian <span class="text-white">Elite</span></h1>
+
+                <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">Execution Terminal | <span id="currentDateDisplay" class="text-[#00FFCC]"></span></p>
+
+            </div>
+
+            <div class="flex gap-6">
+
+                <div class="text-right"><p class="metric-sub">Net P&L</p><p id="totalPnl" class="text-3xl font-black text-green-400">$0.00</p></div>
+
+                <div class="text-right border-l border-gray-800 pl-6"><p class="metric-sub">Exposure</p><p id="activeCount" class="text-3xl font-black text-[#00D9FF]">0</p></div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-6">
+
+            <div class="stat-card p-4 h-[280px] lg:col-span-2"><label>Daily Performance Candles</label><canvas id="equityChart"></canvas></div>
+
+            <div class="stat-card p-4 h-[280px] flex flex-col items-center justify-center">
+
+                <label>Precision</label>
+
+                <div class="relative w-32 h-32"><canvas id="precisionChart"></canvas><div class="absolute inset-0 flex items-center justify-center"><span id="winRateText" class="text-xl font-black text-[#00FFCC]">0%</span></div></div>
+
+            </div>
+
+            <div class="stat-card p-4 h-[280px] lg:col-span-2"><label>Ticker P&L Range (Peak/Valley)</label><canvas id="tickerChart"></canvas></div>
+
+        </div>
+
+
+
+        <!-- NEW: Statistics Table -->
+
+        <div class="stat-card p-6 mb-6">
+
+            <label>Performance Statistics</label>
+
+            <table class="stats-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Period</th>
+
+                        <th class="text-right">Total Trades</th>
+
+                        <th class="text-right">Wins</th>
+
+                        <th class="text-right">Losses</th>
+
+                        <th class="text-right">Win Rate</th>
+
+                        <th class="text-right">Net P&L</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="statsBody">
+
+                    <tr>
+
+                        <td class="font-bold text-[#00FFCC]">Daily</td>
+
+                        <td id="dailyTotal" class="text-right text-white">0</td>
+
+                        <td id="dailyWins" class="text-right text-green-400">0</td>
+
+                        <td id="dailyLosses" class="text-right text-red-400">0</td>
+
+                        <td id="dailyWinRate" class="text-right text-[#00D9FF]">0%</td>
+
+                        <td id="dailyPnl" class="text-right font-bold text-white">$0.00</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td class="font-bold text-[#00FFCC]">Weekly</td>
+
+                        <td id="weeklyTotal" class="text-right text-white">0</td>
+
+                        <td id="weeklyWins" class="text-right text-green-400">0</td>
+
+                        <td id="weeklyLosses" class="text-right text-red-400">0</td>
+
+                        <td id="weeklyWinRate" class="text-right text-[#00D9FF]">0%</td>
+
+                        <td id="weeklyPnl" class="text-right font-bold text-white">$0.00</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td class="font-bold text-[#00FFCC]">Monthly</td>
+
+                        <td id="monthlyTotal" class="text-right text-white">0</td>
+
+                        <td id="monthlyWins" class="text-right text-green-400">0</td>
+
+                        <td id="monthlyLosses" class="text-right text-red-400">0</td>
+
+                        <td id="monthlyWinRate" class="text-right text-[#00D9FF]">0%</td>
+
+                        <td id="monthlyPnl" class="text-right font-bold text-white">$0.00</td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <div id="formContainer" class="stat-card p-6 mb-6 border-t-2 border-t-[#00FFCC]">
+
+            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+
+                <input type="hidden" id="editId" value="">
+
+                
+
+                <div class="col-span-2">
+
+                    <label>Symbol Selection (Alphabetical)</label>
+
+                    <div class="toggle-group" id="tickerSelect">
+
+                        <div class="toggle-btn" style="--brand-color: #666666; color: #fff;" data-ticker="AAPL">AAPL</div>
+
+                        <div class="toggle-btn" style="--brand-color: #ED1C24; color: #ED1C24;" data-ticker="AMD">AMD</div>
+
+                        <div class="toggle-btn" style="--brand-color: #0052FF; color: #0052FF;" data-ticker="COIN">COIN</div>
+
+                        <div class="toggle-btn" style="--brand-color: #0668E1; color: #0668E1;" data-ticker="META">META</div>
+
+                        <div class="toggle-btn" style="--brand-color: #701CC4; color: #701CC4;" data-ticker="MSTR">MSTR</div>
+
+                        <div class="toggle-btn" style="--brand-color: #0050AA; color: #0050AA;" data-ticker="MU">MU</div>
+
+                        <div class="toggle-btn" style="--brand-color: #76B900; color: #76B900;" data-ticker="NVDA">NVDA</div>
+
+                        <div class="toggle-btn" style="--brand-color: #ffffff; color: #F0F0F0;" data-ticker="PLTR">PLTR</div>
+
+                        <div class="toggle-btn" style="--brand-color: #00D9FF; color: #00D9FF;" data-ticker="QQQ">QQQ</div>
+
+                        <div class="toggle-btn" style="--brand-color: #FFD700; color: #FFD700;" data-ticker="SPX">SPX</div>
+
+                        <div class="toggle-btn" style="--brand-color: #00FFCC; color: #00FFCC;" data-ticker="SPY">SPY</div>
+
+                        <div class="toggle-btn" style="--brand-color: #E81828; color: #E81828;" data-ticker="TSLA">TSLA</div>
+
+                    </div>
+
+                    <!-- NEW: Dynamic Stock Entry -->
+
+                    <div class="mt-3">
+
+                        <label style="font-size: 9px;">New (Custom Stock)</label>
+
+                        <input type="text" id="customStock" placeholder="Enter custom ticker (e.g., GOOG)" maxlength="6" style="text-transform: uppercase;">
+
+                    </div>
+
+                </div>
+
+
+
+                <div>
+
+                    <label>Contract Type</label>
+
+                    <div class="toggle-group" id="typeSelect">
+
+                        <div class="toggle-btn" data-type="CALL">CALL</div>
+
+                        <div class="toggle-btn" data-type="PUT">PUT</div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div><label>Qty</label><input type="number" id="count" value="1" min="1"></div>
+
+                <div><label>Entry Price</label><input type="number" id="entry" step="0.01" placeholder="0.00"></div>
+
+                <div><label>Exit Price</label><input type="number" id="exit" step="0.01" placeholder="Locked" disabled></div>
+
+                
+
+                <div class="col-span-full border-t border-gray-800 pt-4">
+
+                    <label>Execution Setup (Fluorescent Selection Mandatory to Close)</label>
+
+                    <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+
+                        <div class="setup-btn" data-val="5/12 CURL">5/12 CURL</div>
+
+                        <div class="setup-btn" data-val="5/12 REJECT">5/12 REJECT</div>
+
+                        <div class="setup-btn" data-val="34/50 Bounce">34/50 Bounce</div>
+
+                        <div class="setup-btn" data-val="34/50 Reject">34/50 Reject</div>
+
+                        <div class="setup-btn" data-val="PM HI break">PM HI break</div>
+
+                        <div class="setup-btn" data-val="PM low break">PM low break</div>
+
+                        <div class="setup-btn" data-val="PD CL Bounce">PD CL Bounce</div>
+
+                        <div class="setup-btn" data-val="PD CL Fail">PD CL Fail</div>
+
+                        <div class="setup-btn" data-val="PD HI Brko">PD HI Brko</div>
+
+                        <div class="setup-btn" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
+
+                        <div class="setup-btn" data-val="34/50 MTF Bnc">34/50 MTF Bnc</div>
+
+                        <div class="setup-btn" data-val="34/50 MTF Rej">34/50 MTF Rej</div>
+
+                        <div class="setup-btn" data-val="50/55 MTF Bnc">50/55 MTF Bnc</div>
+
+                        <div class="setup-btn" data-val="50/55 MTF Rej">50/55 MTF Rej</div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- NEW: Partial close quantity -->
+
+                <div id="partialCloseContainer" class="hidden">
+
+                    <label>Close Qty</label>
+
+                    <input type="number" id="closeQty" value="1" min="1">
+
+                </div>
+
+
+
+                <div class="col-span-full flex gap-4 mt-2">
+
+                    <button type="submit" id="submitBtn" class="btn-live">Open Live Trade</button>
+
+                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden bg-gray-900 border border-red-500 text-red-500 px-6 py-2 rounded font-bold uppercase text-xs">Cancel</button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+
+        <div class="stat-card overflow-x-auto">
+
+            <table class="w-full text-left text-xs">
+
+                <thead class="bg-gray-900/50">
+
+                    <tr><th>Day / Date</th><th>Asset</th><th>Timeline</th><th>Fills</th><th>Setup Logic</th><th class="text-right">PNL</th><th class="text-center">Manage</th></tr>
+
+                </thead>
+
+                <tbody id="tradeBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        // --- CUSTOM WICK PLUGIN ---
+
+        const wickPlugin = {
+
+            id: 'wickPlugin',
+
+            afterDatasetsDraw(chart) {
+
+                const { ctx, scales: { y } } = chart;
+
+                const dataset = chart.data.datasets.find(ds => ds.wicks);
+
+                if (!dataset) return;
+
+                ctx.save();
+
+                chart.getDatasetMeta(chart.data.datasets.indexOf(dataset)).data.forEach((bar, index) => {
+
+                    const high = dataset.wicks[index].h; const low = dataset.wicks[index].l; const x = bar.x;
+
+                    if (high === -Infinity) return;
+
+                    ctx.beginPath(); ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1; ctx.moveTo(x, y.getPixelForValue(high)); ctx.lineTo(x, y.getPixelForValue(low)); ctx.stroke();
+
+                    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px JetBrains Mono'; ctx.textAlign = 'center';
+
+                    ctx.fillText(`$${Math.round(high)}`, x, y.getPixelForValue(high) - 5); ctx.fillText(`$${Math.round(low)}`, x, y.getPixelForValue(low) + 10);
+
+                });
+
+                ctx.restore();
+
+            }
+
+        };
+
+        Chart.register(wickPlugin);
+
+
+
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v3')) || [];
+
+        let equityChart, precisionChart, tickerChart;
+
+        const collapsedGroups = new Set();
+
+
+
+        function initCharts() {
+
+            equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { 
+
+                data: { labels: [], datasets: [
+
+                    { type: 'line', label: 'Equity', data: [], borderColor: '#00FFCC', tension: 0.4, borderWidth: 1, pointRadius: 0, fill: false, order: 1 },
+
+                    { type: 'bar', label: 'Day Close', data: [], backgroundColor: [], barPercentage: 0.5, order: 2, wicks: [] }
+
+                ]}, 
+
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#4b5563', font: { size: 9 } } }, y: { grid: { color: '#1f2937' } } } } 
+
+            });
+
+            precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Win', 'Loss'], datasets: [{ data: [0, 0], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '80%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
+            tickerChart = new Chart(document.getElementById('tickerChart').getContext('2d'), {
+
+                type: 'bar',
+
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 2, barPercentage: 0.5, wicks: [] }] },
+
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: 'bold', size: 9 } } }, y: { grid: { color: '#1f2937' } } } }
+
+            });
+
+        }
+
+
+
+        function updateAnalytics() {
+
+            const closed = trades.filter(t => t.status === 'CLOSED').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            // 1. TICKER CANDLES
+
+            let tickers = {};
+
+            closed.forEach(t => {
+
+                if (!tickers[t.stock]) tickers[t.stock] = { close: 0, high: -Infinity, low: Infinity };
+
+                const p = parseFloat(t.pnl);
+
+                tickers[t.stock].close += p;
+
+                if (tickers[t.stock].close > tickers[t.stock].high) tickers[t.stock].high = tickers[t.stock].close;
+
+                if (tickers[t.stock].close < tickers[t.stock].low) tickers[t.stock].low = tickers[t.stock].close;
+
+            });
+
+            const tLabels = Object.keys(tickers);
+
+            tickerChart.data.labels = tLabels;
+
+            tickerChart.data.datasets[0].data = tLabels.map(k => tickers[k].close);
+
+            tickerChart.data.datasets[0].backgroundColor = tLabels.map(k => tickers[k].close >= 0 ? '#4ade80cc' : '#f87171cc');
+
+            tickerChart.data.datasets[0].wicks = tLabels.map(k => ({ h: tickers[k].high, l: tickers[k].low }));
+
+            tickerChart.update();
+
+
+
+            // 2. DAILY CANDLES
+
+            let daily = {};
+
+            closed.forEach(t => {
+
+                const dateKey = new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'});
+
+                if (!daily[dateKey]) daily[dateKey] = { close: 0, high: -Infinity, low: Infinity };
+
+                const p = parseFloat(t.pnl);
+
+                daily[dateKey].close += p;
+
+                if (daily[dateKey].close > daily[dateKey].high) daily[dateKey].high = daily[dateKey].close;
+
+                if (daily[dateKey].close < daily[dateKey].low) daily[dateKey].low = daily[dateKey].close;
+
+            });
+
+            const dLabels = Object.keys(daily);
+
+            const dCloses = dLabels.map(k => daily[k].close);
+
+            let eqData = []; let temp = 0; dCloses.forEach(v => { temp += v; eqData.push(temp); });
+
+            equityChart.data.labels = dLabels;
+
+            equityChart.data.datasets[0].data = eqData;
+
+            equityChart.data.datasets[1].data = dCloses;
+
+            equityChart.data.datasets[1].backgroundColor = dCloses.map(v => v >= 0 ? '#4ade80cc' : '#f87171cc');
+
+            equityChart.data.datasets[1].wicks = dLabels.map(k => ({ h: daily[k].high, l: daily[k].low }));
+
+            equityChart.update();
+
+
+
+            // 3. STATS
+
+            let totalProfit = 0, totalLoss = 0, wins = 0, losses = 0;
+
+            closed.forEach(t => {
+
+                const p = parseFloat(t.pnl);
+
+                if (p > 0) { totalProfit += p; wins++; } else if (p < 0) { totalLoss += Math.abs(p); losses++; }
+
+            });
+
+            precisionChart.data.datasets[0].data = [wins, losses]; precisionChart.update();
+
+            document.getElementById('winRateText').innerText = closed.length ? Math.round((wins / closed.length) * 100) + '%' : '0%';
+
+            
+
+            // FIXED: Net P&L calculation
+
+            const netPnl = totalProfit - totalLoss;
+
+            document.getElementById('totalPnl').innerText = '$' + netPnl.toFixed(2);
+
+            document.getElementById('totalPnl').className = `text-3xl font-black ${netPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+
+            
+
+            // Update active count
+
+            const activeCount = trades.filter(t => t.status === 'OPEN').reduce((sum, t) => sum + (t.count || 0), 0);
+
+            document.getElementById('activeCount').innerText = activeCount;
+
+            
+
+            // NEW: Update period statistics
+
+            updatePeriodStats();
+
+        }
+
+
+
+        // NEW: Function to update period statistics
+
+        function updatePeriodStats() {
+
+            const now = new Date();
+
+            const periods = { Daily: [], Weekly: [], Monthly: [] };
+
+            
+
+            trades.filter(t => t.status === 'CLOSED').forEach(t => {
+
+                const date = new Date(t.timestamp);
+
+                const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+                
+
+                if (date.toDateString() === now.toDateString()) periods.Daily.push(t);
+
+                if (diff <= 7) periods.Weekly.push(t);
+
+                periods.Monthly.push(t);
+
+            });
+
+            
+
+            Object.keys(periods).forEach(period => {
+
+                const trades = periods[period];
+
+                const total = trades.length;
+
+                let wins = 0, losses = 0, netPnl = 0;
+
+                
+
+                trades.forEach(t => {
+
+                    const p = parseFloat(t.pnl);
+
+                    netPnl += p;
+
+                    if (p > 0) wins++;
+
+                    else if (p < 0) losses++;
+
+                });
+
+                
+
+                const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+                const prefix = period.toLowerCase();
+
+                
+
+                document.getElementById(`${prefix}Total`).innerText = total;
+
+                document.getElementById(`${prefix}Wins`).innerText = wins;
+
+                document.getElementById(`${prefix}Losses`).innerText = losses;
+
+                document.getElementById(`${prefix}WinRate`).innerText = winRate + '%';
+
+                document.getElementById(`${prefix}Pnl`).innerText = '$' + netPnl.toFixed(2);
+
+                document.getElementById(`${prefix}Pnl`).className = `text-right font-bold ${netPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+
+            });
+
+        }
+
+
+
+        function toggleGroup(id) { collapsedGroups.has(id) ? collapsedGroups.delete(id) : collapsedGroups.add(id); render(); }
+
+
+
+        function render() {
+
+            localStorage.setItem('obsidian_elite_v3', JSON.stringify(trades));
+
+            const body = document.getElementById('tradeBody'); body.innerHTML = '';
+
+            const now = new Date();
+
+            const groups = { 'Daily': [], 'Weekly': [], 'Monthly': [] };
+
+            trades.forEach((t, i) => {
+
+                const date = new Date(t.timestamp); const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+                t.idx = i;
+
+                if (date.toDateString() === now.toDateString()) groups['Daily'].push(t);
+
+                else if (diff <= 7) groups['Weekly'].push(t);
+
+                else groups['Monthly'].push(t);
+
+            });
+
+            Object.keys(groups).forEach(label => {
+
+                if (!groups[label].length) return;
+
+                body.innerHTML += `<tr class="group-header" onclick="toggleGroup('${label}')"><td colspan="7" class="p-3 text-[10px] font-black text-[#00FFCC]">${label} (${groups[label].length}) ${collapsedGroups.has(label) ? '▶' : '▼'}</td></tr>`;
+
+                if (!collapsedGroups.has(label)) {
+
+                    groups[label].forEach(t => {
+
+                        const isC = t.status === 'CLOSED'; const frozen = new Date(t.timestamp).toDateString() !== now.toDateString();
+
+                        body.innerHTML += `<tr class="border-b border-gray-800 hover:bg-white/5">
+
+                            <td class="p-4 text-gray-500">${new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'})}</td>
+
+                            <td class="p-4 font-bold text-white text-lg">${t.stock} <span class="${t.option==='CALL'?'text-green-400':'text-red-400'} text-[9px]">${t.option}</span></td>
+
+                            <td class="p-4 text-gray-600 text-[10px]">${t.entryTime} → ${t.exitTime||'--'}</td>
+
+                            <td class="p-4 text-white">${t.entry} → ${t.exit||'??'} (${t.count}x)</td>
+
+                            <td class="p-4 text-[#00D9FF] text-[10px]">${t.setups?.join(', ')||'--'}</td>
+
+                            <td class="p-4 text-right font-black ${parseFloat(t.pnl)>=0?'text-green-400':'text-red-500'}">${isC?'$'+t.pnl:'--'}</td>
+
+                            <td class="p-4 text-center">
+
+                                <button onclick="editTrade(${t.idx})" class="mr-2">✏️</button>
+
+                                ${!isC ? `<button onclick="editTrade(${t.idx})" class="bg-orange-600 text-black px-2 rounded font-bold text-[9px]">CLOSE</button>` : `<button onclick="removeTrade(${t.idx})">🗑️</button>`}
+
+                            </td></tr>`;
+
+                    });
+
+                }
+
+            });
+
+            updateAnalytics();
+
+        }
+
+
+
+        document.getElementById('tradeForm').onsubmit = (e) => {
+
+            e.preventDefault(); const editId = document.getElementById('editId').value;
+
+            
+
+            // Get ticker from either selected button or custom input
+
+            let tick = document.querySelector('#tickerSelect .active')?.dataset.ticker;
+
+            const customTick = document.getElementById('customStock').value.trim().toUpperCase();
+
+            if (customTick) tick = customTick;
+
+            
+
+            const type = document.querySelector('#typeSelect .active')?.dataset.type;
+
+            const ent = parseFloat(document.getElementById('entry').value);
+
+            const ext = parseFloat(document.getElementById('exit').value);
+
+            const count = parseInt(document.getElementById('count').value);
+
+            const closeQty = parseInt(document.getElementById('closeQty').value) || count;
+
+            const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
+
+            
+
+            if (editId !== "") {
+
+                const t = trades[editId];
+
+                if (!isNaN(ext)) { 
+
+                    // PARTIAL CLOSE LOGIC
+
+                    const qtyToClose = Math.min(closeQty, t.count);
+
+                    const remainingQty = t.count - qtyToClose;
+
+                    const pnl = ((ext - t.entry) * 100 * qtyToClose).toFixed(2);
+
+                    
+
+                    if (remainingQty > 0) {
+
+                        // Create closed trade for partial amount
+
+                        trades.push({
+
+                            stock: t.stock,
+
+                            option: t.option,
+
+                            entry: t.entry,
+
+                            exit: ext,
+
+                            count: qtyToClose,
+
+                            status: 'CLOSED',
+
+                            entryTime: t.entryTime,
+
+                            exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+
+                            setups: set,
+
+                            pnl: pnl,
+
+                            timestamp: t.timestamp
+
+                        });
+
+                        // Update original trade with remaining quantity
+
+                        trades[editId].count = remainingQty;
+
+                    } else {
+
+                        // Close entire position
+
+                        trades[editId] = { 
+
+                            ...t, 
+
+                            exit: ext, 
+
+                            status: 'CLOSED', 
+
+                            exitTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+
+                            setups: set, 
+
+                            pnl: pnl 
+
+                        };
+
+                    }
+
+                }
+
+                else trades[editId].setups = set;
+
+            } else {
+
+                trades.unshift({ 
+
+                    stock: tick, 
+
+                    option: type, 
+
+                    entry: ent, 
+
+                    count: count, 
+
+                    status: 'OPEN', 
+
+                    entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), 
+
+                    setups: set, 
+
+                    timestamp: new Date().toISOString() 
+
+                });
+
+            }
+
+            resetForm(); render();
+
+        };
+
+
+
+        function editTrade(i) {
+
+            const t = trades[i]; 
+
+            document.getElementById('editId').value = i; 
+
+            document.getElementById('entry').value = t.entry; 
+
+            document.getElementById('count').value = t.count; 
+
+            document.getElementById('exit').disabled = false;
+
+            
+
+            // Show partial close controls if editing open trade
+
+            const partialContainer = document.getElementById('partialCloseContainer');
+
+            if (t.status === 'OPEN') {
+
+                partialContainer.classList.remove('hidden');
+
+                document.getElementById('closeQty').value = 1;
+
+                document.getElementById('closeQty').max = t.count;
+
+            } else {
+
+                partialContainer.classList.add('hidden');
+
+            }
+
+            
+
+            document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.ticker === t.stock));
+
+            document.querySelectorAll('#typeSelect .toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t.option));
+
+            document.querySelectorAll('.setup-btn').forEach(btn => btn.classList.toggle('active', t.setups?.includes(btn.dataset.val)));
+
+            document.getElementById('submitBtn').innerText = "Update Record"; 
+
+            document.getElementById('cancelBtn').classList.remove('hidden');
+
+        }
+
+        
+
+        function removeTrade(i) { if(confirm("Delete?")) { trades.splice(i, 1); render(); } }
+
+        
+
+        function resetForm() { 
+
+            document.getElementById('tradeForm').reset(); 
+
+            document.getElementById('editId').value = ''; 
+
+            document.getElementById('exit').disabled = true; 
+
+            document.getElementById('partialCloseContainer').classList.add('hidden');
+
+            document.querySelectorAll('.active').forEach(b => b.classList.remove('active')); 
+
+            document.getElementById('submitBtn').innerText = "Open Live Trade"; 
+
+            document.getElementById('cancelBtn').classList.add('hidden'); 
+
+        }
+
+        
+
+        document.querySelectorAll('.setup-btn').forEach(btn => btn.onclick = function() { this.classList.toggle('active'); });
+
+        document.querySelectorAll('.toggle-group .toggle-btn').forEach(btn => btn.onclick = function() { 
+
+            this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active')); 
+
+            this.classList.add('active'); 
+
+            // Clear custom stock input when preset is selected
+
+            if (this.parentElement.id === 'tickerSelect') {
+
+                document.getElementById('customStock').value = '';
+
+            }
+
+        });
+
+        
+
+        // Clear ticker selection when custom stock is entered
+
+        document.getElementById('customStock').oninput = function() {
+
+            if (this.value.trim()) {
+
+                document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.remove('active'));
+
+            }
+
+        };
+
+        
+
+        window.onload = () => { initCharts(); render(); document.getElementById('currentDateDisplay').innerText = new Date().toDateString(); };
+
+    </script>
+
+</body>
+
+</html>
