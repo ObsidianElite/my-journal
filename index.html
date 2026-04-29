@@ -5,182 +5,1323 @@
     <title>Obsidian Elite v4 | Advanced Quant Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00FFCC; --secondary: #00D9FF; --bg-dark: #030508; --bg-card: #0a0e14; }
-        body { background: #030508; color: #ffffff; font-family: 'JetBrains Mono', monospace; }
-        .glass-card { background: rgba(10, 14, 20, 0.7); border: 1px solid rgba(0, 255, 204, 0.1); border-radius: 12px; }
-        label { color: var(--primary); font-weight: 700; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 8px; }
-        input, select { background: #0d1117; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; width: 100%; outline: none; }
-        .toggle-btn { cursor: pointer; background: #161b22; border: 1px solid #30363d; padding: 8px; border-radius: 6px; text-align: center; font-size: 12px; transition: 0.2s; }
-        .toggle-btn.active { background: var(--brand-color) !important; color: #000 !important; font-weight: 800; box-shadow: 0 0 15px var(--brand-color); }
-        .modern-table th { cursor: pointer; user-select: none; transition: background 0.2s; }
-        .modern-table th:hover { background: rgba(0, 255, 204, 0.1); }
-        .frozen-row { opacity: 0.6; background: rgba(255, 255, 255, 0.02); }
-        .matrix-box { cursor: pointer; transition: 0.3s; overflow: hidden; }
-        .matrix-box:hover { border-color: var(--primary); }
-        .collapsed-content { display: none; }
+        :root {
+            --primary: #00FFCC;
+            --secondary: #00D9FF;
+            --accent: #FFD700;
+            --bg-dark: #030508;
+            --bg-card: #0a0e14;
+            --border: #1f2937;
+            --success: #4ade80;
+            --danger: #f87171;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background: linear-gradient(135deg, #030508 0%, #0a0e14 100%);
+            color: #ffffff; 
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(10, 14, 20, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 204, 0.1);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(0, 255, 204, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 255, 204, 0.1);
+        }
+
+        label {
+            color: var(--primary) !important;
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+            font-weight: 700;
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: 0.15em;
+        }
+
+        input, select {
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 204, 0.1);
+            background: rgba(13, 17, 23, 0.95);
+        }
+        input.inline-input {
+            padding: 6px 8px;
+            font-size: 12px;
+            min-width: 80px;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 6px;
+            background: rgba(10, 14, 20, 0.5);
+            padding: 6px;
+            border-radius: 10px;
+            border: 1px solid rgba(31, 41, 55, 0.5);
+            flex-wrap: wrap;
+        }
+        .toggle-btn {
+            flex: 1;
+            min-width: 60px;
+            text-align: center;
+            padding: 8px 4px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid rgba(31, 41, 55, 0.8);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .toggle-btn:hover {
+            box-shadow: inset 0 0 10px var(--brand-color);
+            border-color: var(--brand-color);
+            transform: scale(1.05);
+        }
+        .toggle-btn.active {
+            background: var(--brand-color) !important;
+            color: #000 !important;
+            border-color: #fff !important;
+            box-shadow: 0 0 20px var(--brand-color);
+            font-weight: 800;
+        }
+        .toggle-btn.active[data-type="CALL"] { background: #4ade80 !important; }
+        .toggle-btn.active[data-type="PUT"] { background: #f87171 !important; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #000;
+            padding: 14px 28px;
+            font-weight: 900;
+            border-radius: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            letter-spacing: 1.5px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 12px 24px;
+            font-weight: 800;
+            border-radius: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 13px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: var(--accent);
+            color: #000;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: rgba(248, 113, 113, 0.1);
+            border: 2px solid var(--danger);
+            color: var(--danger);
+            padding: 10px 20px;
+            font-weight: 800;
+            border-radius: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 12px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn-close {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: #fff;
+            padding: 8px 16px;
+            font-weight: 800;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .btn-close:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(249, 115, 22, 0.4);
+        }
+
+        .btn-submit-close {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            padding: 6px 12px;
+            font-weight: 800;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .btn-submit-close:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-cancel-close {
+            background: transparent;
+            color: #ef4444;
+            padding: 6px 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid #ef4444;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .btn-cancel-close:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .stat-display {
+            text-align: center;
+            padding: 20px;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: rgba(0, 255, 204, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 0 0 20px currentColor;
+        }
+        .stat-subvalue {
+            font-size: 0.9rem;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .modern-table thead th {
+            background: rgba(17, 24, 39, 0.8);
+            color: var(--primary);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 10px;
+            padding: 16px;
+            text-align: left;
+            border-bottom: 2px solid rgba(0, 255, 204, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .modern-table tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(31, 41, 55, 0.5);
+        }
+        .modern-table tbody tr:hover {
+            background: rgba(0, 255, 204, 0.05);
+        }
+        .modern-table tbody td {
+            padding: 16px;
+            font-size: 13px;
+        }
+
+        .close-inputs-row {
+            background: rgba(249, 115, 22, 0.1);
+            border-left: 4px solid #f97316;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-imported {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+        .badge-manual {
+            background: rgba(0, 217, 255, 0.2);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+        .badge-open {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .badge-partial {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+            border: 1px solid #fb923c;
+        }
+        .badge-closed {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+            border: 1px solid #6b7280;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #0a0e14 0%, #06090c 100%);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 255, 204, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .import-status {
+            background: rgba(10, 14, 20, 0.9);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .import-status.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 14, 20, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 204, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 204, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .stat-value { font-size: 2rem; }
+        }
     </style>
 </head>
 <body class="p-4 lg:p-8">
     <div class="max-w-[1920px] mx-auto">
-        <div class="flex justify-between items-end mb-8">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 gap-6">
             <div>
-                <h1 class="text-4xl font-black text-[#00FFCC] uppercase">Obsidian <span class="text-white">Elite</span></h1>
-                <p class="text-[10px] text-gray-400 mt-2 uppercase tracking-widest">Execution Terminal | <span id="currentDateDisplay"></span></p>
+                <h1 class="text-4xl lg:text-5xl font-black text-[#00FFCC] uppercase tracking-tighter">
+                    Obsidian <span class="text-white">Elite</span>
+                    <span class="text-xs ml-3 text-gray-500">v4.0</span>
+                </h1>
+                <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">
+                    Advanced Execution Terminal | <span id="currentDateDisplay" class="text-[#00FFCC]"></span>
+                </p>
             </div>
-            <div class="flex gap-4">
-                <div class="glass-card p-4 text-right"><label>Net P&L</label><div id="totalPnl" class="text-3xl font-black text-green-400">$0.00</div></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="glass-card p-4 matrix-box border border-gray-800" onclick="toggleDrill(this)">
-                <div class="flex justify-between items-center"><label>Daily Matrix</label><span>展开/折叠</span></div>
-                <div class="text-2xl font-black mt-2">Win Rate: <span id="dailyWin">0%</span></div>
-                <div class="collapsed-content mt-2 text-xs text-gray-400 border-t border-gray-800 pt-2">
-                    Trades: <span id="dailyTrades">0</span> | Profit: <span id="dailyProfit">$0</span>
+            
+            <div class="flex flex-wrap gap-6">
+                <div class="stat-display glass-card px-8 py-4">
+                    <div class="stat-label">Net P&L</div>
+                    <div id="totalPnl" class="stat-value text-green-400">$0.00</div>
+                    <div id="totalPnlPercent" class="stat-subvalue text-gray-400">0%</div>
                 </div>
-            </div>
-            <div class="glass-card p-4 matrix-box border border-gray-800" onclick="toggleDrill(this)">
-                <div class="flex justify-between items-center"><label>Weekly Matrix</label><span>展开/折叠</span></div>
-                <div class="text-2xl font-black mt-2">Net: <span id="weeklyPnl">$0</span></div>
-                <div class="collapsed-content mt-2 text-xs text-gray-400 border-t border-gray-800 pt-2">
-                    Weekly Volume: <span id="weeklyVol">0</span> contracts
+                <div class="stat-display glass-card px-8 py-4">
+                    <div class="stat-label">Total Trades</div>
+                    <div id="totalTrades" class="stat-value text-[#00D9FF]">0</div>
+                    <div id="totalTradesDetail" class="stat-subvalue text-gray-400">0 entries</div>
                 </div>
-            </div>
-            <div class="glass-card p-4 matrix-box border border-gray-800" onclick="toggleDrill(this)">
-                <div class="flex justify-between items-center"><label>Monthly Matrix</label><span>展开/折叠</span></div>
-                <div class="text-2xl font-black mt-2">Growth: <span id="monthlyGrowth">0%</span></div>
-                <div class="collapsed-content mt-2 text-xs text-gray-400 border-t border-gray-800 pt-2">
-                    Month-to-Date P&L: <span id="monthlyPnl">$0</span>
+                <div class="stat-display glass-card px-8 py-4">
+                    <div class="stat-label">Open Contracts</div>
+                    <div id="openContracts" class="stat-value text-[#00FFCC]">0</div>
+                    <div id="openValue" class="stat-subvalue text-gray-400">$0</div>
                 </div>
             </div>
         </div>
 
-        <div class="glass-card p-6 mb-6 border-t-2 border-t-[#00FFCC]">
-            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div><label>Symbol</label><input type="text" id="ticker" placeholder="e.g. SPY" required></div>
-                <div><label>Type</label><select id="type"><option value="CALL">CALL</option><option value="PUT">PUT</option></select></div>
-                <div><label>Qty</label><input type="number" id="qty" value="1"></div>
-                <div><label>Entry</label><input type="number" id="entry" step="0.01" required></div>
-                <div><label>Action</label><button type="submit" class="bg-[#00FFCC] text-black w-full py-2.5 rounded font-black uppercase text-sm">Open Trade</button></div>
+        <!-- Import Management -->
+        <div class="glass-card p-6 mb-6">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-[#00FFCC] mb-2">📊 Data Management</h2>
+                    <p class="text-xs text-gray-400">Import trades from Excel or manage your data</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <input type="file" id="fileInput" accept=".xls,.xlsx" style="display: none;">
+                    <button onclick="document.getElementById('fileInput').click()" class="btn-secondary">
+                        📁 Import Excel
+                    </button>
+                    <button onclick="exportToExcel()" class="btn-secondary">
+                        💾 Export All Data
+                    </button>
+                    <button onclick="showDeleteImportedModal()" class="btn-danger" id="deleteImportedBtn" style="display: none;">
+                        🗑️ Delete All Imported
+                    </button>
+                </div>
+            </div>
+
+            <div id="importStatusBox" class="import-status">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📦</span>
+                        <div>
+                            <div class="font-bold text-[#00FFCC]" id="importFileName">No file imported</div>
+                            <div class="text-xs text-gray-400" id="importDate">--</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-white" id="importedCount">0 trades</div>
+                        <div class="text-xs text-gray-400" id="importedPnl">$0.00 P&L</div>
+                    </div>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div id="importProgress" class="h-full bg-gradient-to-r from-[#00FFCC] to-[#00D9FF] transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="glass-card p-6 h-[320px] lg:col-span-2">
+                <label>📈 Cumulative Equity Curve</label>
+                <canvas id="equityChart"></canvas>
+            </div>
+
+            <div class="glass-card p-6 h-[320px] flex flex-col items-center justify-center">
+                <label>🎯 Win Rate</label>
+                <div class="relative w-40 h-40 mt-4">
+                    <canvas id="precisionChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="winRateText" class="text-3xl font-black text-[#00FFCC]">0%</span>
+                    </div>
+                </div>
+                <div class="mt-6 grid grid-cols-2 gap-4 w-full">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400">Wins</div>
+                        <div id="totalWins" class="text-xl font-bold text-green-400">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400">Losses</div>
+                        <div id="totalLosses" class="text-xl font-bold text-red-400">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trade Entry Form -->
+        <div id="formContainer" class="glass-card p-6 mb-6 border-t-2 border-t-[#00FFCC]">
+            <h2 class="text-xl font-bold text-[#00FFCC] mb-6">⚡ Trade Execution</h2>
+            <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                <div class="col-span-2">
+                    <label>Symbol <span class="text-red-400">*</span></label>
+                    <div class="toggle-group" id="tickerSelect">
+                        <div class="toggle-btn" style="--brand-color: #666666; color: #fff;" data-ticker="AAPL">AAPL</div>
+                        <div class="toggle-btn" style="--brand-color: #ED1C24; color: #ED1C24;" data-ticker="AMD">AMD</div>
+                        <div class="toggle-btn" style="--brand-color: #0052FF; color: #0052FF;" data-ticker="COIN">COIN</div>
+                        <div class="toggle-btn" style="--brand-color: #0668E1; color: #0668E1;" data-ticker="META">META</div>
+                        <div class="toggle-btn" style="--brand-color: #701CC4; color: #701CC4;" data-ticker="MSTR">MSTR</div>
+                        <div class="toggle-btn" style="--brand-color: #76B900; color: #76B900;" data-ticker="NVDA">NVDA</div>
+                        <div class="toggle-btn" style="--brand-color: #00D9FF; color: #00D9FF;" data-ticker="SPX">SPX</div>
+                        <div class="toggle-btn" style="--brand-color: #00FFCC; color: #00FFCC;" data-ticker="SPY">SPY</div>
+                        <div class="toggle-btn" style="--brand-color: #E81828; color: #E81828;" data-ticker="TSLA">TSLA</div>
+                    </div>
+                    <div class="mt-3">
+                        <label style="font-size: 9px;">Custom Ticker</label>
+                        <input type="text" id="customStock" placeholder="Enter custom ticker..." maxlength="10" style="text-transform: uppercase;">
+                    </div>
+                </div>
+
+                <div>
+                    <label>Day <span class="text-red-400">*</span></label>
+                    <select id="daySelect" class="font-bold">
+                        <option value="">Select Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Type <span class="text-red-400">*</span></label>
+                    <div class="toggle-group" id="typeSelect">
+                        <div class="toggle-btn" data-type="CALL">CALL</div>
+                        <div class="toggle-btn" data-type="PUT">PUT</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Contracts <span class="text-red-400">*</span></label>
+                    <input type="number" id="count" value="1" min="1">
+                </div>
+                
+                <div>
+                    <label>Entry Price <span class="text-red-400">*</span></label>
+                    <input type="number" id="entry" step="0.01" placeholder="0.00">
+                </div>
+                
+                <div class="col-span-full border-t border-gray-800 pt-4">
+                    <label>Execution Setup (Select At Least 1) <span class="text-red-400">*</span></label>
+                    <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                        <div class="toggle-btn" style="--brand-color: #00FFCC; color: #00FFCC;" data-val="5/12 CURL">5/12 CURL</div>
+                        <div class="toggle-btn" style="--brand-color: #00D9FF; color: #00D9FF;" data-val="5/12 REJECT">5/12 REJECT</div>
+                        <div class="toggle-btn" style="--brand-color: #4ade80; color: #4ade80;" data-val="34/50 Bounce">34/50 Bounce</div>
+                        <div class="toggle-btn" style="--brand-color: #f87171; color: #f87171;" data-val="34/50 Reject">34/50 Reject</div>
+                        <div class="toggle-btn" style="--brand-color: #FFD700; color: #FFD700;" data-val="PM HI break">PM HI break</div>
+                        <div class="toggle-btn" style="--brand-color: #a78bfa; color: #a78bfa;" data-val="PM low break">PM low break</div>
+                        <div class="toggle-btn" style="--brand-color: #fb923c; color: #fb923c;" data-val="PD CL Bounce">PD CL Bounce</div>
+                        <div class="toggle-btn" style="--brand-color: #ec4899; color: #ec4899;" data-val="PD CL Fail">PD CL Fail</div>
+                        <div class="toggle-btn" style="--brand-color: #06b6d4; color: #06b6d4;" data-val="PD HI Brko">PD HI Brko</div>
+                        <div class="toggle-btn" style="--brand-color: #f59e0b; color: #f59e0b;" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
+                    </div>
+                </div>
+
+                <div class="col-span-full flex gap-4 mt-4">
+                    <button type="submit" class="btn-primary flex-1">
+                        🚀 Open Live Trade
+                    </button>
+                </div>
             </form>
         </div>
 
-        <div class="glass-card overflow-hidden">
-            <table class="w-full text-left modern-table">
-                <thead class="bg-gray-900/50">
-                    <tr class="text-[#00FFCC] text-[10px]">
-                        <th onclick="sortTable(0)">#</th>
-                        <th onclick="sortTable(1)">Date</th>
-                        <th onclick="sortTable(2)">Symbol</th>
-                        <th onclick="sortTable(3)">Side</th>
-                        <th onclick="sortTable(4)">Qty</th>
-                        <th onclick="sortTable(5)">Entry</th>
-                        <th onclick="sortTable(6)">Exit</th>
-                        <th onclick="sortTable(7)">P&L</th>
+        <!-- Trade History -->
+        <div class="glass-card overflow-x-auto">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-[#00FFCC]">📊 Trade History</h2>
+                <div class="text-sm text-gray-400">
+                    <span id="totalEntries" class="text-[#00FFCC] font-bold">0</span> entries | 
+                    <span id="totalCloses" class="text-[#00FFCC] font-bold">0</span> closes
+                </div>
+            </div>
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Day</th>
+                        <th>Date</th>
+                        <th>Symbol</th>
+                        <th>Status</th>
+                        <th>Qty (Rem/Total)</th>
+                        <th>Entry Price</th>
+                        <th>Avg Exit</th>
+                        <th>Entry Time</th>
+                        <th>Setup</th>
+                        <th class="text-right">Realized P&L</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="tradeBody" class="text-sm"></tbody>
+                <tbody id="tradeBody"></tbody>
             </table>
         </div>
     </div>
 
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 class="text-2xl font-black text-red-400 mb-4">⚠️ Confirm Deletion</h2>
+            <p class="text-gray-300 mb-6">
+                Are you sure you want to delete <strong id="deleteCount" class="text-[#00FFCC]">0</strong> imported trades?
+            </p>
+            <p class="text-sm text-gray-400 mb-6">
+                This action cannot be undone. All imported trade data will be permanently removed.
+            </p>
+            <div class="flex gap-4">
+                <button onclick="confirmDeleteImported()" class="btn-danger flex-1">
+                    Yes, Delete All Imported
+                </button>
+                <button onclick="closeDeleteModal()" class="btn-secondary flex-1">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let trades = JSON.parse(localStorage.getItem('obsidian_v4_data')) || [];
-        let currentSort = { col: null, asc: true };
-
-        function toggleDrill(el) {
-            const content = el.querySelector('.collapsed-content');
-            content.style.display = content.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function sortTable(colIndex) {
-            currentSort.asc = currentSort.col === colIndex ? !currentSort.asc : true;
-            currentSort.col = colIndex;
-            
-            trades.sort((a, b) => {
-                let valA = Object.values(a)[colIndex];
-                let valB = Object.values(b)[colIndex];
-                if (colIndex === 0 || colIndex >= 4) { // Numbers
-                    return currentSort.asc ? valA - valB : valB - valA;
-                }
-                return currentSort.asc ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
-            });
-            render();
-        }
-
-        document.getElementById('tradeForm').onsubmit = (e) => {
-            e.preventDefault();
-            const newTrade = {
-                id: trades.length + 1,
-                date: new Date().toISOString().split('T')[0],
-                symbol: document.getElementById('ticker').value.toUpperCase(),
-                side: document.getElementById('type').value,
-                qty: parseInt(document.getElementById('qty').value),
-                entry: parseFloat(document.getElementById('entry').value),
-                exit: 0,
-                pnl: 0
-            };
-            trades.unshift(newTrade);
-            saveAndRender();
-            e.target.reset();
+        // Chart.js Setup
+        const wickPlugin = {
+            id: 'wickPlugin',
+            afterDatasetsDraw(chart) {
+                const { ctx, scales: { y } } = chart;
+                const dataset = chart.data.datasets.find(ds => ds.wicks);
+                if (!dataset) return;
+                
+                ctx.save();
+                chart.getDatasetMeta(chart.data.datasets.indexOf(dataset)).data.forEach((bar, index) => {
+                    const high = dataset.wicks[index]?.h;
+                    const low = dataset.wicks[index]?.l;
+                    const x = bar.x;
+                    if (high === undefined || high === -Infinity) return;
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#ffffffaa';
+                    ctx.lineWidth = 1.5;
+                    ctx.moveTo(x, y.getPixelForValue(high));
+                    ctx.lineTo(x, y.getPixelForValue(low));
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
         };
+        Chart.register(wickPlugin);
 
-        function deleteTrade(index) {
-            const tradeDate = trades[index].date;
-            const today = new Date().toISOString().split('T')[0];
+        // Global State - NEW STRUCTURE
+        let trades = JSON.parse(localStorage.getItem('obsidian_elite_v4')) || [];
+        let importMetadata = JSON.parse(localStorage.getItem('obsidian_import_metadata')) || null;
+        let equityChart, precisionChart;
+        let closingTradeId = null;
+
+        // Utility Functions
+        function getTickerPrefix(symbol) {
+            if (!symbol) return '';
+            let clean = symbol.replace(/^-/, '');
+            const match = clean.match(/^([A-Z]+)/);
+            return match ? match[1] : clean;
+        }
+
+        function formatCurrency(value) {
+            return '$' + parseFloat(value).toFixed(2);
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Import Excel
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
             
-            if (tradeDate !== today) {
-                alert("ANTI-TAMPER LOCK: Cannot delete trades from previous days.");
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                processImportedData(jsonData, file.name);
+                
+                document.getElementById('importStatusBox').classList.add('active');
+            } catch (error) {
+                alert('Import failed: ' + error.message);
+                console.error('Import error:', error);
+            }
+            
+            e.target.value = '';
+        });
+
+        function processImportedData(data, fileName) {
+            const openPositions = {};
+            const importedTrades = [];
+            const importId = Date.now().toString();
+            
+            // Process in reverse (oldest first)
+            data.reverse().forEach(record => {
+                const symbol = record['Symbol'];
+                const status = record['Status'];
+                const description = record['Trade Description'];
+                const orderTime = record['Order Time'];
+                
+                const priceMatch = status.match(/\$([0-9.]+)/);
+                const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                
+                // Extract quantity - handle both "1 Apr" and "6 May" formats
+                const qtyMatch = description.match(/(?:Open|Close)\s+(\d+)\s+/);
+                if (!qtyMatch) return;
+                
+                const qty = parseInt(qtyMatch[1]);
+                const action = description.includes('Buy to Open') ? 'BUY' : 'SELL';
+                const contractType = description.toLowerCase().includes('call') ? 'CALL' : 'PUT';
+                const ticker = getTickerPrefix(symbol);
+                
+                const timeMatch = orderTime.match(/(\d{2}:\d{2}:\d{2} [AP]M) (\d{2}\/\d{2}\/\d{4})/);
+                const time = timeMatch ? timeMatch[1] : orderTime;
+                const dateStr = timeMatch ? timeMatch[2] : new Date().toLocaleDateString();
+                const [month, day, year] = dateStr.split('/');
+                const fullDate = new Date(`${year}-${month}-${day}`);
+                const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][fullDate.getDay()];
+                
+                const key = `${symbol}_${contractType}`;
+                
+                if (action === 'BUY') {
+                    // Create ONE trade entry for this BUY
+                    const tradeId = generateId();
+                    openPositions[key] = {
+                        tradeId: tradeId,
+                        symbol: ticker,
+                        fullSymbol: symbol,
+                        contractType: contractType,
+                        totalQty: qty,
+                        remainingQty: qty,
+                        entryPrice: price,
+                        entryTime: time,
+                        day: dayName,
+                        timestamp: fullDate.toISOString(),
+                        closes: []
+                    };
+                } else if (action === 'SELL') {
+                    // Add close to existing position
+                    if (openPositions[key]) {
+                        openPositions[key].closes.push({
+                            qty: qty,
+                            exitPrice: price,
+                            exitTime: time,
+                            pnl: ((price - openPositions[key].entryPrice) * 100 * qty).toFixed(2)
+                        });
+                        openPositions[key].remainingQty -= qty;
+                        
+                        // If fully closed, convert to trade
+                        if (openPositions[key].remainingQty <= 0) {
+                            const pos = openPositions[key];
+                            const totalPnl = pos.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
+                            const avgExit = pos.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / pos.totalQty;
+                            
+                            importedTrades.push({
+                                id: pos.tradeId,
+                                stock: pos.symbol,
+                                fullSymbol: pos.fullSymbol,
+                                option: pos.contractType,
+                                day: pos.day,
+                                totalQty: pos.totalQty,
+                                remainingQty: 0,
+                                entry: pos.entryPrice,
+                                avgExit: avgExit,
+                                status: 'CLOSED',
+                                entryTime: pos.entryTime,
+                                setups: ['Imported'],
+                                closes: pos.closes,
+                                realizedPnl: totalPnl,
+                                timestamp: pos.timestamp,
+                                source: 'imported',
+                                importId: importId
+                            });
+                            
+                            delete openPositions[key];
+                        }
+                    }
+                }
+            });
+            
+            // Add any remaining open positions
+            Object.values(openPositions).forEach(pos => {
+                const totalPnl = pos.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
+                const closedQty = pos.totalQty - pos.remainingQty;
+                const avgExit = closedQty > 0 ? pos.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / closedQty : 0;
+                
+                importedTrades.push({
+                    id: pos.tradeId,
+                    stock: pos.symbol,
+                    fullSymbol: pos.fullSymbol,
+                    option: pos.contractType,
+                    day: pos.day,
+                    totalQty: pos.totalQty,
+                    remainingQty: pos.remainingQty,
+                    entry: pos.entryPrice,
+                    avgExit: avgExit,
+                    status: pos.remainingQty === pos.totalQty ? 'OPEN' : 'PARTIAL',
+                    entryTime: pos.entryTime,
+                    setups: ['Imported'],
+                    closes: pos.closes,
+                    realizedPnl: totalPnl,
+                    timestamp: pos.timestamp,
+                    source: 'imported',
+                    importId: importId
+                });
+            });
+            
+            const importPnl = importedTrades.reduce((sum, t) => sum + parseFloat(t.realizedPnl || 0), 0);
+            
+            importMetadata = {
+                fileName: fileName,
+                importDate: new Date().toISOString(),
+                importId: importId,
+                tradeCount: importedTrades.length,
+                pnl: importPnl
+            };
+            localStorage.setItem('obsidian_import_metadata', JSON.stringify(importMetadata));
+            
+            trades = [...importedTrades, ...trades];
+            
+            updateImportStatus();
+            document.getElementById('deleteImportedBtn').style.display = 'inline-block';
+            
+            render();
+            
+            setTimeout(() => {
+                document.getElementById('importProgress').style.width = '100%';
+            }, 100);
+        }
+
+        function updateImportStatus() {
+            if (!importMetadata) return;
+            
+            document.getElementById('importFileName').textContent = importMetadata.fileName;
+            document.getElementById('importDate').textContent = 'Imported: ' + new Date(importMetadata.importDate).toLocaleString();
+            document.getElementById('importedCount').textContent = importMetadata.tradeCount + ' trades';
+            document.getElementById('importedPnl').textContent = formatCurrency(importMetadata.pnl);
+            
+            const pnlEl = document.getElementById('importedPnl');
+            pnlEl.className = importMetadata.pnl >= 0 ? 'text-xs text-green-400' : 'text-xs text-red-400';
+        }
+
+        // Delete Imported
+        function showDeleteImportedModal() {
+            const importedCount = trades.filter(t => t.source === 'imported').length;
+            document.getElementById('deleteCount').textContent = importedCount;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function confirmDeleteImported() {
+            trades = trades.filter(t => t.source !== 'imported');
+            importMetadata = null;
+            localStorage.setItem('obsidian_import_metadata', null);
+            localStorage.setItem('obsidian_elite_v4', JSON.stringify(trades));
+            
+            document.getElementById('importStatusBox').classList.remove('active');
+            document.getElementById('deleteImportedBtn').style.display = 'none';
+            document.getElementById('importProgress').style.width = '0%';
+            
+            closeDeleteModal();
+            render();
+            
+            alert('All imported trades deleted successfully.');
+        }
+
+        // Export
+        function exportToExcel() {
+            if (trades.length === 0) {
+                alert('No trades to export');
                 return;
             }
             
-            if(confirm("Delete this trade?")) {
-                trades.splice(index, 1);
-                saveAndRender();
-            }
+            const exportData = [];
+            trades.forEach(t => {
+                if (t.closes && t.closes.length > 0) {
+                    t.closes.forEach(c => {
+                        exportData.push({
+                            'Date': new Date(t.timestamp).toLocaleDateString(),
+                            'Day': t.day || '--',
+                            'Symbol': t.stock,
+                            'Type': t.option,
+                            'Total Qty': t.totalQty,
+                            'Close Qty': c.qty,
+                            'Entry': t.entry,
+                            'Exit': c.exitPrice,
+                            'P&L': c.pnl,
+                            'Entry Time': t.entryTime,
+                            'Exit Time': c.exitTime,
+                            'Setup': (t.setups || []).join(', '),
+                            'Source': t.source || 'manual'
+                        });
+                    });
+                } else {
+                    exportData.push({
+                        'Date': new Date(t.timestamp).toLocaleDateString(),
+                        'Day': t.day || '--',
+                        'Symbol': t.stock,
+                        'Type': t.option,
+                        'Total Qty': t.totalQty,
+                        'Remaining Qty': t.remainingQty,
+                        'Entry': t.entry,
+                        'Status': t.status,
+                        'Entry Time': t.entryTime,
+                        'Setup': (t.setups || []).join(', '),
+                        'Source': t.source || 'manual'
+                    });
+                }
+            });
+            
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Trades");
+            
+            const fileName = `Obsidian_Elite_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
 
-        function saveAndRender() {
-            localStorage.setItem('obsidian_v4_data', JSON.stringify(trades));
+        // Initialize Charts
+        function initCharts() {
+            equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), {
+                data: {
+                    labels: [],
+                    datasets: [{
+                        type: 'line',
+                        label: 'Equity',
+                        data: [],
+                        borderColor: '#00FFCC',
+                        backgroundColor: 'rgba(0, 255, 204, 0.1)',
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: 'rgba(31, 41, 55, 0.3)' } }
+                    }
+                }
+            });
+
+            precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Wins', 'Losses'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#00FFCC', '#1f2937'],
+                        borderWidth: 0,
+                        cutout: '75%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Analytics
+        function updateAnalytics() {
+            const closedTrades = trades.filter(t => t.status === 'CLOSED');
+            
+            // Equity Curve
+            const sortedTrades = [...closedTrades].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            let cumulative = 0;
+            const equityData = sortedTrades.map(t => {
+                cumulative += parseFloat(t.realizedPnl || 0);
+                return cumulative;
+            });
+            const labels = sortedTrades.map(t => new Date(t.timestamp).toLocaleDateString([], {month: 'short', day: 'numeric'}));
+            
+            equityChart.data.labels = labels;
+            equityChart.data.datasets[0].data = equityData;
+            equityChart.update();
+
+            // Win/Loss
+            let wins = 0, losses = 0, totalPnl = 0;
+            closedTrades.forEach(t => {
+                const pnl = parseFloat(t.realizedPnl || 0);
+                totalPnl += pnl;
+                if (pnl > 0) wins++;
+                else if (pnl < 0) losses++;
+            });
+
+            precisionChart.data.datasets[0].data = [wins, losses];
+            precisionChart.update();
+
+            const winRate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100) : 0;
+            document.getElementById('winRateText').innerText = Math.round(winRate) + '%';
+            document.getElementById('totalWins').innerText = wins;
+            document.getElementById('totalLosses').innerText = losses;
+
+            // Header Stats
+            document.getElementById('totalPnl').innerText = formatCurrency(totalPnl);
+            document.getElementById('totalPnl').className = `stat-value ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            
+            const totalTrades = trades.length;
+            const totalCloses = trades.reduce((sum, t) => sum + (t.closes?.length || 0), 0);
+            document.getElementById('totalTrades').innerText = totalTrades;
+            document.getElementById('totalTradesDetail').innerText = `${totalCloses} closes`;
+            
+            const openContracts = trades.reduce((sum, t) => sum + (t.remainingQty || 0), 0);
+            const openValue = trades.filter(t => t.remainingQty > 0).reduce((sum, t) => sum + (t.entry * t.remainingQty * 100), 0);
+            document.getElementById('openContracts').innerText = openContracts;
+            document.getElementById('openValue').innerText = formatCurrency(openValue);
+            
+            document.getElementById('totalEntries').innerText = trades.length;
+            document.getElementById('totalCloses').innerText = totalCloses;
+        }
+
+        // Render Table
+        function renderTradeTable() {
+            const body = document.getElementById('tradeBody');
+            body.innerHTML = '';
+
+            if (trades.length === 0) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="text-center py-12 text-gray-400">
+                            <div class="text-4xl mb-4">📊</div>
+                            <div class="text-lg">No trades yet</div>
+                            <div class="text-sm mt-2">Start by opening a trade</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            trades.forEach((t, i) => {
+                const ticker = getTickerPrefix(t.stock);
+                const source = t.source || 'manual';
+                const realizedPnl = parseFloat(t.realizedPnl || 0);
+                const avgExit = t.avgExit || 0;
+                
+                let statusBadge = '';
+                if (t.status === 'OPEN') {
+                    statusBadge = '<span class="badge badge-open">🟢 OPEN</span>';
+                } else if (t.status === 'PARTIAL') {
+                    statusBadge = '<span class="badge badge-partial">🟡 PARTIAL</span>';
+                } else {
+                    statusBadge = '<span class="badge badge-closed">⚫ CLOSED</span>';
+                }
+
+                // Main row
+                body.innerHTML += `
+                    <tr id="trade-${i}">
+                        <td>
+                            <span class="badge ${source === 'imported' ? 'badge-imported' : 'badge-manual'}">
+                                ${source === 'imported' ? '📦' : '✍️'}
+                            </span>
+                        </td>
+                        <td class="text-[#00D9FF] font-bold text-xs">${t.day || '--'}</td>
+                        <td class="text-gray-400 text-xs">${new Date(t.timestamp).toLocaleDateString([], {month: 'short', day: 'numeric'})}</td>
+                        <td class="font-black text-white">
+                            ${ticker}
+                            <span class="${t.option === 'CALL' ? 'text-green-400' : 'text-red-400'} text-[9px] ml-1">
+                                ${t.option}
+                            </span>
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td class="text-white font-bold">${t.remainingQty}/${t.totalQty}</td>
+                        <td class="text-white font-mono text-sm">${formatCurrency(t.entry)}</td>
+                        <td class="text-gray-400 font-mono text-sm">${avgExit > 0 ? formatCurrency(avgExit) : '--'}</td>
+                        <td class="text-gray-500 text-[10px]">${t.entryTime}</td>
+                        <td class="text-xs text-gray-400">${(t.setups || []).slice(0, 2).join(', ')}</td>
+                        <td class="text-right font-black ${realizedPnl >= 0 ? 'text-green-400' : 'text-red-500'}">
+                            ${realizedPnl !== 0 ? formatCurrency(realizedPnl) : '--'}
+                        </td>
+                        <td class="text-center">
+                            ${t.remainingQty > 0 ? `
+                                <button onclick="showCloseInputs(${i})" id="closeBtn-${i}" class="btn-close">
+                                    📍 CLOSE
+                                </button>
+                            ` : `
+                                <button onclick="removeTrade(${i})" class="text-red-400 hover:text-red-300 text-lg">
+                                    🗑️
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `;
+
+                // Close inputs row (hidden by default)
+                body.innerHTML += `
+                    <tr id="closeInputs-${i}" class="close-inputs-row" style="display: none;">
+                        <td colspan="12" class="p-6">
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <div>
+                                    <label style="font-size: 9px; margin-bottom: 4px;">Contracts to Close</label>
+                                    <input type="number" id="closeQty-${i}" min="1" max="${t.remainingQty}" value="${t.remainingQty}" class="inline-input">
+                                </div>
+                                <div class="flex-1">
+                                    <label style="font-size: 9px; margin-bottom: 4px;">Exit Price</label>
+                                    <input type="number" id="closePrice-${i}" step="0.01" placeholder="0.00" class="inline-input">
+                                </div>
+                                <div class="flex gap-2 mt-5">
+                                    <button onclick="submitClose(${i})" class="btn-submit-close">
+                                        ✅ Submit
+                                    </button>
+                                    <button onclick="hideCloseInputs(${i})" class="btn-cancel-close">
+                                        ❌ Cancel
+                                    </button>
+                                </div>
+                                <div class="ml-auto text-sm text-gray-400">
+                                    Available: <span class="text-[#00FFCC] font-bold">${t.remainingQty}</span> contracts
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Close Trade Functions
+        function showCloseInputs(index) {
+            // Hide all other close inputs first
+            document.querySelectorAll('[id^="closeInputs-"]').forEach(row => {
+                row.style.display = 'none';
+            });
+            
+            const closeRow = document.getElementById(`closeInputs-${index}`);
+            closeRow.style.display = 'table-row';
+            
+            // Focus on exit price input
+            setTimeout(() => {
+                document.getElementById(`closePrice-${index}`).focus();
+            }, 100);
+        }
+
+        function hideCloseInputs(index) {
+            document.getElementById(`closeInputs-${index}`).style.display = 'none';
+        }
+
+        function submitClose(index) {
+            const trade = trades[index];
+            const closeQty = parseInt(document.getElementById(`closeQty-${index}`).value);
+            const exitPrice = parseFloat(document.getElementById(`closePrice-${index}`).value);
+
+            if (isNaN(closeQty) || closeQty < 1) {
+                alert('Please enter a valid quantity');
+                return;
+            }
+            if (closeQty > trade.remainingQty) {
+                alert(`Cannot close more than ${trade.remainingQty} contracts`);
+                return;
+            }
+            if (isNaN(exitPrice) || exitPrice <= 0) {
+                alert('Please enter a valid exit price');
+                return;
+            }
+
+            // Calculate P&L for this close
+            const pnl = ((exitPrice - trade.entry) * 100 * closeQty).toFixed(2);
+            const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
+            // Add close record
+            if (!trade.closes) trade.closes = [];
+            trade.closes.push({
+                qty: closeQty,
+                exitPrice: exitPrice,
+                exitTime: now,
+                pnl: pnl
+            });
+
+            // Update trade
+            trade.remainingQty -= closeQty;
+            const closedQty = trade.totalQty - trade.remainingQty;
+            trade.avgExit = trade.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / closedQty;
+            trade.realizedPnl = trade.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
+
+            if (trade.remainingQty === 0) {
+                trade.status = 'CLOSED';
+            } else {
+                trade.status = 'PARTIAL';
+            }
+
+            hideCloseInputs(index);
             render();
         }
 
-        function render() {
-            const body = document.getElementById('tradeBody');
-            const today = new Date().toISOString().split('T')[0];
-            body.innerHTML = '';
-            let total = 0;
-
-            trades.forEach((t, i) => {
-                const isFrozen = t.date !== today;
-                total += t.pnl;
-                body.innerHTML += `
-                    <tr class="border-b border-gray-800 ${isFrozen ? 'frozen-row' : ''}">
-                        <td class="p-4 text-gray-500">${t.id}</td>
-                        <td class="p-4">${t.date}</td>
-                        <td class="p-4 font-bold">${t.symbol}</td>
-                        <td class="p-4 ${t.side==='CALL'?'text-green-400':'text-red-400'}">${t.side}</td>
-                        <td class="p-4">${t.qty}</td>
-                        <td class="p-4">$${t.entry.toFixed(2)}</td>
-                        <td class="p-4">${t.exit ? '$'+t.exit.toFixed(2) : '--'}</td>
-                        <td class="p-4 font-bold ${t.pnl >=0 ? 'text-green-400' : 'text-red-400'}">$${t.pnl.toFixed(2)}</td>
-                        <td class="p-4 text-center">
-                            ${isFrozen ? '<span class="text-[10px] text-gray-600">LOCKED</span>' : 
-                            `<button onclick="deleteTrade(${i})" class="text-red-500 hover:text-white">🗑️</button>`}
-                        </td>
-                    </tr>`;
-            });
-
-            document.getElementById('totalPnl').innerText = '$' + total.toFixed(2);
-            document.getElementById('currentDateDisplay').innerText = new Date().toDateString();
+        // Remove Trade
+        function removeTrade(index) {
+            if (confirm('Delete this trade?')) {
+                trades.splice(index, 1);
+                render();
+            }
         }
 
-        window.onload = render;
+        // Form Submission
+        document.getElementById('tradeForm').onsubmit = (e) => {
+            e.preventDefault();
+
+            let tick = document.querySelector('#tickerSelect .active')?.dataset.ticker;
+            const customTick = document.getElementById('customStock').value.trim().toUpperCase();
+            if (customTick) tick = customTick;
+
+            const type = document.querySelector('#typeSelect .active')?.dataset.type;
+            const day = document.getElementById('daySelect').value;
+            const ent = parseFloat(document.getElementById('entry').value);
+            const count = parseInt(document.getElementById('count').value);
+            const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
+
+            if (!tick) {
+                alert('Please select a symbol');
+                return;
+            }
+            if (!type) {
+                alert('Please select contract type');
+                return;
+            }
+            if (!day) {
+                alert('Please select a day');
+                return;
+            }
+            if (isNaN(ent) || ent <= 0) {
+                alert('Please enter a valid entry price');
+                return;
+            }
+            if (set.length === 0) {
+                alert('Please select at least one setup');
+                return;
+            }
+
+            trades.unshift({
+                id: generateId(),
+                stock: tick,
+                option: type,
+                day: day,
+                totalQty: count,
+                remainingQty: count,
+                entry: ent,
+                avgExit: 0,
+                status: 'OPEN',
+                entryTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
+                setups: set,
+                closes: [],
+                realizedPnl: 0,
+                timestamp: new Date().toISOString(),
+                source: 'manual'
+            });
+
+            resetForm();
+            render();
+        };
+
+        function resetForm() {
+            document.getElementById('tradeForm').reset();
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        }
+
+        // Toggle Handlers
+        document.querySelectorAll('#setupGrid .toggle-btn').forEach(btn => {
+            btn.onclick = function() {
+                this.classList.toggle('active');
+            };
+        });
+
+        document.querySelectorAll('#tickerSelect .toggle-btn, #typeSelect .toggle-btn').forEach(btn => {
+            btn.onclick = function() {
+                this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                if (this.parentElement.id === 'tickerSelect') {
+                    document.getElementById('customStock').value = '';
+                }
+            };
+        });
+
+        document.getElementById('customStock').oninput = function() {
+            if (this.value.trim()) {
+                document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.remove('active'));
+            }
+        };
+
+        // Main Render
+        function render() {
+            localStorage.setItem('obsidian_elite_v4', JSON.stringify(trades));
+            renderTradeTable();
+            updateAnalytics();
+        }
+
+        // Initialize
+        window.onload = () => {
+            initCharts();
+            
+            if (importMetadata) {
+                document.getElementById('importStatusBox').classList.add('active');
+                document.getElementById('importProgress').style.width = '100%';
+                updateImportStatus();
+                document.getElementById('deleteImportedBtn').style.display = 'inline-block';
+            }
+            
+            render();
+
+            document.getElementById('currentDateDisplay').innerText = new Date().toDateString();
+            
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const today = days[new Date().getDay()];
+            if (today !== 'Saturday' && today !== 'Sunday') {
+                document.getElementById('daySelect').value = today;
+            }
+        };
     </script>
 </body>
 </html>
