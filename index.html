@@ -199,6 +199,13 @@
         .chart-container { position: relative; height: 280px; }
         .collapse-icon { display: inline-block; transition: transform 0.2s; }
         .collapsed .collapse-icon { transform: rotate(-90deg); }
+
+        /* manager panel divider on large screens */
+        @media (min-width: 1024px) {
+            #managerBody .divide-x > *:last-child {
+                border-left: 1px solid rgba(31,41,55,0.6);
+            }
+        }
     </style>
 </head>
 <body class="p-4 lg:p-8">
@@ -398,16 +405,68 @@
         </div>
     </div>
 
+    <!-- ── IMPORT & DAY MANAGER (bottom) ── -->
+    <div class="glass-card overflow-hidden mb-6" id="managerPanel">
+        <!-- Collapsible header -->
+        <div class="p-5 border-b border-gray-800 flex items-center justify-between cursor-pointer select-none"
+             onclick="toggleManagerPanel()">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">🗂️</span>
+                <div>
+                    <h2 class="text-lg font-black text-[#FFD700] uppercase tracking-tight">Import & Day Manager</h2>
+                    <p class="text-[10px] text-gray-500 mt-0.5">Delete entire imports or individual trading days — all related entries removed automatically</p>
+                </div>
+            </div>
+            <span id="managerChevron" class="text-[#FFD700] text-xl transition-transform duration-200">▼</span>
+        </div>
+
+        <div id="managerBody">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-gray-800">
+
+                <!-- LEFT: Delete by Import File -->
+                <div class="p-6">
+                    <div class="flex items-center gap-2 mb-5">
+                        <span class="text-base">📦</span>
+                        <h3 class="text-sm font-black text-[#00FFCC] uppercase tracking-widest">Delete by Import File</h3>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mb-4 leading-relaxed">
+                        Deletes the entire imported Excel file and all its associated trade entries from the journal.
+                    </p>
+                    <div id="importFileDeleteList">
+                        <p class="text-xs text-gray-600 italic">No imports found.</p>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Delete by Day -->
+                <div class="p-6">
+                    <div class="flex items-center gap-2 mb-5">
+                        <span class="text-base">📅</span>
+                        <h3 class="text-sm font-black text-[#00D9FF] uppercase tracking-widest">Delete by Trading Day</h3>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mb-4 leading-relaxed">
+                        Removes all trade entries (from any source) for a specific calendar date. Use this to wipe a full day.
+                    </p>
+                    <div id="dayDeleteList">
+                        <p class="text-xs text-gray-600 italic">No trade days found.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 </div><!-- /max-w -->
 
-<!-- ── DELETE BATCH MODAL ── -->
+<!-- ── CONFIRM DELETE MODAL ── -->
 <div id="deleteModal" class="modal-overlay" style="display:none">
-    <div class="modal-content">
-        <h2 class="text-2xl font-black text-red-400 mb-4">⚠️ Confirm Deletion</h2>
-        <p class="text-gray-300 mb-3">Delete <strong id="deleteModalBatchName" class="text-[#00FFCC]">this import</strong>?</p>
-        <p class="text-sm text-gray-400 mb-6">This will permanently remove <strong id="deleteModalCount" class="text-[#00FFCC]">0</strong> trades. Cannot be undone.</p>
+    <div class="modal-content" style="max-width:500px">
+        <div class="flex items-center gap-3 mb-5">
+            <span class="text-3xl">⚠️</span>
+            <h2 class="text-xl font-black text-red-400">Confirm Deletion</h2>
+        </div>
+        <div id="deleteModalBody" class="mb-6"></div>
         <div class="flex gap-4">
-            <button onclick="confirmDeleteBatch()" class="btn-danger flex-1">Yes, Delete Import</button>
+            <button onclick="confirmDelete()" class="btn-danger flex-1" id="deleteConfirmBtn">Yes, Delete</button>
             <button onclick="closeDeleteModal()" class="btn-secondary flex-1">Cancel</button>
         </div>
     </div>
@@ -428,7 +487,6 @@ let openClosePanels = new Set();
 let openEditPanels  = new Set();
 let collapsedGroups = new Set(); // stores group keys that are COLLAPSED
 let chartRange = 'all';
-let deleteBatchId = null;
 
 // ── today string for freeze logic
 function todayStr() {
@@ -558,64 +616,194 @@ function processImportedData(data, fileName) {
 }
 
 // ══════════════════════════════════════════════
-//  DELETE BATCH
+//  DELETE MODAL (unified)
 // ══════════════════════════════════════════════
+let pendingDeleteFn = null;
+
+function showDeleteModal(bodyHtml, confirmFn, btnLabel) {
+    document.getElementById('deleteModalBody').innerHTML = bodyHtml;
+    document.getElementById('deleteConfirmBtn').textContent = btnLabel || 'Yes, Delete';
+    pendingDeleteFn = confirmFn;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    pendingDeleteFn = null;
+}
+function confirmDelete() {
+    if (pendingDeleteFn) pendingDeleteFn();
+    closeDeleteModal();
+}
+
+// ── Delete by Import File
 function showDeleteBatch(importId) {
     const batch = importBatches.find(b => b.importId === importId);
     if (!batch) return;
-    deleteBatchId = importId;
-    document.getElementById('deleteModalBatchName').textContent = batch.fileName;
-    document.getElementById('deleteModalCount').textContent = batch.tradeCount;
-    document.getElementById('deleteModal').style.display = 'flex';
+    const cnt = trades.filter(t => t.importId === importId).length;
+    showDeleteModal(
+        `<p class="text-gray-300 mb-2">Delete import file:</p>
+         <p class="text-[#FFD700] font-bold mb-3">${batch.fileName}</p>
+         <p class="text-sm text-gray-400">This will permanently remove <strong class="text-[#00FFCC]">${cnt} trade entries</strong> from the journal. Cannot be undone.</p>`,
+        () => {
+            trades = trades.filter(t => t.importId !== importId);
+            importBatches = importBatches.filter(b => b.importId !== importId);
+            localStorage.setItem('obsidian_import_batches', JSON.stringify(importBatches));
+            save(); render();
+        },
+        '🗑️ Delete Import'
+    );
 }
-function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; deleteBatchId = null; }
-function confirmDeleteBatch() {
-    if (!deleteBatchId) return;
-    trades = trades.filter(t => t.importId !== deleteBatchId);
-    importBatches = importBatches.filter(b => b.importId !== deleteBatchId);
-    localStorage.setItem('obsidian_import_batches', JSON.stringify(importBatches));
-    closeDeleteModal();
-    save();
-    render();
+
+// ── Delete by Day
+function showDeleteDay(dateStr) {
+    const cnt = trades.filter(t => tradeDate(t) === dateStr).length;
+    const label = new Date(dateStr + 'T12:00:00').toLocaleDateString([], { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    showDeleteModal(
+        `<p class="text-gray-300 mb-2">Delete all trades for:</p>
+         <p class="text-[#00D9FF] font-bold mb-3">${label}</p>
+         <p class="text-sm text-gray-400">This will permanently remove <strong class="text-[#00FFCC]">${cnt} trade entries</strong> (from all sources) for this day. Cannot be undone.</p>`,
+        () => {
+            trades = trades.filter(t => tradeDate(t) !== dateStr);
+            // Also update import batch counts
+            importBatches = importBatches.map(b => {
+                const remaining = trades.filter(t => t.importId === b.importId);
+                if (remaining.length === 0) return null; // mark for removal
+                return { ...b, tradeCount: remaining.length, pnl: remaining.reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0) };
+            }).filter(Boolean);
+            localStorage.setItem('obsidian_import_batches', JSON.stringify(importBatches));
+            save(); render();
+        },
+        '🗑️ Delete Day'
+    );
 }
 
 // ══════════════════════════════════════════════
-//  RENDER IMPORT BATCH LIST
+//  MANAGER PANEL
+// ══════════════════════════════════════════════
+let managerOpen = true;
+function toggleManagerPanel() {
+    managerOpen = !managerOpen;
+    document.getElementById('managerBody').style.display = managerOpen ? 'block' : 'none';
+    document.getElementById('managerChevron').style.transform = managerOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+}
+
+function renderManagerPanel() {
+    // ── Import file list
+    const fileListEl = document.getElementById('importFileDeleteList');
+    if (importBatches.length === 0) {
+        fileListEl.innerHTML = '<p class="text-xs text-gray-600 italic">No imports found.</p>';
+    } else {
+        fileListEl.innerHTML = importBatches.map(b => {
+            const liveCnt = trades.filter(t => t.importId === b.importId).length;
+            const livePnl = trades.filter(t => t.importId === b.importId).reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0);
+            const pnlColor = livePnl >= 0 ? '#4ade80' : '#f87171';
+            const dateStr = new Date(b.importDate).toLocaleDateString([], { month:'short', day:'numeric', year:'numeric' });
+            return `
+            <div style="background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+                <div class="flex items-start justify-between gap-3 flex-wrap">
+                    <div style="min-width:0;flex:1">
+                        <div class="font-bold text-white text-xs truncate mb-1" title="${b.fileName}">📄 ${b.fileName}</div>
+                        <div class="text-[10px] text-gray-500">Imported ${dateStr}</div>
+                    </div>
+                    <div class="flex items-center gap-4 shrink-0">
+                        <div class="text-center">
+                            <div class="text-[9px] text-gray-600 uppercase">Trades</div>
+                            <div class="text-white font-bold text-xs">${liveCnt}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[9px] text-gray-600 uppercase">P&L</div>
+                            <div class="font-bold text-xs" style="color:${pnlColor}">${livePnl >= 0 ? '+' : ''}${fmt(livePnl)}</div>
+                        </div>
+                        <button onclick="showDeleteBatch('${b.importId}')"
+                            style="background:rgba(248,113,113,0.1);border:1px solid #f87171;color:#f87171;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:10px;font-weight:800;text-transform:uppercase;font-family:inherit;transition:all 0.2s;white-space:nowrap"
+                            onmouseover="this.style.background='#f87171';this.style.color='#fff'"
+                            onmouseout="this.style.background='rgba(248,113,113,0.1)';this.style.color='#f87171'">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ── Day list
+    const dayListEl = document.getElementById('dayDeleteList');
+    const dayMap = {};
+    trades.forEach(t => {
+        const dk = tradeDate(t);
+        if (!dayMap[dk]) dayMap[dk] = { count: 0, pnl: 0, sources: new Set() };
+        dayMap[dk].count++;
+        dayMap[dk].pnl += parseFloat(t.realizedPnl || 0);
+        dayMap[dk].sources.add(t.source || 'manual');
+    });
+    const sortedDays = Object.keys(dayMap).sort().reverse(); // most recent first
+
+    if (sortedDays.length === 0) {
+        dayListEl.innerHTML = '<p class="text-xs text-gray-600 italic">No trade days found.</p>';
+    } else {
+        dayListEl.innerHTML = sortedDays.map(dk => {
+            const d = dayMap[dk];
+            const pnlColor = d.pnl >= 0 ? '#4ade80' : '#f87171';
+            const label = new Date(dk + 'T12:00:00').toLocaleDateString([], { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+            const srcTags = Array.from(d.sources).map(s =>
+                s === 'imported'
+                    ? `<span style="background:rgba(255,215,0,0.15);color:#FFD700;border:1px solid rgba(255,215,0,0.3);padding:1px 6px;border-radius:8px;font-size:8px;font-weight:800">📦 IMPORT</span>`
+                    : `<span style="background:rgba(0,217,255,0.15);color:#00D9FF;border:1px solid rgba(0,217,255,0.3);padding:1px 6px;border-radius:8px;font-size:8px;font-weight:800">✍️ MANUAL</span>`
+            ).join(' ');
+            return `
+            <div style="background:rgba(0,217,255,0.03);border:1px solid rgba(0,217,255,0.12);border-radius:10px;padding:12px 16px;margin-bottom:8px">
+                <div class="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                        <div class="font-bold text-white text-xs mb-1">${label}</div>
+                        <div class="flex items-center gap-2">${srcTags}</div>
+                    </div>
+                    <div class="flex items-center gap-4 shrink-0">
+                        <div class="text-center">
+                            <div class="text-[9px] text-gray-600 uppercase">Entries</div>
+                            <div class="text-white font-bold text-xs">${d.count}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[9px] text-gray-600 uppercase">P&L</div>
+                            <div class="font-bold text-xs" style="color:${pnlColor}">${d.pnl >= 0 ? '+' : ''}${fmt(d.pnl)}</div>
+                        </div>
+                        <button onclick="showDeleteDay('${dk}')"
+                            style="background:rgba(248,113,113,0.1);border:1px solid #f87171;color:#f87171;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:10px;font-weight:800;text-transform:uppercase;font-family:inherit;transition:all 0.2s;white-space:nowrap"
+                            onmouseover="this.style.background='#f87171';this.style.color='#fff'"
+                            onmouseout="this.style.background='rgba(248,113,113,0.1)';this.style.color='#f87171'">
+                            🗑️ Delete Day
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+}
+
+// ══════════════════════════════════════════════
+//  RENDER IMPORT BATCH LIST (top summary)
 // ══════════════════════════════════════════════
 function renderImportBatches() {
     const el = document.getElementById('importBatchList');
     if (importBatches.length === 0) {
-        el.innerHTML = '<p class="text-xs text-gray-500 italic">No imports yet. Use Import Excel to load trades.</p>';
+        el.innerHTML = '<p class="text-xs text-gray-500 italic">No imports yet. Use Import Excel to load trades. Manage imports in the <strong class="text-[#FFD700]">Import & Day Manager</strong> section at the bottom.</p>';
         return;
     }
-    el.innerHTML = importBatches.map(b => {
-        const pnlColor = b.pnl >= 0 ? 'text-green-400' : 'text-red-400';
-        return `
-        <div class="import-batch-card">
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div class="flex items-center gap-3">
-                    <span class="text-xl">📦</span>
-                    <div>
-                        <div class="font-bold text-[#FFD700] text-sm">${b.fileName}</div>
-                        <div class="text-xs text-gray-400">Imported: ${new Date(b.importDate).toLocaleString()}</div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-6">
-                    <div class="text-center">
-                        <div class="text-xs text-gray-500">Trades</div>
-                        <div class="text-white font-bold text-sm">${b.tradeCount}</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-xs text-gray-500">P&L</div>
-                        <div class="font-bold text-sm ${pnlColor}">${fmt(b.pnl)}</div>
-                    </div>
-                    <button onclick="showDeleteBatch('${b.importId}')" class="btn-danger" style="padding:6px 14px;font-size:11px">
-                        🗑️ Delete Import
-                    </button>
-                </div>
+    const totalImported = trades.filter(t => t.source === 'imported').length;
+    const totalImportPnl = trades.filter(t => t.source === 'imported').reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0);
+    const pnlColor = totalImportPnl >= 0 ? 'text-green-400' : 'text-red-400';
+    el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:12px 16px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:10px">
+            <div class="flex items-center gap-2">
+                <span>📦</span>
+                <span class="text-[#FFD700] font-bold text-sm">${importBatches.length} import${importBatches.length>1?'s':''} loaded</span>
             </div>
+            <div class="text-xs text-gray-400">${totalImported} imported trades</div>
+            <div class="text-xs font-bold ${pnlColor}">${totalImportPnl >= 0 ? '+' : ''}${fmt(totalImportPnl)} P&L</div>
+            <a href="#managerPanel" onclick="if(!managerOpen)toggleManagerPanel()" 
+               style="margin-left:auto;font-size:10px;color:#FFD700;text-decoration:underline;cursor:pointer;font-weight:700">
+                ↓ Manage Imports & Days
+            </a>
         </div>`;
-    }).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1196,6 +1384,7 @@ function save() { localStorage.setItem('obsidian_elite_v4', JSON.stringify(trade
 function render() {
     save();
     renderImportBatches();
+    renderManagerPanel();
     renderTradeTable();
     updateAnalytics();
 }
