@@ -192,6 +192,28 @@
             transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(249, 115, 22, 0.4);
         }
+        .btn-close.active-close {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+            box-shadow: 0 0 15px rgba(249,115,22,0.6);
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            padding: 8px 16px;
+            font-weight: 800;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .btn-edit:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+        }
 
         .btn-submit-close {
             background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -270,7 +292,25 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            white-space: nowrap;
         }
+        .modern-table thead th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .modern-table thead th.sortable:hover {
+            color: #fff;
+            background: rgba(0, 255, 204, 0.08);
+        }
+        .sort-icon {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 9px;
+            opacity: 0.5;
+        }
+        .sort-icon.asc { opacity: 1; color: var(--primary); }
+        .sort-icon.desc { opacity: 1; color: var(--primary); }
+
         .modern-table tbody tr {
             transition: all 0.2s ease;
             border-bottom: 1px solid rgba(31, 41, 55, 0.5);
@@ -284,8 +324,13 @@
         }
 
         .close-inputs-row {
-            background: rgba(249, 115, 22, 0.1);
+            background: rgba(249, 115, 22, 0.07);
             border-left: 4px solid #f97316;
+        }
+
+        .edit-inputs-row {
+            background: rgba(99, 102, 241, 0.07);
+            border-left: 4px solid #6366f1;
         }
 
         .badge {
@@ -376,20 +421,10 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(10, 14, 20, 0.5);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 255, 204, 0.3);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 255, 204, 0.5);
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(10, 14, 20, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 204, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 204, 0.5); }
 
         @media (max-width: 768px) {
             .stat-value { font-size: 2rem; }
@@ -588,16 +623,16 @@
                 <thead>
                     <tr>
                         <th>Source</th>
-                        <th>Day</th>
-                        <th>Date</th>
-                        <th>Symbol</th>
-                        <th>Status</th>
-                        <th>Qty (Rem/Total)</th>
-                        <th>Entry Price</th>
-                        <th>Avg Exit</th>
+                        <th class="sortable" data-col="day" onclick="sortBy('day')">Day <span class="sort-icon" id="sort-day">⇅</span></th>
+                        <th class="sortable" data-col="date" onclick="sortBy('date')">Date <span class="sort-icon" id="sort-date">⇅</span></th>
+                        <th class="sortable" data-col="stock" onclick="sortBy('stock')">Symbol <span class="sort-icon" id="sort-stock">⇅</span></th>
+                        <th class="sortable" data-col="status" onclick="sortBy('status')">Status <span class="sort-icon" id="sort-status">⇅</span></th>
+                        <th class="sortable" data-col="totalQty" onclick="sortBy('totalQty')">Qty (Rem/Total) <span class="sort-icon" id="sort-totalQty">⇅</span></th>
+                        <th class="sortable" data-col="entry" onclick="sortBy('entry')">Entry Price <span class="sort-icon" id="sort-entry">⇅</span></th>
+                        <th class="sortable" data-col="avgExit" onclick="sortBy('avgExit')">Avg Exit <span class="sort-icon" id="sort-avgExit">⇅</span></th>
                         <th>Entry Time</th>
                         <th>Setup</th>
-                        <th class="text-right">Realized P&L</th>
+                        <th class="text-right sortable" data-col="realizedPnl" onclick="sortBy('realizedPnl')">Realized P&L <span class="sort-icon" id="sort-realizedPnl">⇅</span></th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
@@ -635,14 +670,12 @@
                 const { ctx, scales: { y } } = chart;
                 const dataset = chart.data.datasets.find(ds => ds.wicks);
                 if (!dataset) return;
-                
                 ctx.save();
                 chart.getDatasetMeta(chart.data.datasets.indexOf(dataset)).data.forEach((bar, index) => {
                     const high = dataset.wicks[index]?.h;
                     const low = dataset.wicks[index]?.l;
                     const x = bar.x;
                     if (high === undefined || high === -Infinity) return;
-                    
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffffffaa';
                     ctx.lineWidth = 1.5;
@@ -655,47 +688,88 @@
         };
         Chart.register(wickPlugin);
 
-        // Global State - NEW STRUCTURE
+        // Global State
         let trades = JSON.parse(localStorage.getItem('obsidian_elite_v4')) || [];
         let importMetadata = JSON.parse(localStorage.getItem('obsidian_import_metadata')) || null;
         let equityChart, precisionChart;
-        let closingTradeId = null;
 
-        // Utility Functions
+        // Sort State
+        let sortCol = null;
+        let sortDir = 'desc'; // 'asc' or 'desc'
+
+        // Track which rows have close/edit panels open (by trade original index)
+        let openClosePanels = new Set();
+        let openEditPanels = new Set();
+
+        // Utility
         function getTickerPrefix(symbol) {
             if (!symbol) return '';
             let clean = symbol.replace(/^-/, '');
             const match = clean.match(/^([A-Z]+)/);
             return match ? match[1] : clean;
         }
-
         function formatCurrency(value) {
             return '$' + parseFloat(value).toFixed(2);
         }
-
         function generateId() {
             return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Sorting
+        function sortBy(col) {
+            if (sortCol === col) {
+                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortCol = col;
+                sortDir = 'asc';
+            }
+            // Update icons
+            document.querySelectorAll('.sort-icon').forEach(el => {
+                el.textContent = '⇅';
+                el.className = 'sort-icon';
+            });
+            const icon = document.getElementById(`sort-${col}`);
+            if (icon) {
+                icon.textContent = sortDir === 'asc' ? '▲' : '▼';
+                icon.className = `sort-icon ${sortDir}`;
+            }
+            renderTradeTable();
+        }
+
+        function getSortedTrades() {
+            if (!sortCol) return [...trades];
+            return [...trades].sort((a, b) => {
+                let va, vb;
+                if (sortCol === 'date') {
+                    va = new Date(a.timestamp).getTime();
+                    vb = new Date(b.timestamp).getTime();
+                } else if (sortCol === 'realizedPnl' || sortCol === 'entry' || sortCol === 'avgExit' || sortCol === 'totalQty') {
+                    va = parseFloat(a[sortCol] || 0);
+                    vb = parseFloat(b[sortCol] || 0);
+                } else {
+                    va = (a[sortCol] || '').toString().toLowerCase();
+                    vb = (b[sortCol] || '').toString().toLowerCase();
+                }
+                if (va < vb) return sortDir === 'asc' ? -1 : 1;
+                if (va > vb) return sortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
         }
 
         // Import Excel
         document.getElementById('fileInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            
             try {
                 const data = await file.arrayBuffer();
                 const workbook = XLSX.read(data);
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                
                 processImportedData(jsonData, file.name);
-                
                 document.getElementById('importStatusBox').classList.add('active');
             } catch (error) {
                 alert('Import failed: ' + error.message);
-                console.error('Import error:', error);
             }
-            
             e.target.value = '';
         });
 
@@ -703,255 +777,156 @@
             const openPositions = {};
             const importedTrades = [];
             const importId = Date.now().toString();
-            
-            // Process in reverse (oldest first)
             data.reverse().forEach(record => {
                 const symbol = record['Symbol'];
                 const status = record['Status'];
                 const description = record['Trade Description'];
                 const orderTime = record['Order Time'];
-                
                 const priceMatch = status.match(/\$([0-9.]+)/);
                 const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
-                
-                // Extract quantity - handle both "1 Apr" and "6 May" formats
                 const qtyMatch = description.match(/(?:Open|Close)\s+(\d+)\s+/);
                 if (!qtyMatch) return;
-                
                 const qty = parseInt(qtyMatch[1]);
                 const action = description.includes('Buy to Open') ? 'BUY' : 'SELL';
                 const contractType = description.toLowerCase().includes('call') ? 'CALL' : 'PUT';
                 const ticker = getTickerPrefix(symbol);
-                
                 const timeMatch = orderTime.match(/(\d{2}:\d{2}:\d{2} [AP]M) (\d{2}\/\d{2}\/\d{4})/);
                 const time = timeMatch ? timeMatch[1] : orderTime;
                 const dateStr = timeMatch ? timeMatch[2] : new Date().toLocaleDateString();
                 const [month, day, year] = dateStr.split('/');
                 const fullDate = new Date(`${year}-${month}-${day}`);
-                const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][fullDate.getDay()];
-                
+                const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][fullDate.getDay()];
                 const key = `${symbol}_${contractType}`;
-                
                 if (action === 'BUY') {
-                    // Create ONE trade entry for this BUY
                     const tradeId = generateId();
                     openPositions[key] = {
-                        tradeId: tradeId,
-                        symbol: ticker,
-                        fullSymbol: symbol,
-                        contractType: contractType,
-                        totalQty: qty,
-                        remainingQty: qty,
-                        entryPrice: price,
-                        entryTime: time,
-                        day: dayName,
-                        timestamp: fullDate.toISOString(),
-                        closes: []
+                        tradeId, symbol: ticker, fullSymbol: symbol, contractType,
+                        totalQty: qty, remainingQty: qty, entryPrice: price,
+                        entryTime: time, day: dayName, timestamp: fullDate.toISOString(), closes: []
                     };
-                } else if (action === 'SELL') {
-                    // Add close to existing position
-                    if (openPositions[key]) {
-                        openPositions[key].closes.push({
-                            qty: qty,
-                            exitPrice: price,
-                            exitTime: time,
-                            pnl: ((price - openPositions[key].entryPrice) * 100 * qty).toFixed(2)
+                } else if (action === 'SELL' && openPositions[key]) {
+                    openPositions[key].closes.push({
+                        qty, exitPrice: price, exitTime: time,
+                        pnl: ((price - openPositions[key].entryPrice) * 100 * qty).toFixed(2)
+                    });
+                    openPositions[key].remainingQty -= qty;
+                    if (openPositions[key].remainingQty <= 0) {
+                        const pos = openPositions[key];
+                        const totalPnl = pos.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
+                        const avgExit = pos.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / pos.totalQty;
+                        importedTrades.push({
+                            id: pos.tradeId, stock: pos.symbol, fullSymbol: pos.fullSymbol,
+                            option: pos.contractType, day: pos.day, totalQty: pos.totalQty,
+                            remainingQty: 0, entry: pos.entryPrice, avgExit, status: 'CLOSED',
+                            entryTime: pos.entryTime, setups: ['Imported'], closes: pos.closes,
+                            realizedPnl: totalPnl, timestamp: pos.timestamp, source: 'imported', importId
                         });
-                        openPositions[key].remainingQty -= qty;
-                        
-                        // If fully closed, convert to trade
-                        if (openPositions[key].remainingQty <= 0) {
-                            const pos = openPositions[key];
-                            const totalPnl = pos.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
-                            const avgExit = pos.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / pos.totalQty;
-                            
-                            importedTrades.push({
-                                id: pos.tradeId,
-                                stock: pos.symbol,
-                                fullSymbol: pos.fullSymbol,
-                                option: pos.contractType,
-                                day: pos.day,
-                                totalQty: pos.totalQty,
-                                remainingQty: 0,
-                                entry: pos.entryPrice,
-                                avgExit: avgExit,
-                                status: 'CLOSED',
-                                entryTime: pos.entryTime,
-                                setups: ['Imported'],
-                                closes: pos.closes,
-                                realizedPnl: totalPnl,
-                                timestamp: pos.timestamp,
-                                source: 'imported',
-                                importId: importId
-                            });
-                            
-                            delete openPositions[key];
-                        }
+                        delete openPositions[key];
                     }
                 }
             });
-            
-            // Add any remaining open positions
             Object.values(openPositions).forEach(pos => {
                 const totalPnl = pos.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
                 const closedQty = pos.totalQty - pos.remainingQty;
                 const avgExit = closedQty > 0 ? pos.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / closedQty : 0;
-                
                 importedTrades.push({
-                    id: pos.tradeId,
-                    stock: pos.symbol,
-                    fullSymbol: pos.fullSymbol,
-                    option: pos.contractType,
-                    day: pos.day,
-                    totalQty: pos.totalQty,
-                    remainingQty: pos.remainingQty,
-                    entry: pos.entryPrice,
-                    avgExit: avgExit,
+                    id: pos.tradeId, stock: pos.symbol, fullSymbol: pos.fullSymbol,
+                    option: pos.contractType, day: pos.day, totalQty: pos.totalQty,
+                    remainingQty: pos.remainingQty, entry: pos.entryPrice, avgExit,
                     status: pos.remainingQty === pos.totalQty ? 'OPEN' : 'PARTIAL',
-                    entryTime: pos.entryTime,
-                    setups: ['Imported'],
-                    closes: pos.closes,
-                    realizedPnl: totalPnl,
-                    timestamp: pos.timestamp,
-                    source: 'imported',
-                    importId: importId
+                    entryTime: pos.entryTime, setups: ['Imported'], closes: pos.closes,
+                    realizedPnl: totalPnl, timestamp: pos.timestamp, source: 'imported', importId
                 });
             });
-            
             const importPnl = importedTrades.reduce((sum, t) => sum + parseFloat(t.realizedPnl || 0), 0);
-            
             importMetadata = {
-                fileName: fileName,
-                importDate: new Date().toISOString(),
-                importId: importId,
-                tradeCount: importedTrades.length,
-                pnl: importPnl
+                fileName, importDate: new Date().toISOString(), importId,
+                tradeCount: importedTrades.length, pnl: importPnl
             };
             localStorage.setItem('obsidian_import_metadata', JSON.stringify(importMetadata));
-            
             trades = [...importedTrades, ...trades];
-            
             updateImportStatus();
             document.getElementById('deleteImportedBtn').style.display = 'inline-block';
-            
             render();
-            
-            setTimeout(() => {
-                document.getElementById('importProgress').style.width = '100%';
-            }, 100);
+            setTimeout(() => { document.getElementById('importProgress').style.width = '100%'; }, 100);
         }
 
         function updateImportStatus() {
             if (!importMetadata) return;
-            
             document.getElementById('importFileName').textContent = importMetadata.fileName;
             document.getElementById('importDate').textContent = 'Imported: ' + new Date(importMetadata.importDate).toLocaleString();
             document.getElementById('importedCount').textContent = importMetadata.tradeCount + ' trades';
             document.getElementById('importedPnl').textContent = formatCurrency(importMetadata.pnl);
-            
             const pnlEl = document.getElementById('importedPnl');
             pnlEl.className = importMetadata.pnl >= 0 ? 'text-xs text-green-400' : 'text-xs text-red-400';
         }
 
-        // Delete Imported
         function showDeleteImportedModal() {
             const importedCount = trades.filter(t => t.source === 'imported').length;
             document.getElementById('deleteCount').textContent = importedCount;
             document.getElementById('deleteModal').style.display = 'flex';
         }
-
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
         }
-
         function confirmDeleteImported() {
             trades = trades.filter(t => t.source !== 'imported');
             importMetadata = null;
             localStorage.setItem('obsidian_import_metadata', null);
             localStorage.setItem('obsidian_elite_v4', JSON.stringify(trades));
-            
             document.getElementById('importStatusBox').classList.remove('active');
             document.getElementById('deleteImportedBtn').style.display = 'none';
             document.getElementById('importProgress').style.width = '0%';
-            
             closeDeleteModal();
             render();
-            
             alert('All imported trades deleted successfully.');
         }
 
         // Export
         function exportToExcel() {
-            if (trades.length === 0) {
-                alert('No trades to export');
-                return;
-            }
-            
+            if (trades.length === 0) { alert('No trades to export'); return; }
             const exportData = [];
             trades.forEach(t => {
                 if (t.closes && t.closes.length > 0) {
                     t.closes.forEach(c => {
                         exportData.push({
                             'Date': new Date(t.timestamp).toLocaleDateString(),
-                            'Day': t.day || '--',
-                            'Symbol': t.stock,
-                            'Type': t.option,
-                            'Total Qty': t.totalQty,
-                            'Close Qty': c.qty,
-                            'Entry': t.entry,
-                            'Exit': c.exitPrice,
-                            'P&L': c.pnl,
-                            'Entry Time': t.entryTime,
-                            'Exit Time': c.exitTime,
-                            'Setup': (t.setups || []).join(', '),
-                            'Source': t.source || 'manual'
+                            'Day': t.day || '--', 'Symbol': t.stock, 'Type': t.option,
+                            'Total Qty': t.totalQty, 'Close Qty': c.qty,
+                            'Entry': t.entry, 'Exit': c.exitPrice, 'P&L': c.pnl,
+                            'Entry Time': t.entryTime, 'Exit Time': c.exitTime,
+                            'Setup': (t.setups || []).join(', '), 'Source': t.source || 'manual'
                         });
                     });
                 } else {
                     exportData.push({
                         'Date': new Date(t.timestamp).toLocaleDateString(),
-                        'Day': t.day || '--',
-                        'Symbol': t.stock,
-                        'Type': t.option,
-                        'Total Qty': t.totalQty,
-                        'Remaining Qty': t.remainingQty,
-                        'Entry': t.entry,
-                        'Status': t.status,
-                        'Entry Time': t.entryTime,
-                        'Setup': (t.setups || []).join(', '),
-                        'Source': t.source || 'manual'
+                        'Day': t.day || '--', 'Symbol': t.stock, 'Type': t.option,
+                        'Total Qty': t.totalQty, 'Remaining Qty': t.remainingQty,
+                        'Entry': t.entry, 'Status': t.status, 'Entry Time': t.entryTime,
+                        'Setup': (t.setups || []).join(', '), 'Source': t.source || 'manual'
                     });
                 }
             });
-            
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Trades");
-            
-            const fileName = `Obsidian_Elite_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            XLSX.writeFile(wb, `Obsidian_Elite_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
-        // Initialize Charts
+        // Charts
         function initCharts() {
             equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), {
                 data: {
                     labels: [],
                     datasets: [{
-                        type: 'line',
-                        label: 'Equity',
-                        data: [],
-                        borderColor: '#00FFCC',
-                        backgroundColor: 'rgba(0, 255, 204, 0.1)',
-                        tension: 0.4,
-                        borderWidth: 3,
-                        pointRadius: 0,
-                        fill: true
+                        type: 'line', label: 'Equity', data: [],
+                        borderColor: '#00FFCC', backgroundColor: 'rgba(0, 255, 204, 0.1)',
+                        tension: 0.4, borderWidth: 3, pointRadius: 0, fill: true
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
                         x: { grid: { display: false } },
@@ -959,44 +934,25 @@
                     }
                 }
             });
-
             precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Wins', 'Losses'],
-                    datasets: [{
-                        data: [0, 0],
-                        backgroundColor: ['#00FFCC', '#1f2937'],
-                        borderWidth: 0,
-                        cutout: '75%'
-                    }]
+                    datasets: [{ data: [0, 0], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '75%' }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
-        // Analytics
         function updateAnalytics() {
             const closedTrades = trades.filter(t => t.status === 'CLOSED');
-            
-            // Equity Curve
             const sortedTrades = [...closedTrades].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             let cumulative = 0;
-            const equityData = sortedTrades.map(t => {
-                cumulative += parseFloat(t.realizedPnl || 0);
-                return cumulative;
-            });
-            const labels = sortedTrades.map(t => new Date(t.timestamp).toLocaleDateString([], {month: 'short', day: 'numeric'}));
-            
+            const equityData = sortedTrades.map(t => { cumulative += parseFloat(t.realizedPnl || 0); return cumulative; });
+            const labels = sortedTrades.map(t => new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'}));
             equityChart.data.labels = labels;
             equityChart.data.datasets[0].data = equityData;
             equityChart.update();
-
-            // Win/Loss
             let wins = 0, losses = 0, totalPnl = 0;
             closedTrades.forEach(t => {
                 const pnl = parseFloat(t.realizedPnl || 0);
@@ -1004,38 +960,30 @@
                 if (pnl > 0) wins++;
                 else if (pnl < 0) losses++;
             });
-
             precisionChart.data.datasets[0].data = [wins, losses];
             precisionChart.update();
-
             const winRate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100) : 0;
             document.getElementById('winRateText').innerText = Math.round(winRate) + '%';
             document.getElementById('totalWins').innerText = wins;
             document.getElementById('totalLosses').innerText = losses;
-
-            // Header Stats
             document.getElementById('totalPnl').innerText = formatCurrency(totalPnl);
             document.getElementById('totalPnl').className = `stat-value ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
-            
-            const totalTrades = trades.length;
-            const totalCloses = trades.reduce((sum, t) => sum + (t.closes?.length || 0), 0);
-            document.getElementById('totalTrades').innerText = totalTrades;
-            document.getElementById('totalTradesDetail').innerText = `${totalCloses} closes`;
-            
+            const totalTradesCount = trades.length;
+            const totalClosesCount = trades.reduce((sum, t) => sum + (t.closes?.length || 0), 0);
+            document.getElementById('totalTrades').innerText = totalTradesCount;
+            document.getElementById('totalTradesDetail').innerText = `${totalClosesCount} closes`;
             const openContracts = trades.reduce((sum, t) => sum + (t.remainingQty || 0), 0);
             const openValue = trades.filter(t => t.remainingQty > 0).reduce((sum, t) => sum + (t.entry * t.remainingQty * 100), 0);
             document.getElementById('openContracts').innerText = openContracts;
             document.getElementById('openValue').innerText = formatCurrency(openValue);
-            
             document.getElementById('totalEntries').innerText = trades.length;
-            document.getElementById('totalCloses').innerText = totalCloses;
+            document.getElementById('totalCloses').innerText = totalClosesCount;
         }
 
-        // Render Table
+        // ─── Render Table ───────────────────────────────────────────────────────
         function renderTradeTable() {
             const body = document.getElementById('tradeBody');
             body.innerHTML = '';
-
             if (trades.length === 0) {
                 body.innerHTML = `
                     <tr>
@@ -1044,224 +992,289 @@
                             <div class="text-lg">No trades yet</div>
                             <div class="text-sm mt-2">Start by opening a trade</div>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
                 return;
             }
 
-            trades.forEach((t, i) => {
+            // Build a sorted index → original index map
+            const sortedTrades = getSortedTrades();
+
+            sortedTrades.forEach((t) => {
+                // Find original index in trades array by id
+                const origIdx = trades.findIndex(tr => tr.id === t.id);
                 const ticker = getTickerPrefix(t.stock);
                 const source = t.source || 'manual';
                 const realizedPnl = parseFloat(t.realizedPnl || 0);
                 const avgExit = t.avgExit || 0;
                 
                 let statusBadge = '';
-                if (t.status === 'OPEN') {
-                    statusBadge = '<span class="badge badge-open">🟢 OPEN</span>';
-                } else if (t.status === 'PARTIAL') {
-                    statusBadge = '<span class="badge badge-partial">🟡 PARTIAL</span>';
-                } else {
-                    statusBadge = '<span class="badge badge-closed">⚫ CLOSED</span>';
-                }
+                if (t.status === 'OPEN') statusBadge = '<span class="badge badge-open">🟢 OPEN</span>';
+                else if (t.status === 'PARTIAL') statusBadge = '<span class="badge badge-partial">🟡 PARTIAL</span>';
+                else statusBadge = '<span class="badge badge-closed">⚫ CLOSED</span>';
 
                 // Main row
-                body.innerHTML += `
-                    <tr id="trade-${i}">
-                        <td>
-                            <span class="badge ${source === 'imported' ? 'badge-imported' : 'badge-manual'}">
-                                ${source === 'imported' ? '📦' : '✍️'}
-                            </span>
-                        </td>
-                        <td class="text-[#00D9FF] font-bold text-xs">${t.day || '--'}</td>
-                        <td class="text-gray-400 text-xs">${new Date(t.timestamp).toLocaleDateString([], {month: 'short', day: 'numeric'})}</td>
-                        <td class="font-black text-white">
-                            ${ticker}
-                            <span class="${t.option === 'CALL' ? 'text-green-400' : 'text-red-400'} text-[9px] ml-1">
-                                ${t.option}
-                            </span>
-                        </td>
-                        <td>${statusBadge}</td>
-                        <td class="text-white font-bold">${t.remainingQty}/${t.totalQty}</td>
-                        <td class="text-white font-mono text-sm">${formatCurrency(t.entry)}</td>
-                        <td class="text-gray-400 font-mono text-sm">${avgExit > 0 ? formatCurrency(avgExit) : '--'}</td>
-                        <td class="text-gray-500 text-[10px]">${t.entryTime}</td>
-                        <td class="text-xs text-gray-400">${(t.setups || []).slice(0, 2).join(', ')}</td>
-                        <td class="text-right font-black ${realizedPnl >= 0 ? 'text-green-400' : 'text-red-500'}">
-                            ${realizedPnl !== 0 ? formatCurrency(realizedPnl) : '--'}
-                        </td>
-                        <td class="text-center">
+                const mainRow = document.createElement('tr');
+                mainRow.id = `trade-row-${origIdx}`;
+                mainRow.innerHTML = `
+                    <td>
+                        <span class="badge ${source === 'imported' ? 'badge-imported' : 'badge-manual'}">
+                            ${source === 'imported' ? '📦' : '✍️'}
+                        </span>
+                    </td>
+                    <td class="text-[#00D9FF] font-bold text-xs">${t.day || '--'}</td>
+                    <td class="text-gray-400 text-xs">${new Date(t.timestamp).toLocaleDateString([], {month:'short', day:'numeric'})}</td>
+                    <td class="font-black text-white">
+                        ${ticker}
+                        <span class="${t.option === 'CALL' ? 'text-green-400' : 'text-red-400'} text-[9px] ml-1">${t.option}</span>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td class="text-white font-bold">${t.remainingQty}/${t.totalQty}</td>
+                    <td class="text-white font-mono text-sm">${formatCurrency(t.entry)}</td>
+                    <td class="text-gray-400 font-mono text-sm">${avgExit > 0 ? formatCurrency(avgExit) : '--'}</td>
+                    <td class="text-gray-500 text-[10px]">${t.entryTime}</td>
+                    <td class="text-xs text-gray-400">${(t.setups || []).slice(0, 2).join(', ')}</td>
+                    <td class="text-right font-black ${realizedPnl >= 0 ? 'text-green-400' : 'text-red-500'}">
+                        ${realizedPnl !== 0 ? formatCurrency(realizedPnl) : '--'}
+                    </td>
+                    <td class="text-center">
+                        <div class="flex gap-2 justify-center">
                             ${t.remainingQty > 0 ? `
-                                <button onclick="showCloseInputs(${i})" id="closeBtn-${i}" class="btn-close">
+                                <button onclick="toggleClosePanel(${origIdx})" id="closeBtn-${origIdx}" class="btn-close ${openClosePanels.has(origIdx) ? 'active-close' : ''}">
                                     📍 CLOSE
                                 </button>
-                            ` : `
-                                <button onclick="removeTrade(${i})" class="text-red-400 hover:text-red-300 text-lg">
-                                    🗑️
-                                </button>
-                            `}
-                        </td>
-                    </tr>
+                            ` : ''}
+                            <button onclick="toggleEditPanel(${origIdx})" id="editBtn-${origIdx}" class="btn-edit">
+                                ✏️ EDIT
+                            </button>
+                            <button onclick="removeTrade(${origIdx})" class="text-red-400 hover:text-red-300 text-lg" title="Delete">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
                 `;
+                body.appendChild(mainRow);
 
-                // Close inputs row (hidden by default)
-                body.innerHTML += `
-                    <tr id="closeInputs-${i}" class="close-inputs-row" style="display: none;">
-                        <td colspan="12" class="p-6">
-                            <div class="flex items-center gap-4 flex-wrap">
-                                <div>
-                                    <label style="font-size: 9px; margin-bottom: 4px;">Contracts to Close</label>
-                                    <input type="number" id="closeQty-${i}" min="1" max="${t.remainingQty}" value="${t.remainingQty}" class="inline-input">
-                                </div>
-                                <div class="flex-1">
-                                    <label style="font-size: 9px; margin-bottom: 4px;">Exit Price</label>
-                                    <input type="number" id="closePrice-${i}" step="0.01" placeholder="0.00" class="inline-input">
-                                </div>
-                                <div class="flex gap-2 mt-5">
-                                    <button onclick="submitClose(${i})" class="btn-submit-close">
-                                        ✅ Submit
-                                    </button>
-                                    <button onclick="hideCloseInputs(${i})" class="btn-cancel-close">
-                                        ❌ Cancel
-                                    </button>
-                                </div>
-                                <div class="ml-auto text-sm text-gray-400">
-                                    Available: <span class="text-[#00FFCC] font-bold">${t.remainingQty}</span> contracts
-                                </div>
+                // ── Close Panel Row ───────────────────────────────────────────
+                const closePanelRow = document.createElement('tr');
+                closePanelRow.id = `closeInputs-${origIdx}`;
+                closePanelRow.className = 'close-inputs-row';
+                closePanelRow.style.display = openClosePanels.has(origIdx) ? 'table-row' : 'none';
+                closePanelRow.innerHTML = `
+                    <td colspan="12" class="p-6">
+                        <div class="flex items-center gap-4 flex-wrap">
+                            <div>
+                                <label style="font-size: 9px; margin-bottom: 4px;">Contracts to Close</label>
+                                <input type="number" id="closeQty-${origIdx}" min="1" max="${t.remainingQty}" value="${t.remainingQty}" class="inline-input">
                             </div>
-                        </td>
-                    </tr>
+                            <div class="flex-1">
+                                <label style="font-size: 9px; margin-bottom: 4px;">Exit Price</label>
+                                <input type="number" id="closePrice-${origIdx}" step="0.01" placeholder="0.00" class="inline-input">
+                            </div>
+                            <div class="flex gap-2 mt-5">
+                                <button onclick="submitClose(${origIdx})" class="btn-submit-close">✅ Submit</button>
+                                <button onclick="toggleClosePanel(${origIdx})" class="btn-cancel-close">❌ Cancel</button>
+                            </div>
+                            <div class="ml-auto text-sm text-gray-400">
+                                Available: <span class="text-[#00FFCC] font-bold">${t.remainingQty}</span> contracts
+                            </div>
+                        </div>
+                    </td>
                 `;
+                body.appendChild(closePanelRow);
+
+                // ── Edit Panel Row ────────────────────────────────────────────
+                const editPanelRow = document.createElement('tr');
+                editPanelRow.id = `editInputs-${origIdx}`;
+                editPanelRow.className = 'edit-inputs-row';
+                editPanelRow.style.display = openEditPanels.has(origIdx) ? 'table-row' : 'none';
+
+                const dayOptions = ['Monday','Tuesday','Wednesday','Thursday','Friday'].map(d =>
+                    `<option value="${d}" ${t.day === d ? 'selected' : ''}>${d}</option>`
+                ).join('');
+
+                const setupOptions = ['5/12 CURL','5/12 REJECT','34/50 Bounce','34/50 Reject','PM HI break','PM low break','PD CL Bounce','PD CL Fail','PD HI Brko','PD LW Brkdwn'];
+                const setupBtns = setupOptions.map(s => {
+                    const isActive = (t.setups || []).includes(s);
+                    return `<span class="toggle-btn text-xs ${isActive ? 'active' : ''}" style="--brand-color: #6366f1; color: #a5b4fc; min-width:0; flex: none; padding: 4px 8px;" data-editsetup="${origIdx}" data-val="${s}" onclick="toggleEditSetup(this)">${s}</span>`;
+                }).join('');
+
+                editPanelRow.innerHTML = `
+                    <td colspan="12" class="p-6">
+                        <div class="text-xs font-bold text-indigo-400 mb-4 uppercase tracking-widest">✏️ Edit Trade #${origIdx + 1}</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-4">
+                            <div>
+                                <label style="font-size: 9px; margin-bottom: 4px;">Symbol</label>
+                                <input type="text" id="editStock-${origIdx}" value="${t.stock}" class="inline-input" style="text-transform:uppercase; width:100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; margin-bottom: 4px;">Type</label>
+                                <select id="editOption-${origIdx}" class="inline-input" style="width:100%;">
+                                    <option value="CALL" ${t.option === 'CALL' ? 'selected' : ''}>CALL</option>
+                                    <option value="PUT" ${t.option === 'PUT' ? 'selected' : ''}>PUT</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; margin-bottom: 4px;">Day</label>
+                                <select id="editDay-${origIdx}" class="inline-input" style="width:100%;">
+                                    ${dayOptions}
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; margin-bottom: 4px;">Entry Price</label>
+                                <input type="number" id="editEntry-${origIdx}" value="${t.entry}" step="0.01" class="inline-input" style="width:100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; margin-bottom: 4px;">Total Qty</label>
+                                <input type="number" id="editQty-${origIdx}" value="${t.totalQty}" min="1" class="inline-input" style="width:100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; margin-bottom: 4px;">Entry Time</label>
+                                <input type="text" id="editTime-${origIdx}" value="${t.entryTime}" class="inline-input" style="width:100%;">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label style="font-size: 9px; margin-bottom: 4px;">Setup Tags</label>
+                            <div class="flex flex-wrap gap-2">${setupBtns}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="submitEdit(${origIdx})" class="btn-submit-close">💾 Save Changes</button>
+                            <button onclick="toggleEditPanel(${origIdx})" class="btn-cancel-close">❌ Cancel</button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(editPanelRow);
             });
         }
 
-        // Close Trade Functions
-        function showCloseInputs(index) {
-            // Hide all other close inputs first
-            document.querySelectorAll('[id^="closeInputs-"]').forEach(row => {
-                row.style.display = 'none';
-            });
-            
-            const closeRow = document.getElementById(`closeInputs-${index}`);
-            closeRow.style.display = 'table-row';
-            
-            // Focus on exit price input
-            setTimeout(() => {
-                document.getElementById(`closePrice-${index}`).focus();
-            }, 100);
+        // ─── Toggle Panels (persistent across re-renders) ─────────────────────
+        function toggleClosePanel(origIdx) {
+            if (openClosePanels.has(origIdx)) {
+                openClosePanels.delete(origIdx);
+            } else {
+                openClosePanels.add(origIdx);
+            }
+            renderTradeTable();
+            // Focus exit price input if opening
+            if (openClosePanels.has(origIdx)) {
+                setTimeout(() => {
+                    const el = document.getElementById(`closePrice-${origIdx}`);
+                    if (el) el.focus();
+                }, 50);
+            }
         }
 
-        function hideCloseInputs(index) {
-            document.getElementById(`closeInputs-${index}`).style.display = 'none';
+        function toggleEditPanel(origIdx) {
+            if (openEditPanels.has(origIdx)) {
+                openEditPanels.delete(origIdx);
+            } else {
+                openEditPanels.add(origIdx);
+            }
+            renderTradeTable();
         }
 
-        function submitClose(index) {
-            const trade = trades[index];
-            const closeQty = parseInt(document.getElementById(`closeQty-${index}`).value);
-            const exitPrice = parseFloat(document.getElementById(`closePrice-${index}`).value);
+        function toggleEditSetup(btn) {
+            btn.classList.toggle('active');
+        }
 
-            if (isNaN(closeQty) || closeQty < 1) {
-                alert('Please enter a valid quantity');
-                return;
-            }
-            if (closeQty > trade.remainingQty) {
-                alert(`Cannot close more than ${trade.remainingQty} contracts`);
-                return;
-            }
-            if (isNaN(exitPrice) || exitPrice <= 0) {
-                alert('Please enter a valid exit price');
-                return;
-            }
+        // ─── Submit Close ─────────────────────────────────────────────────────
+        function submitClose(origIdx) {
+            const trade = trades[origIdx];
+            const closeQty = parseInt(document.getElementById(`closeQty-${origIdx}`).value);
+            const exitPrice = parseFloat(document.getElementById(`closePrice-${origIdx}`).value);
+            if (isNaN(closeQty) || closeQty < 1) { alert('Please enter a valid quantity'); return; }
+            if (closeQty > trade.remainingQty) { alert(`Cannot close more than ${trade.remainingQty} contracts`); return; }
+            if (isNaN(exitPrice) || exitPrice <= 0) { alert('Please enter a valid exit price'); return; }
 
-            // Calculate P&L for this close
             const pnl = ((exitPrice - trade.entry) * 100 * closeQty).toFixed(2);
             const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-
-            // Add close record
             if (!trade.closes) trade.closes = [];
-            trade.closes.push({
-                qty: closeQty,
-                exitPrice: exitPrice,
-                exitTime: now,
-                pnl: pnl
-            });
-
-            // Update trade
+            trade.closes.push({ qty: closeQty, exitPrice, exitTime: now, pnl });
             trade.remainingQty -= closeQty;
             const closedQty = trade.totalQty - trade.remainingQty;
             trade.avgExit = trade.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / closedQty;
             trade.realizedPnl = trade.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
+            trade.status = trade.remainingQty === 0 ? 'CLOSED' : 'PARTIAL';
 
-            if (trade.remainingQty === 0) {
-                trade.status = 'CLOSED';
-            } else {
-                trade.status = 'PARTIAL';
-            }
-
-            hideCloseInputs(index);
+            openClosePanels.delete(origIdx);
             render();
         }
 
-        // Remove Trade
-        function removeTrade(index) {
+        // ─── Submit Edit ──────────────────────────────────────────────────────
+        function submitEdit(origIdx) {
+            const trade = trades[origIdx];
+            const newStock = document.getElementById(`editStock-${origIdx}`).value.trim().toUpperCase();
+            const newOption = document.getElementById(`editOption-${origIdx}`).value;
+            const newDay = document.getElementById(`editDay-${origIdx}`).value;
+            const newEntry = parseFloat(document.getElementById(`editEntry-${origIdx}`).value);
+            const newQty = parseInt(document.getElementById(`editQty-${origIdx}`).value);
+            const newTime = document.getElementById(`editTime-${origIdx}`).value.trim();
+
+            if (!newStock) { alert('Symbol cannot be empty'); return; }
+            if (isNaN(newEntry) || newEntry <= 0) { alert('Please enter a valid entry price'); return; }
+            if (isNaN(newQty) || newQty < 1) { alert('Please enter a valid quantity'); return; }
+
+            // Collect selected setup buttons
+            const setupBtns = document.querySelectorAll(`[data-editsetup="${origIdx}"].active`);
+            const newSetups = Array.from(setupBtns).map(b => b.dataset.val);
+
+            trade.stock = newStock;
+            trade.option = newOption;
+            trade.day = newDay;
+            trade.entry = newEntry;
+            trade.totalQty = newQty;
+            if (trade.remainingQty > newQty) trade.remainingQty = newQty;
+            trade.entryTime = newTime;
+            if (newSetups.length > 0) trade.setups = newSetups;
+
+            // Recalculate P&L with new entry price
+            if (trade.closes && trade.closes.length > 0) {
+                trade.closes = trade.closes.map(c => ({
+                    ...c,
+                    pnl: ((c.exitPrice - newEntry) * 100 * c.qty).toFixed(2)
+                }));
+                const closedQty = trade.totalQty - trade.remainingQty;
+                trade.avgExit = trade.closes.reduce((sum, c) => sum + (c.exitPrice * c.qty), 0) / (closedQty || 1);
+                trade.realizedPnl = trade.closes.reduce((sum, c) => sum + parseFloat(c.pnl), 0);
+            }
+
+            openEditPanels.delete(origIdx);
+            render();
+        }
+
+        // ─── Remove Trade ─────────────────────────────────────────────────────
+        function removeTrade(origIdx) {
             if (confirm('Delete this trade?')) {
-                trades.splice(index, 1);
+                openClosePanels.delete(origIdx);
+                openEditPanels.delete(origIdx);
+                trades.splice(origIdx, 1);
                 render();
             }
         }
 
-        // Form Submission
+        // ─── Form Submission ──────────────────────────────────────────────────
         document.getElementById('tradeForm').onsubmit = (e) => {
             e.preventDefault();
-
             let tick = document.querySelector('#tickerSelect .active')?.dataset.ticker;
             const customTick = document.getElementById('customStock').value.trim().toUpperCase();
             if (customTick) tick = customTick;
-
             const type = document.querySelector('#typeSelect .active')?.dataset.type;
             const day = document.getElementById('daySelect').value;
             const ent = parseFloat(document.getElementById('entry').value);
             const count = parseInt(document.getElementById('count').value);
             const set = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
 
-            if (!tick) {
-                alert('Please select a symbol');
-                return;
-            }
-            if (!type) {
-                alert('Please select contract type');
-                return;
-            }
-            if (!day) {
-                alert('Please select a day');
-                return;
-            }
-            if (isNaN(ent) || ent <= 0) {
-                alert('Please enter a valid entry price');
-                return;
-            }
-            if (set.length === 0) {
-                alert('Please select at least one setup');
-                return;
-            }
+            if (!tick) { alert('Please select a symbol'); return; }
+            if (!type) { alert('Please select contract type'); return; }
+            if (!day) { alert('Please select a day'); return; }
+            if (isNaN(ent) || ent <= 0) { alert('Please enter a valid entry price'); return; }
+            if (set.length === 0) { alert('Please select at least one setup'); return; }
 
             trades.unshift({
-                id: generateId(),
-                stock: tick,
-                option: type,
-                day: day,
-                totalQty: count,
-                remainingQty: count,
-                entry: ent,
-                avgExit: 0,
-                status: 'OPEN',
-                entryTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
-                setups: set,
-                closes: [],
-                realizedPnl: 0,
-                timestamp: new Date().toISOString(),
-                source: 'manual'
+                id: generateId(), stock: tick, option: type, day, totalQty: count,
+                remainingQty: count, entry: ent, avgExit: 0, status: 'OPEN',
+                entryTime: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                setups: set, closes: [], realizedPnl: 0, timestamp: new Date().toISOString(), source: 'manual'
             });
-
             resetForm();
             render();
         };
@@ -1273,25 +1286,17 @@
 
         // Toggle Handlers
         document.querySelectorAll('#setupGrid .toggle-btn').forEach(btn => {
-            btn.onclick = function() {
-                this.classList.toggle('active');
-            };
+            btn.onclick = function() { this.classList.toggle('active'); };
         });
-
         document.querySelectorAll('#tickerSelect .toggle-btn, #typeSelect .toggle-btn').forEach(btn => {
             btn.onclick = function() {
                 this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                if (this.parentElement.id === 'tickerSelect') {
-                    document.getElementById('customStock').value = '';
-                }
+                if (this.parentElement.id === 'tickerSelect') document.getElementById('customStock').value = '';
             };
         });
-
         document.getElementById('customStock').oninput = function() {
-            if (this.value.trim()) {
-                document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.remove('active'));
-            }
+            if (this.value.trim()) document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.remove('active'));
         };
 
         // Main Render
@@ -1304,22 +1309,21 @@
         // Initialize
         window.onload = () => {
             initCharts();
-            
             if (importMetadata) {
                 document.getElementById('importStatusBox').classList.add('active');
                 document.getElementById('importProgress').style.width = '100%';
                 updateImportStatus();
                 document.getElementById('deleteImportedBtn').style.display = 'inline-block';
             }
-            
             render();
-
             document.getElementById('currentDateDisplay').innerText = new Date().toDateString();
-            
-            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const today = days[new Date().getDay()];
-            if (today !== 'Saturday' && today !== 'Sunday') {
-                document.getElementById('daySelect').value = today;
+
+            // Set day dropdown to current weekday (Mon–Fri only)
+            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const todayName = days[new Date().getDay()];
+            const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+            if (weekdays.includes(todayName)) {
+                document.getElementById('daySelect').value = todayName;
             }
         };
     </script>
