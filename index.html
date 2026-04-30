@@ -1,1406 +1,1136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Obsidian Elite v4.1 | Advanced Quant Terminal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #00FFCC;
-            --secondary: #00D9FF;
-            --accent: #FFD700;
-            --bg-dark: #030508;
-            --bg-card: #0a0e14;
-            --border: #1f2937;
-            --success: #4ade80;
-            --danger: #f87171;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: linear-gradient(135deg, #030508 0%, #0a0e14 100%);
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            min-height: 100vh;
-        }
-        .glass-card {
-            background: rgba(10,14,20,0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0,255,204,0.1);
-            border-radius: 16px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        .glass-card:hover {
-            border-color: rgba(0,255,204,0.3);
-            box-shadow: 0 10px 40px rgba(0,255,204,0.1);
-        }
-        label {
-            color: var(--primary) !important;
-            text-shadow: 0 0 10px rgba(0,255,204,0.5);
-            font-weight: 700;
-            font-size: 10px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            display: block;
-            letter-spacing: 0.15em;
-        }
-        input, select {
-            background: rgba(13,17,23,0.8);
-            border: 1px solid rgba(48,54,61,0.5);
-            color: #fff;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            width: 100%;
-            outline: none;
-            transition: all 0.3s ease;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        input:focus, select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0,255,204,0.1);
-            background: rgba(13,17,23,0.95);
-        }
-        input.inline-input { padding: 6px 8px; font-size: 12px; min-width: 80px; }
-        .toggle-group {
-            display: flex; gap: 6px;
-            background: rgba(10,14,20,0.5);
-            padding: 6px; border-radius: 10px;
-            border: 1px solid rgba(31,41,55,0.5); flex-wrap: wrap;
-        }
-        .toggle-btn {
-            flex: 1; min-width: 60px; text-align: center;
-            padding: 8px 4px; font-size: 13px; font-weight: 700;
-            border-radius: 6px; cursor: pointer;
-            background: rgba(13,17,23,0.8);
-            border: 1px solid rgba(31,41,55,0.8);
-            transition: all 0.2s ease; text-transform: uppercase;
-        }
-        .toggle-btn:hover { box-shadow: inset 0 0 10px var(--brand-color); border-color: var(--brand-color); transform: scale(1.05); }
-        .toggle-btn.active { background: var(--brand-color) !important; color: #000 !important; border-color: #fff !important; box-shadow: 0 0 20px var(--brand-color); font-weight: 800; }
-        .toggle-btn.active[data-type="CALL"] { background: #4ade80 !important; }
-        .toggle-btn.active[data-type="PUT"] { background: #f87171 !important; }
+<meta charset="UTF-8">
+<title>Stellium Elite | Professional Options Terminal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#00FFCC;--secondary:#00D9FF;--accent:#FFD700;--purple:#a855f7;
+  --bg:#03050a;--card:rgba(10,14,22,0.85);--border:rgba(0,255,204,0.12);
+  --success:#22c55e;--danger:#ef4444;--warn:#f59e0b;
+  --glow:0 0 40px rgba(0,255,204,0.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:#e2e8f0;
+  font-family:'Inter',sans-serif;min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,255,204,0.06) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%,rgba(168,85,247,0.04) 0%,transparent 50%);
+}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.3)}
+::-webkit-scrollbar-thumb{background:rgba(0,255,204,0.25);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,255,204,0.45)}
 
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #000; padding: 14px 28px; font-weight: 900; border-radius: 10px; text-transform: uppercase; cursor: pointer; border: none; font-size: 14px; letter-spacing: 1.5px; transition: all 0.3s ease; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,255,204,0.4); }
-        .btn-secondary { background: rgba(255,215,0,0.1); border: 2px solid var(--accent); color: var(--accent); padding: 12px 24px; font-weight: 800; border-radius: 10px; text-transform: uppercase; cursor: pointer; font-size: 13px; letter-spacing: 1px; transition: all 0.3s ease; }
-        .btn-secondary:hover { background: var(--accent); color: #000; transform: translateY(-2px); }
-        .btn-danger { background: rgba(248,113,113,0.1); border: 2px solid var(--danger); color: var(--danger); padding: 10px 20px; font-weight: 800; border-radius: 10px; text-transform: uppercase; cursor: pointer; font-size: 12px; letter-spacing: 1px; transition: all 0.3s ease; }
-        .btn-danger:hover { background: var(--danger); color: #fff; transform: translateY(-2px); }
-        .btn-close-trade { background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; padding: 6px 12px; font-weight: 800; border-radius: 8px; cursor: pointer; border: none; font-size: 10px; transition: all 0.2s ease; text-transform: uppercase; white-space: nowrap; }
-        .btn-close-trade:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(249,115,22,0.4); }
-        .btn-close-trade.open { background: linear-gradient(135deg, #ea580c, #c2410c); box-shadow: 0 0 12px rgba(249,115,22,0.5); }
-        .btn-edit { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; padding: 6px 12px; font-weight: 800; border-radius: 8px; cursor: pointer; border: none; font-size: 10px; transition: all 0.2s ease; text-transform: uppercase; white-space: nowrap; }
-        .btn-edit:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(99,102,241,0.4); }
-        .btn-sm-green { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; padding: 6px 12px; font-weight: 800; border-radius: 6px; cursor: pointer; border: none; font-size: 10px; transition: all 0.2s ease; text-transform: uppercase; }
-        .btn-sm-green:hover { transform: scale(1.05); }
-        .btn-sm-red { background: transparent; color: #ef4444; padding: 6px 12px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 1px solid #ef4444; font-size: 10px; transition: all 0.2s ease; text-transform: uppercase; }
-        .btn-sm-red:hover { background: #ef4444; color: #fff; }
+/* ── GLASS CARDS ── */
+.glass{
+  background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:16px;
+  transition:border-color .25s,box-shadow .25s;
+}
+.glass:hover{border-color:rgba(0,255,204,0.25);box-shadow:var(--glow)}
+.glass-dark{background:rgba(6,9,14,0.9);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.04);border-radius:14px}
 
-        .stat-display { text-align: center; padding: 20px; }
-        .stat-label { font-size: 10px; color: rgba(0,255,204,0.7); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 700; }
-        .stat-value { font-size: 2.5rem; font-weight: 900; line-height: 1; text-shadow: 0 0 20px currentColor; }
-        .stat-subvalue { font-size: 0.9rem; opacity: 0.6; margin-top: 4px; }
+/* ── TICKER BAND ── */
+.ticker-band{
+  background:linear-gradient(90deg,rgba(0,255,204,0.06),rgba(0,217,255,0.04),rgba(168,85,247,0.04));
+  border-top:1px solid rgba(0,255,204,0.08);
+  border-bottom:1px solid rgba(0,255,204,0.08);
+  overflow:hidden;white-space:nowrap;
+}
+.ticker-scroll{display:inline-block;animation:tickerMove 40s linear infinite}
+@keyframes tickerMove{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
-        /* ── Trade History Table ── */
-        .modern-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .modern-table thead th {
-            background: rgba(17,24,39,0.9); color: var(--primary);
-            font-weight: 800; text-transform: uppercase; font-size: 10px;
-            padding: 14px 12px; text-align: left;
-            border-bottom: 2px solid rgba(0,255,204,0.3);
-            position: sticky; top: 0; z-index: 10; white-space: nowrap;
-        }
-        .modern-table thead th.sortable { cursor: pointer; user-select: none; }
-        .modern-table thead th.sortable:hover { color: #fff; background: rgba(0,255,204,0.08); }
-        .sort-icon { display: inline-block; margin-left: 4px; font-size: 9px; opacity: 0.4; }
-        .sort-icon.asc,.sort-icon.desc { opacity: 1; color: var(--primary); }
-        .modern-table tbody tr { transition: background 0.15s; border-bottom: 1px solid rgba(31,41,55,0.5); }
-        .modern-table tbody tr:hover { background: rgba(0,255,204,0.04); }
-        .modern-table tbody td { padding: 12px; font-size: 12px; }
+/* ── STATS ── */
+.stat-card{
+  background:var(--card);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:14px;
+  padding:18px 24px;text-align:center;position:relative;overflow:hidden;
+  transition:all .3s;
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--grad,linear-gradient(90deg,var(--primary),var(--secondary)));
+}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,255,204,0.12)}
+.stat-val{font-size:2rem;font-weight:900;line-height:1.1;font-family:'JetBrains Mono',monospace;letter-spacing:-0.02em}
+.stat-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:rgba(0,255,204,0.6);margin-bottom:6px}
+.stat-sub{font-size:11px;color:#6b7280;margin-top:4px;font-family:'JetBrains Mono',monospace}
 
-        /* ── Group header rows ── */
-        .group-header-row td {
-            background: rgba(0,255,204,0.06);
-            border-top: 1px solid rgba(0,255,204,0.2);
-            border-bottom: 1px solid rgba(0,255,204,0.1);
-            cursor: pointer;
-            padding: 10px 14px !important;
-            font-size: 11px !important;
-        }
-        .group-header-row:hover td { background: rgba(0,255,204,0.10); }
-        .week-header-row td {
-            background: rgba(0,217,255,0.05);
-            border-top: 1px solid rgba(0,217,255,0.15);
-            cursor: pointer;
-            padding: 8px 14px !important;
-            font-size: 11px !important;
-        }
-        .month-header-row td {
-            background: rgba(255,215,0,0.06);
-            border-top: 2px solid rgba(255,215,0,0.25);
-            cursor: pointer;
-            padding: 10px 14px !important;
-            font-size: 12px !important;
-        }
+/* ── METRICS TABS ── */
+.metric-tab{
+  padding:6px 14px;font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;border-radius:8px;cursor:pointer;
+  border:1px solid rgba(0,255,204,0.15);color:rgba(0,255,204,0.4);
+  background:transparent;transition:all .2s;font-family:'JetBrains Mono',monospace;
+}
+.metric-tab.active{background:rgba(0,255,204,0.12);color:var(--primary);border-color:rgba(0,255,204,0.4);box-shadow:0 0 12px rgba(0,255,204,0.15)}
+.metric-tab:hover:not(.active){color:rgba(0,255,204,0.7);border-color:rgba(0,255,204,0.3)}
 
-        /* ── Inline panel rows ── */
-        .close-panel-row { background: rgba(249,115,22,0.07); border-left: 4px solid #f97316; }
-        .edit-panel-row  { background: rgba(99,102,241,0.07);  border-left: 4px solid #6366f1; }
+/* ── METRIC KPI BOXES ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.kpi-box{
+  background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);
+  border-radius:10px;padding:12px 14px;transition:border-color .2s;
+}
+.kpi-box:hover{border-color:rgba(0,255,204,0.2)}
+.kpi-box .kv{font-size:1.2rem;font-weight:900;font-family:'JetBrains Mono',monospace;line-height:1}
+.kpi-box .kl{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
 
-        /* ── Badges ── */
-        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
-        .badge-imported { background: rgba(255,215,0,0.2);   color: var(--accent);   border: 1px solid var(--accent); }
-        .badge-manual   { background: rgba(0,217,255,0.2);   color: var(--secondary);border: 1px solid var(--secondary); }
-        .badge-open     { background: rgba(74,222,128,0.2);  color: var(--success);  border: 1px solid var(--success); animation: pulse 2s ease-in-out infinite; }
-        .badge-partial  { background: rgba(251,146,60,0.2);  color: #fb923c;         border: 1px solid #fb923c; }
-        .badge-closed   { background: rgba(107,114,128,0.2); color: #9ca3af;         border: 1px solid #6b7280; }
-        .badge-frozen   { background: rgba(100,160,255,0.2); color: #93c5fd;         border: 1px solid #60a5fa; font-size: 9px; }
+/* ── INPUTS ── */
+label.field-lbl{
+  display:block;font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  color:rgba(0,255,204,0.7);margin-bottom:6px;
+}
+input,select{
+  background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.08);
+  color:#e2e8f0;padding:10px 12px;border-radius:8px;font-size:13px;
+  width:100%;outline:none;transition:all .25s;font-family:'JetBrains Mono',monospace;
+}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,255,204,0.08);background:rgba(0,0,0,0.7)}
+input.sm{padding:6px 8px;font-size:11px}
+select option{background:#0a0e16}
 
-        /* ── Import batch cards ── */
-        .import-batch-card {
-            background: rgba(10,14,20,0.8);
-            border: 1px solid rgba(255,215,0,0.2);
-            border-radius: 12px; padding: 16px; margin-bottom: 10px;
-            transition: all 0.2s;
-        }
-        .import-batch-card:hover { border-color: rgba(255,215,0,0.4); }
+/* ── TOGGLE BUTTONS ── */
+.tg-group{display:flex;flex-wrap:wrap;gap:5px;background:rgba(0,0,0,0.4);padding:5px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)}
+.tg-btn{
+  flex:1;min-width:52px;text-align:center;padding:7px 5px;
+  font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+  transition:all .18s;text-transform:uppercase;font-family:'JetBrains Mono',monospace;
+  color:#6b7280;user-select:none;
+}
+.tg-btn:hover{border-color:var(--bc,rgba(0,255,204,0.4));color:var(--bc,var(--primary));background:rgba(0,255,204,0.04)}
+.tg-btn.on{background:var(--bc,var(--primary))!important;color:#000!important;border-color:rgba(255,255,255,0.3)!important;box-shadow:0 0 14px var(--bc,var(--primary));font-weight:900}
+.tg-btn.on[data-type="CALL"]{background:#22c55e!important}
+.tg-btn.on[data-type="PUT"]{background:#ef4444!important}
 
-        /* ── View toggle ── */
-        .view-toggle-btn {
-            padding: 7px 16px; font-size: 11px; font-weight: 700;
-            border-radius: 8px; cursor: pointer;
-            border: 1px solid rgba(0,255,204,0.2);
-            background: transparent; color: rgba(0,255,204,0.5);
-            transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .view-toggle-btn.active {
-            background: rgba(0,255,204,0.15); color: var(--primary);
-            border-color: var(--primary); box-shadow: 0 0 10px rgba(0,255,204,0.2);
-        }
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:'JetBrains Mono',monospace;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;border:none;border-radius:9px;transition:all .2s}
+.btn-cta{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000;padding:13px 28px;font-size:13px;letter-spacing:.1em}
+.btn-cta:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,255,204,0.35)}
+.btn-outline{background:rgba(255,215,0,0.06);border:1.5px solid var(--accent);color:var(--accent);padding:10px 20px;font-size:11px}
+.btn-outline:hover{background:var(--accent);color:#000;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1.5px solid rgba(255,255,255,0.12);color:#9ca3af;padding:8px 14px;font-size:10px}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.btn-red{background:rgba(239,68,68,0.08);border:1.5px solid #ef4444;color:#ef4444;padding:8px 16px;font-size:10px}
+.btn-red:hover{background:#ef4444;color:#fff}
+.btn-orange{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:5px 11px;font-size:10px;border-radius:7px}
+.btn-orange:hover{transform:scale(1.04);box-shadow:0 4px 14px rgba(249,115,22,0.4)}
+.btn-orange.lit{background:linear-gradient(135deg,#ea580c,#c2410c);box-shadow:0 0 10px rgba(249,115,22,0.5)}
+.btn-indigo{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;padding:5px 11px;font-size:10px;border-radius:7px}
+.btn-indigo:hover{transform:scale(1.04)}
+.btn-green-sm{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;padding:5px 11px;font-size:10px;border-radius:6px}
+.btn-red-sm{background:transparent;border:1px solid #ef4444;color:#ef4444;padding:5px 11px;font-size:10px;border-radius:6px}
+.btn-red-sm:hover{background:#ef4444;color:#fff}
 
-        /* ── Modal ── */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: linear-gradient(135deg,#0a0e14,#06090c); border: 2px solid var(--primary); border-radius: 20px; padding: 40px; max-width: 600px; width: 90%; box-shadow: 0 20px 60px rgba(0,255,204,0.3); }
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:separate;border-spacing:0}
+.tbl thead th{
+  background:rgba(6,9,14,0.95);color:var(--primary);font-family:'JetBrains Mono',monospace;
+  font-weight:800;text-transform:uppercase;font-size:9px;letter-spacing:.1em;
+  padding:13px 10px;text-align:left;border-bottom:1px solid rgba(0,255,204,0.2);
+  position:sticky;top:0;z-index:10;white-space:nowrap;
+}
+.tbl thead th.sort{cursor:pointer;user-select:none}
+.tbl thead th.sort:hover{color:#fff;background:rgba(0,255,204,0.06)}
+.si{display:inline-block;margin-left:3px;font-size:8px;opacity:.35}
+.si.asc,.si.desc{opacity:1;color:var(--primary)}
+.tbl tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background .15s}
+.tbl tbody tr:hover{background:rgba(0,255,204,0.03)}
+.tbl tbody td{padding:11px 10px;font-size:11px;font-family:'JetBrains Mono',monospace}
+.row-close{background:rgba(249,115,22,0.05);border-left:3px solid #f97316}
+.row-edit{background:rgba(99,102,241,0.05);border-left:3px solid #6366f1}
+.row-group-day{background:rgba(0,255,204,0.04);border-top:1px solid rgba(0,255,204,0.15);cursor:pointer}
+.row-group-day:hover td{background:rgba(0,255,204,0.07)}
+.row-group-week{background:rgba(0,217,255,0.03);border-top:1px solid rgba(0,217,255,0.12);cursor:pointer}
+.row-group-month{background:rgba(255,215,0,0.04);border-top:2px solid rgba(255,215,0,0.2);cursor:pointer}
 
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes slideDown { from{transform:translateY(-10px);opacity:0} to{transform:translateY(0);opacity:1} }
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-family:'JetBrains Mono',monospace}
+.b-imported{background:rgba(255,215,0,0.12);color:var(--accent);border:1px solid rgba(255,215,0,0.3)}
+.b-manual{background:rgba(0,217,255,0.1);color:var(--secondary);border:1px solid rgba(0,217,255,0.25)}
+.b-open{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.3);animation:pulse 2.5s ease infinite}
+.b-partial{background:rgba(251,146,60,0.12);color:#fb923c;border:1px solid rgba(251,146,60,0.3)}
+.b-closed{background:rgba(107,114,128,0.12);color:#9ca3af;border:1px solid rgba(107,114,128,0.2)}
+.b-frozen{background:rgba(96,165,250,0.1);color:#93c5fd;border:1px solid rgba(96,165,250,0.2);font-size:8px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.65}}
 
-        ::-webkit-scrollbar{width:8px;height:8px}
-        ::-webkit-scrollbar-track{background:rgba(10,14,20,0.5)}
-        ::-webkit-scrollbar-thumb{background:rgba(0,255,204,0.3);border-radius:4px}
-        ::-webkit-scrollbar-thumb:hover{background:rgba(0,255,204,0.5)}
+/* ── VIEW TOGGLE ── */
+.vtog{padding:6px 13px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:7px;cursor:pointer;border:1px solid rgba(0,255,204,0.15);color:rgba(0,255,204,0.4);background:transparent;transition:all .18s;font-family:'JetBrains Mono',monospace}
+.vtog.on{background:rgba(0,255,204,0.1);color:var(--primary);border-color:rgba(0,255,204,0.35);box-shadow:0 0 10px rgba(0,255,204,0.12)}
+.vtog:hover:not(.on){color:rgba(0,255,204,0.65);border-color:rgba(0,255,204,0.25)}
 
-        .chart-container { position: relative; height: 280px; }
-        .collapse-icon { display: inline-block; transition: transform 0.2s; }
-        .collapsed .collapse-icon { transform: rotate(-90deg); }
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fi .25s ease}
+.modal-box{background:linear-gradient(145deg,#080c12,#050810);border:1.5px solid rgba(0,255,204,0.25);border-radius:18px;padding:36px;max-width:480px;width:92%;box-shadow:0 24px 80px rgba(0,255,204,0.18)}
+@keyframes fi{from{opacity:0}to{opacity:1}}
 
-        /* manager panel divider on large screens */
-        @media (min-width: 1024px) {
-            #managerBody .divide-x > *:last-child {
-                border-left: 1px solid rgba(31,41,55,0.6);
-            }
-        }
-    </style>
+/* ── CHART CONTAINERS ── */
+.ch-wrap{position:relative;height:260px}
+.ch-wrap-sm{position:relative;height:210px}
+
+/* ── PROGRESS BARS ── */
+.prog-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* ── GLOW TEXT ── */
+.glow-cyan{text-shadow:0 0 20px rgba(0,255,204,0.5)}
+.glow-gold{text-shadow:0 0 20px rgba(255,215,0,0.5)}
+
+/* ── DIVIDERS ── */
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:rgba(0,255,204,0.5);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(0,255,204,0.08)}
+
+/* ── LOGO ── */
+.logo-star{display:inline-block;animation:spin 12s linear infinite;font-size:28px}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── PNL PILL ── */
+.pnl-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.pnl-pill.pos{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.2)}
+.pnl-pill.neg{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+
+/* ── IMPORT CARD ── */
+.imp-card{background:rgba(255,215,0,0.03);border:1px solid rgba(255,215,0,0.12);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.day-card{background:rgba(0,217,255,0.03);border:1px solid rgba(0,217,255,0.1);border-radius:10px;padding:10px 14px;margin-bottom:7px}
+
+/* ── MANAGER PANEL ── */
+.mgr-hdr{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.mgr-hdr:hover{background:rgba(255,215,0,0.03)}
+
+/* responsive */
+@media(max-width:768px){.stat-val{font-size:1.5rem}.hide-mob{display:none}}
+</style>
 </head>
-<body class="p-4 lg:p-8">
-<div class="max-w-[1920px] mx-auto">
+<body>
 
-    <!-- ── HEADER ── -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 gap-6">
-        <div>
-            <h1 class="text-4xl lg:text-5xl font-black text-[#00FFCC] uppercase tracking-tighter">
-                Obsidian <span class="text-white">Elite</span>
-                <span class="text-xs ml-3 text-gray-500">v4.1</span>
-            </h1>
-            <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">
-                Advanced Execution Terminal | <span id="currentDateDisplay" class="text-[#00FFCC]"></span>
-            </p>
-        </div>
-        <div class="flex flex-wrap gap-6">
-            <div class="stat-display glass-card px-8 py-4">
-                <div class="stat-label">Net P&L</div>
-                <div id="totalPnl" class="stat-value text-green-400">$0.00</div>
-                <div class="stat-subvalue text-gray-400" id="totalPnlSub">All time</div>
-            </div>
-            <div class="stat-display glass-card px-8 py-4">
-                <div class="stat-label">Total Trades</div>
-                <div id="totalTrades" class="stat-value text-[#00D9FF]">0</div>
-                <div id="totalTradesDetail" class="stat-subvalue text-gray-400">0 closes</div>
-            </div>
-            <div class="stat-display glass-card px-8 py-4">
-                <div class="stat-label">Open Contracts</div>
-                <div id="openContracts" class="stat-value text-[#00FFCC]">0</div>
-                <div id="openValue" class="stat-subvalue text-gray-400">$0</div>
-            </div>
-        </div>
+<!-- ══ TICKER BAND ══ -->
+<div class="ticker-band py-1.5">
+  <span class="ticker-scroll text-[10px] font-mono text-gray-500" id="tickerBand">
+    ⬡ STELLIUM ELITE &nbsp;·&nbsp; OPTIONS EXECUTION TERMINAL &nbsp;·&nbsp; LIVE TRADING JOURNAL &nbsp;·&nbsp; PRECISION METRICS &nbsp;·&nbsp; RISK MANAGEMENT &nbsp;·&nbsp; STELLIUM ELITE &nbsp;·&nbsp; OPTIONS EXECUTION TERMINAL &nbsp;·&nbsp; LIVE TRADING JOURNAL &nbsp;·&nbsp; PRECISION METRICS &nbsp;·&nbsp; RISK MANAGEMENT &nbsp;·&nbsp;
+  </span>
+</div>
+
+<div class="max-w-[1900px] mx-auto px-4 lg:px-8 py-6">
+
+<!-- ══ HEADER ══ -->
+<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+  <div class="flex items-center gap-4">
+    <div class="logo-star">✦</div>
+    <div>
+      <h1 class="text-3xl lg:text-4xl font-black uppercase tracking-[-0.03em] leading-none">
+        <span class="text-[#00FFCC] glow-cyan">Stellium</span>
+        <span class="text-white"> Elite</span>
+        <span class="text-[10px] text-gray-600 ml-2 font-normal tracking-widest">v5.0</span>
+      </h1>
+      <p class="text-[10px] text-gray-500 mt-1 uppercase tracking-[.2em]">
+        Professional Options Terminal &nbsp;·&nbsp; <span id="currentDateDisplay" class="text-[#00FFCC]"></span>
+      </p>
+    </div>
+  </div>
+  <!-- HEADER STATS -->
+  <div class="flex flex-wrap gap-3">
+    <div class="stat-card" style="--grad:linear-gradient(90deg,#00FFCC,#00D9FF);min-width:140px">
+      <div class="stat-lbl">Net P&L</div>
+      <div id="hNetPnl" class="stat-val text-[#00FFCC] glow-cyan">$0.00</div>
+      <div id="hNetSub" class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card" style="--grad:linear-gradient(90deg,#FFD700,#f59e0b);min-width:140px">
+      <div class="stat-lbl">Today's P&L</div>
+      <div id="hTodayPnl" class="stat-val text-[#FFD700] glow-gold">$0.00</div>
+      <div id="hTodaySub" class="stat-sub">0 trades today</div>
+    </div>
+    <div class="stat-card" style="--grad:linear-gradient(90deg,#a855f7,#6366f1);min-width:130px">
+      <div class="stat-lbl">Win Rate</div>
+      <div id="hWinRate" class="stat-val" style="color:#a855f7">0%</div>
+      <div id="hWRSub" class="stat-sub">0W · 0L</div>
+    </div>
+    <div class="stat-card" style="--grad:linear-gradient(90deg,#22c55e,#16a34a);min-width:130px">
+      <div class="stat-lbl">Open Contracts</div>
+      <div id="hOpen" class="stat-val text-green-400">0</div>
+      <div id="hOpenVal" class="stat-sub">$0.00 exposure</div>
+    </div>
+    <div class="stat-card" style="--grad:linear-gradient(90deg,#00D9FF,#0ea5e9);min-width:130px">
+      <div class="stat-lbl">Total Trades</div>
+      <div id="hTotal" class="stat-val text-[#00D9FF]">0</div>
+      <div id="hTotalSub" class="stat-sub">0 closes</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DATA MANAGEMENT ══ -->
+<div class="glass p-5 mb-6">
+  <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+    <div>
+      <div class="section-title">📊 Data Management</div>
+      <p class="text-[10px] text-gray-500">Import Excel · each file tracked independently</p>
+    </div>
+    <div class="flex gap-3 flex-wrap">
+      <input type="file" id="fileInput" accept=".xls,.xlsx" style="display:none">
+      <button onclick="document.getElementById('fileInput').click()" class="btn btn-outline">📁 Import Excel</button>
+      <button onclick="exportToExcel()" class="btn btn-outline">💾 Export</button>
+    </div>
+  </div>
+  <div id="importBatchList" class="mt-4"></div>
+</div>
+
+<!-- ══ METRICS PANEL ══ -->
+<div class="glass p-5 mb-6">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div class="section-title" style="margin-bottom:0">📐 Performance Metrics</div>
+    <div class="flex gap-2 flex-wrap">
+      <button class="metric-tab on" id="mt-daily"   onclick="setMetricPeriod('daily')">Daily</button>
+      <button class="metric-tab"   id="mt-weekly"  onclick="setMetricPeriod('weekly')">Weekly</button>
+      <button class="metric-tab"   id="mt-monthly" onclick="setMetricPeriod('monthly')">Monthly</button>
+      <button class="metric-tab"   id="mt-yearly"  onclick="setMetricPeriod('yearly')">Yearly</button>
+    </div>
+  </div>
+  <div id="metricsGrid" class="kpi-grid"></div>
+</div>
+
+<!-- ══ ANALYTICS ROW ══ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+
+  <!-- Equity + Daily Bar -->
+  <div class="glass p-5 lg:col-span-2">
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div class="section-title" style="margin-bottom:0">📈 Daily P&L + Equity Curve</div>
+      <div class="flex gap-2">
+        <button onclick="setChartRange('all')"   id="cr-all"   class="metric-tab on">All</button>
+        <button onclick="setChartRange('month')" id="cr-month" class="metric-tab">Month</button>
+        <button onclick="setChartRange('week')"  id="cr-week"  class="metric-tab">Week</button>
+      </div>
+    </div>
+    <div class="ch-wrap"><canvas id="equityChart"></canvas></div>
+  </div>
+
+  <!-- Win Rate -->
+  <div class="glass p-5 flex flex-col items-center justify-center">
+    <div class="section-title w-full">🎯 Win Rate</div>
+    <div class="relative w-36 h-36">
+      <canvas id="precisionChart"></canvas>
+      <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <span id="winRateBig" class="text-3xl font-black text-[#00FFCC]" style="font-family:'JetBrains Mono',monospace">0%</span>
+        <span class="text-[9px] text-gray-500 uppercase tracking-widest">Win Rate</span>
+      </div>
+    </div>
+    <div class="mt-4 w-full grid grid-cols-2 gap-3">
+      <div class="kpi-box text-center"><div id="wWins" class="kv text-green-400">0</div><div class="kl">Wins</div></div>
+      <div class="kpi-box text-center"><div id="wLosses" class="kv text-red-400">0</div><div class="kl">Losses</div></div>
+    </div>
+    <div class="mt-3 w-full kpi-box">
+      <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Profit Factor</div>
+      <div id="wPF" class="font-black text-lg text-[#00FFCC]" style="font-family:'JetBrains Mono',monospace">0.00</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TICKER PNL CHART ══ -->
+<div class="glass p-5 mb-6">
+  <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+    <div class="section-title" style="margin-bottom:0">📊 Ticker P&L Breakdown</div>
+    <div class="flex gap-2">
+      <button onclick="setTickerRange('today')"  id="tr-today"  class="metric-tab on">Today</button>
+      <button onclick="setTickerRange('week')"   id="tr-week"   class="metric-tab">Week</button>
+      <button onclick="setTickerRange('month')"  id="tr-month"  class="metric-tab">Month</button>
+      <button onclick="setTickerRange('all')"    id="tr-all"    class="metric-tab">All Time</button>
+    </div>
+  </div>
+  <div class="ch-wrap-sm"><canvas id="tickerChart"></canvas></div>
+</div>
+
+<!-- ══ TRADE ENTRY FORM ══ -->
+<div class="glass p-6 mb-6" style="border-top:2px solid var(--primary)">
+  <div class="section-title">⚡ Trade Execution</div>
+  <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-5">
+
+    <!-- Symbol -->
+    <div class="lg:col-span-2">
+      <label class="field-lbl">Symbol <span class="text-red-400">*</span></label>
+      <div class="tg-group" id="tickerSel">
+        <div class="tg-btn" style="--bc:#aaa;color:#aaa" data-ticker="AAPL">AAPL</div>
+        <div class="tg-btn" style="--bc:#ED1C24;color:#ED1C24" data-ticker="AMD">AMD</div>
+        <div class="tg-btn" style="--bc:#0052FF;color:#0052FF" data-ticker="COIN">COIN</div>
+        <div class="tg-btn" style="--bc:#29ABE2;color:#29ABE2" data-ticker="MU">MU</div>
+        <div class="tg-btn" style="--bc:#0668E1;color:#0668E1" data-ticker="META">META</div>
+        <div class="tg-btn" style="--bc:#701CC4;color:#701CC4" data-ticker="MSTR">MSTR</div>
+        <div class="tg-btn" style="--bc:#76B900;color:#76B900" data-ticker="NVDA">NVDA</div>
+        <div class="tg-btn" style="--bc:#6c8ebf;color:#6c8ebf" data-ticker="PLTR">PLTR</div>
+        <div class="tg-btn" style="--bc:#00D9FF;color:#00D9FF" data-ticker="SPX">SPX</div>
+        <div class="tg-btn" style="--bc:#00FFCC;color:#00FFCC" data-ticker="SPY">SPY</div>
+        <div class="tg-btn" style="--bc:#E81828;color:#E81828" data-ticker="TSLA">TSLA</div>
+      </div>
+      <div class="mt-2">
+        <label class="field-lbl" style="font-size:8px">Custom Ticker</label>
+        <input type="text" id="customStock" placeholder="Custom…" maxlength="10" style="text-transform:uppercase">
+      </div>
     </div>
 
-    <!-- ── DATA MANAGEMENT ── -->
-    <div class="glass-card p-6 mb-6">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
-            <div>
-                <h2 class="text-xl font-bold text-[#00FFCC] mb-1">📊 Data Management</h2>
-                <p class="text-xs text-gray-400">Import trades from Excel — each file tracked separately</p>
-            </div>
-            <div class="flex flex-wrap gap-3">
-                <input type="file" id="fileInput" accept=".xls,.xlsx" style="display:none;">
-                <button onclick="document.getElementById('fileInput').click()" class="btn-secondary">📁 Import Excel</button>
-                <button onclick="exportToExcel()" class="btn-secondary">💾 Export All Data</button>
-            </div>
-        </div>
-        <!-- Per-import batch list -->
-        <div id="importBatchList"></div>
+    <!-- Day -->
+    <div>
+      <label class="field-lbl">Day <span class="text-red-400">*</span></label>
+      <select id="daySelect">
+        <option value="">Select</option>
+        <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+        <option>Thursday</option><option>Friday</option>
+      </select>
     </div>
 
-    <!-- ── ANALYTICS ── -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div class="glass-card p-6 lg:col-span-2">
-            <div class="flex items-center justify-between mb-3">
-                <label style="margin-bottom:0">📈 Daily P&L + Cumulative Equity</label>
-                <div class="flex gap-2">
-                    <button onclick="setChartRange('all')" id="chart-all" class="view-toggle-btn active">All</button>
-                    <button onclick="setChartRange('month')" id="chart-month" class="view-toggle-btn">Month</button>
-                    <button onclick="setChartRange('week')" id="chart-week" class="view-toggle-btn">Week</button>
-                </div>
-            </div>
-            <div class="chart-container"><canvas id="equityChart"></canvas></div>
-        </div>
-        <div class="glass-card p-6 flex flex-col items-center justify-center">
-            <label>🎯 Win Rate</label>
-            <div class="relative w-40 h-40 mt-4">
-                <canvas id="precisionChart"></canvas>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span id="winRateText" class="text-3xl font-black text-[#00FFCC]">0%</span>
-                </div>
-            </div>
-            <div class="mt-6 grid grid-cols-2 gap-4 w-full">
-                <div class="text-center">
-                    <div class="text-xs text-gray-400">Wins</div>
-                    <div id="totalWins" class="text-xl font-bold text-green-400">0</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-xs text-gray-400">Losses</div>
-                    <div id="totalLosses" class="text-xl font-bold text-red-400">0</div>
-                </div>
-            </div>
-        </div>
+    <!-- Type -->
+    <div>
+      <label class="field-lbl">Type <span class="text-red-400">*</span></label>
+      <div class="tg-group" id="typeSel">
+        <div class="tg-btn" data-type="CALL">Call</div>
+        <div class="tg-btn" data-type="PUT">Put</div>
+      </div>
     </div>
 
-    <!-- ── TRADE FORM ── -->
-    <div class="glass-card p-6 mb-6 border-t-2 border-t-[#00FFCC]">
-        <h2 class="text-xl font-bold text-[#00FFCC] mb-6">⚡ Trade Execution</h2>
-        <form id="tradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            <div class="col-span-2">
-                <label>Symbol <span class="text-red-400">*</span></label>
-                <div class="toggle-group" id="tickerSelect">
-                    <div class="toggle-btn" style="--brand-color:#666;color:#fff" data-ticker="AAPL">AAPL</div>
-                    <div class="toggle-btn" style="--brand-color:#ED1C24;color:#ED1C24" data-ticker="AMD">AMD</div>
-                    <div class="toggle-btn" style="--brand-color:#0052FF;color:#0052FF" data-ticker="COIN">COIN</div>
-                    <div class="toggle-btn" style="--brand-color:#0668E1;color:#0668E1" data-ticker="META">META</div>
-                    <div class="toggle-btn" style="--brand-color:#701CC4;color:#701CC4" data-ticker="MSTR">MSTR</div>
-                    <div class="toggle-btn" style="--brand-color:#76B900;color:#76B900" data-ticker="NVDA">NVDA</div>
-                    <div class="toggle-btn" style="--brand-color:#00D9FF;color:#00D9FF" data-ticker="SPX">SPX</div>
-                    <div class="toggle-btn" style="--brand-color:#00FFCC;color:#00FFCC" data-ticker="SPY">SPY</div>
-                    <div class="toggle-btn" style="--brand-color:#E81828;color:#E81828" data-ticker="TSLA">TSLA</div>
-                </div>
-                <div class="mt-3">
-                    <label style="font-size:9px">Custom Ticker</label>
-                    <input type="text" id="customStock" placeholder="Enter custom ticker..." maxlength="10" style="text-transform:uppercase">
-                </div>
-            </div>
-            <div>
-                <label>Day <span class="text-red-400">*</span></label>
-                <select id="daySelect" class="font-bold">
-                    <option value="">Select Day</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                </select>
-            </div>
-            <div>
-                <label>Type <span class="text-red-400">*</span></label>
-                <div class="toggle-group" id="typeSelect">
-                    <div class="toggle-btn" data-type="CALL">CALL</div>
-                    <div class="toggle-btn" data-type="PUT">PUT</div>
-                </div>
-            </div>
-            <div>
-                <label>Contracts <span class="text-red-400">*</span></label>
-                <input type="number" id="count" value="1" min="1">
-            </div>
-            <div>
-                <label>Entry Price <span class="text-red-400">*</span></label>
-                <input type="number" id="entry" step="0.01" placeholder="0.00">
-            </div>
-            <div class="col-span-full border-t border-gray-800 pt-4">
-                <label>Execution Setup (Select At Least 1) <span class="text-red-400">*</span></label>
-                <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-                    <div class="toggle-btn" style="--brand-color:#00FFCC;color:#00FFCC" data-val="5/12 CURL">5/12 CURL</div>
-                    <div class="toggle-btn" style="--brand-color:#00D9FF;color:#00D9FF" data-val="5/12 REJECT">5/12 REJECT</div>
-                    <div class="toggle-btn" style="--brand-color:#4ade80;color:#4ade80" data-val="34/50 Bounce">34/50 Bounce</div>
-                    <div class="toggle-btn" style="--brand-color:#f87171;color:#f87171" data-val="34/50 Reject">34/50 Reject</div>
-                    <div class="toggle-btn" style="--brand-color:#FFD700;color:#FFD700" data-val="PM HI break">PM HI break</div>
-                    <div class="toggle-btn" style="--brand-color:#a78bfa;color:#a78bfa" data-val="PM low break">PM low break</div>
-                    <div class="toggle-btn" style="--brand-color:#fb923c;color:#fb923c" data-val="PD CL Bounce">PD CL Bounce</div>
-                    <div class="toggle-btn" style="--brand-color:#ec4899;color:#ec4899" data-val="PD CL Fail">PD CL Fail</div>
-                    <div class="toggle-btn" style="--brand-color:#06b6d4;color:#06b6d4" data-val="PD HI Brko">PD HI Brko</div>
-                    <div class="toggle-btn" style="--brand-color:#f59e0b;color:#f59e0b" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
-                </div>
-            </div>
-            <div class="col-span-full flex gap-4 mt-2">
-                <button type="submit" class="btn-primary flex-1">🚀 Open Live Trade</button>
-            </div>
-        </form>
+    <!-- Qty -->
+    <div>
+      <label class="field-lbl">Contracts <span class="text-red-400">*</span></label>
+      <input type="number" id="count" value="1" min="1">
     </div>
 
-    <!-- ── TRADE HISTORY ── -->
-    <div class="glass-card overflow-hidden mb-6">
-        <div class="p-4 border-b border-gray-800 flex flex-wrap justify-between items-center gap-3">
-            <div class="flex items-center gap-4">
-                <h2 class="text-xl font-bold text-[#00FFCC]">📊 Trade History</h2>
-                <div class="text-sm text-gray-400">
-                    <span id="totalEntries" class="text-[#00FFCC] font-bold">0</span> trades |
-                    <span id="totalCloses" class="text-[#00FFCC] font-bold">0</span> closes
-                </div>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs text-gray-500 uppercase tracking-widest mr-1">Group by:</span>
-                <button onclick="setView('flat')"   id="view-flat"   class="view-toggle-btn active">Flat</button>
-                <button onclick="setView('daily')"  id="view-daily"  class="view-toggle-btn">Daily</button>
-                <button onclick="setView('weekly')" id="view-weekly" class="view-toggle-btn">Weekly</button>
-                <button onclick="setView('monthly')"id="view-monthly"class="view-toggle-btn">Monthly</button>
-                <button onclick="expandAll()"  class="text-[10px] text-gray-400 hover:text-[#00FFCC] ml-2 cursor-pointer">⊞ All</button>
-                <button onclick="collapseAll()" class="text-[10px] text-gray-400 hover:text-[#00FFCC] cursor-pointer">⊟ All</button>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th style="width:28px"></th>
-                        <th>Source</th>
-                        <th class="sortable" onclick="sortBy('day')">Day <span class="sort-icon" id="sort-day">⇅</span></th>
-                        <th class="sortable" onclick="sortBy('date')">Date <span class="sort-icon" id="sort-date">⇅</span></th>
-                        <th class="sortable" onclick="sortBy('stock')">Symbol <span class="sort-icon" id="sort-stock">⇅</span></th>
-                        <th class="sortable" onclick="sortBy('status')">Status <span class="sort-icon" id="sort-status">⇅</span></th>
-                        <th class="sortable" onclick="sortBy('totalQty')">Qty <span class="sort-icon" id="sort-totalQty">⇅</span></th>
-                        <th class="sortable" onclick="sortBy('entry')">Entry <span class="sort-icon" id="sort-entry">⇅</span></th>
-                        <th class="sortable" onclick="sortBy('avgExit')">Avg Exit <span class="sort-icon" id="sort-avgExit">⇅</span></th>
-                        <th>Time</th>
-                        <th>Setup</th>
-                        <th class="text-right sortable" onclick="sortBy('realizedPnl')">P&L <span class="sort-icon" id="sort-realizedPnl">⇅</span></th>
-                        <th class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="tradeBody"></tbody>
-            </table>
-        </div>
+    <!-- Entry -->
+    <div>
+      <label class="field-lbl">Entry Price <span class="text-red-400">*</span></label>
+      <input type="number" id="entry" step="0.01" placeholder="0.00">
     </div>
 
-    <!-- ── IMPORT & DAY MANAGER (bottom) ── -->
-    <div class="glass-card overflow-hidden mb-6" id="managerPanel">
-        <!-- Collapsible header -->
-        <div class="p-5 border-b border-gray-800 flex items-center justify-between cursor-pointer select-none"
-             onclick="toggleManagerPanel()">
-            <div class="flex items-center gap-3">
-                <span class="text-xl">🗂️</span>
-                <div>
-                    <h2 class="text-lg font-black text-[#FFD700] uppercase tracking-tight">Import & Day Manager</h2>
-                    <p class="text-[10px] text-gray-500 mt-0.5">Delete entire imports or individual trading days — all related entries removed automatically</p>
-                </div>
-            </div>
-            <span id="managerChevron" class="text-[#FFD700] text-xl transition-transform duration-200">▼</span>
-        </div>
-
-        <div id="managerBody">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-gray-800">
-
-                <!-- LEFT: Delete by Import File -->
-                <div class="p-6">
-                    <div class="flex items-center gap-2 mb-5">
-                        <span class="text-base">📦</span>
-                        <h3 class="text-sm font-black text-[#00FFCC] uppercase tracking-widest">Delete by Import File</h3>
-                    </div>
-                    <p class="text-[10px] text-gray-500 mb-4 leading-relaxed">
-                        Deletes the entire imported Excel file and all its associated trade entries from the journal.
-                    </p>
-                    <div id="importFileDeleteList">
-                        <p class="text-xs text-gray-600 italic">No imports found.</p>
-                    </div>
-                </div>
-
-                <!-- RIGHT: Delete by Day -->
-                <div class="p-6">
-                    <div class="flex items-center gap-2 mb-5">
-                        <span class="text-base">📅</span>
-                        <h3 class="text-sm font-black text-[#00D9FF] uppercase tracking-widest">Delete by Trading Day</h3>
-                    </div>
-                    <p class="text-[10px] text-gray-500 mb-4 leading-relaxed">
-                        Removes all trade entries (from any source) for a specific calendar date. Use this to wipe a full day.
-                    </p>
-                    <div id="dayDeleteList">
-                        <p class="text-xs text-gray-600 italic">No trade days found.</p>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+    <!-- Setup -->
+    <div class="col-span-full border-t border-white/5 pt-4">
+      <label class="field-lbl">Execution Setup <span class="text-gray-500">(Select ≥ 1)</span> <span class="text-red-400">*</span></label>
+      <div id="setupGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+        <div class="tg-btn" style="--bc:#00FFCC;color:#00FFCC" data-val="5/12 CURL">5/12 CURL</div>
+        <div class="tg-btn" style="--bc:#00D9FF;color:#00D9FF" data-val="5/12 REJECT">5/12 REJECT</div>
+        <div class="tg-btn" style="--bc:#4ade80;color:#4ade80" data-val="34/50 Bounce">34/50 Bounce</div>
+        <div class="tg-btn" style="--bc:#f87171;color:#f87171" data-val="34/50 Reject">34/50 Reject</div>
+        <div class="tg-btn" style="--bc:#FFD700;color:#FFD700" data-val="PM HI Break">PM HI Break</div>
+        <div class="tg-btn" style="--bc:#a78bfa;color:#a78bfa" data-val="PM Low Break">PM Low Break</div>
+        <div class="tg-btn" style="--bc:#fb923c;color:#fb923c" data-val="PD CL Bounce">PD CL Bounce</div>
+        <div class="tg-btn" style="--bc:#ec4899;color:#ec4899" data-val="PD CL Fail">PD CL Fail</div>
+        <div class="tg-btn" style="--bc:#06b6d4;color:#06b6d4" data-val="PD HI Brko">PD HI Brko</div>
+        <div class="tg-btn" style="--bc:#f59e0b;color:#f59e0b" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
+        <div class="tg-btn" style="--bc:#ff6b6b;color:#ff6b6b" data-val="BULL ALRT">🐂 BULL ALRT</div>
+      </div>
     </div>
 
-</div><!-- /max-w -->
-
-<!-- ── CONFIRM DELETE MODAL ── -->
-<div id="deleteModal" class="modal-overlay" style="display:none">
-    <div class="modal-content" style="max-width:500px">
-        <div class="flex items-center gap-3 mb-5">
-            <span class="text-3xl">⚠️</span>
-            <h2 class="text-xl font-black text-red-400">Confirm Deletion</h2>
-        </div>
-        <div id="deleteModalBody" class="mb-6"></div>
-        <div class="flex gap-4">
-            <button onclick="confirmDelete()" class="btn-danger flex-1" id="deleteConfirmBtn">Yes, Delete</button>
-            <button onclick="closeDeleteModal()" class="btn-secondary flex-1">Cancel</button>
-        </div>
+    <div class="col-span-full mt-2">
+      <button type="submit" class="btn btn-cta w-full">🚀 Open Live Trade</button>
     </div>
+  </form>
+</div>
+
+<!-- ══ TRADE HISTORY ══ -->
+<div class="glass overflow-hidden mb-6">
+  <div class="p-4 border-b border-white/5 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center gap-4">
+      <div class="section-title" style="margin-bottom:0">📋 Trade History</div>
+      <div class="text-[10px] text-gray-500 font-mono">
+        <span id="hEntries" class="text-[#00FFCC] font-bold">0</span> trades ·
+        <span id="hCloses"  class="text-[#00FFCC] font-bold">0</span> closes
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-[9px] text-gray-600 uppercase tracking-widest">Group:</span>
+      <button onclick="setView('flat')"    id="vf" class="vtog on">Flat</button>
+      <button onclick="setView('daily')"   id="vd" class="vtog">Daily</button>
+      <button onclick="setView('weekly')"  id="vw" class="vtog">Weekly</button>
+      <button onclick="setView('monthly')" id="vm" class="vtog">Monthly</button>
+      <button onclick="expandAll()"  class="text-[9px] text-gray-500 hover:text-[#00FFCC] ml-1">⊞</button>
+      <button onclick="collapseAll()" class="text-[9px] text-gray-500 hover:text-[#00FFCC]">⊟</button>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:24px"></th>
+        <th>Src</th>
+        <th class="sort" onclick="sortBy('day')">Day <span class="si" id="si-day">⇅</span></th>
+        <th class="sort" onclick="sortBy('date')">Date <span class="si" id="si-date">⇅</span></th>
+        <th class="sort" onclick="sortBy('stock')">Symbol <span class="si" id="si-stock">⇅</span></th>
+        <th class="sort" onclick="sortBy('status')">Status <span class="si" id="si-status">⇅</span></th>
+        <th class="sort" onclick="sortBy('totalQty')">Qty <span class="si" id="si-totalQty">⇅</span></th>
+        <th class="sort" onclick="sortBy('entry')">Entry <span class="si" id="si-entry">⇅</span></th>
+        <th class="sort" onclick="sortBy('avgExit')">Exit <span class="si" id="si-avgExit">⇅</span></th>
+        <th>Time</th>
+        <th>Setup</th>
+        <th class="sort text-right" onclick="sortBy('realizedPnl')">P&L <span class="si" id="si-realizedPnl">⇅</span></th>
+        <th class="text-right">Return%</th>
+        <th class="text-center">Actions</th>
+      </tr></thead>
+      <tbody id="tradeBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ IMPORT & DAY MANAGER ══ -->
+<div class="glass overflow-hidden mb-8" id="managerPanel">
+  <div class="mgr-hdr" onclick="toggleMgr()">
+    <div class="flex items-center gap-3">
+      <span class="text-lg">🗂️</span>
+      <div>
+        <div class="text-sm font-black text-[#FFD700] uppercase tracking-tight">Import & Day Manager</div>
+        <div class="text-[9px] text-gray-600 mt-0.5">Delete full imports or individual trading days</div>
+      </div>
+    </div>
+    <span id="mgrChevron" class="text-[#FFD700] text-lg">▼</span>
+  </div>
+  <div id="mgrBody">
+    <div class="grid grid-cols-1 lg:grid-cols-2">
+      <div class="p-6 border-b lg:border-b-0 lg:border-r border-white/5">
+        <div class="section-title">📦 By Import File</div>
+        <p class="text-[10px] text-gray-600 mb-4">Removes the entire Excel file and all its trade entries.</p>
+        <div id="importFileList"></div>
+      </div>
+      <div class="p-6">
+        <div class="section-title">📅 By Trading Day</div>
+        <p class="text-[10px] text-gray-600 mb-4">Removes all entries for a specific date (any source).</p>
+        <div id="dayDeleteList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div id="delModal" class="overlay" style="display:none">
+  <div class="modal-box">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="text-2xl">⚠️</span>
+      <h2 class="text-lg font-black text-red-400">Confirm Deletion</h2>
+    </div>
+    <div id="delModalBody" class="mb-6 text-sm text-gray-300 leading-relaxed"></div>
+    <div class="flex gap-3">
+      <button onclick="confirmDel()" class="btn btn-red flex-1" id="delConfirmBtn">Delete</button>
+      <button onclick="closeDel()"   class="btn btn-ghost flex-1">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  STATE
-// ══════════════════════════════════════════════
-let trades = JSON.parse(localStorage.getItem('obsidian_elite_v4')) || [];
-// importBatches: [ { importId, fileName, importDate, tradeCount, pnl } ]
-let importBatches = JSON.parse(localStorage.getItem('obsidian_import_batches')) || [];
+// ═══════════════════════════════════════════════════════
+let trades       = JSON.parse(localStorage.getItem('stellium_trades'))  || [];
+let importBatches= JSON.parse(localStorage.getItem('stellium_batches')) || [];
 
-let equityChart, precisionChart;
-let sortCol = null, sortDir = 'desc';
-let viewMode = 'flat'; // flat | daily | weekly | monthly
-let openClosePanels = new Set();
-let openEditPanels  = new Set();
-let collapsedGroups = new Set(); // stores group keys that are COLLAPSED
-let chartRange = 'all';
+let equityChart, precisionChart, tickerChart;
+let sortCol=null, sortDir='desc';
+let viewMode='flat';
+let openClose=new Set(), openEdit=new Set(), collapsedGrp=new Set();
+let chartRange='all', tickerRange='today', metricPeriod='daily';
+let mgrOpen=true, pendingDel=null;
 
-// ── today string for freeze logic
-function todayStr() {
-    return new Date().toISOString().slice(0,10);
-}
-function tradeDate(t) {
-    return new Date(t.timestamp).toISOString().slice(0,10);
-}
-function isFrozen(t) {
-    // Imported trades from a previous calendar day are frozen (cannot delete without deleting the import)
-    return t.source === 'imported' && tradeDate(t) < todayStr();
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+function fmt(v){const n=parseFloat(v)||0;return(n<0?'-$':'$')+Math.abs(n).toFixed(2)}
+function fmtPct(v){const n=parseFloat(v)||0;return(n>=0?'+':'')+n.toFixed(1)+'%'}
+function fmtNum(v){return parseFloat(v).toFixed(2)}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function tradeDate(t){return new Date(t.timestamp).toISOString().slice(0,10)}
+function isFrozen(t){return t.source==='imported'&&tradeDate(t)<todayStr()}
+function dateKey(ts){return new Date(ts).toISOString().slice(0,10)}
+function weekKey(ts){const d=new Date(ts);const j=new Date(d.getFullYear(),0,1);const w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7);return`${d.getFullYear()}-W${String(w).padStart(2,'0')}`}
+function monthKey(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+function yearKey(ts){return String(new Date(ts).getFullYear())}
+function getPrefix(s){if(!s)return'';return(s.replace(/^-/,'').match(/^([A-Z]+)/)||[,''])[1]}
+function save(){localStorage.setItem('stellium_trades',JSON.stringify(trades));localStorage.setItem('stellium_batches',JSON.stringify(importBatches))}
+
+// Return % = (exit-entry)/entry * 100
+function calcReturn(t){
+  if(!t.avgExit||t.avgExit===0)return null;
+  return((t.avgExit-t.entry)/t.entry*100);
 }
 
-// ══════════════════════════════════════════════
-//  UTILS
-// ══════════════════════════════════════════════
-function getTickerPrefix(s) {
-    if (!s) return '';
-    let c = s.replace(/^-/, '');
-    const m = c.match(/^([A-Z]+)/);
-    return m ? m[1] : c;
-}
-function fmt(v) { return '$' + parseFloat(v).toFixed(2); }
-function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-function weekKey(ts) {
-    const d = new Date(ts);
-    const jan1 = new Date(d.getFullYear(), 0, 1);
-    const wk = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-    return `${d.getFullYear()}-W${String(wk).padStart(2,'0')}`;
-}
-function monthKey(ts) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-function dateKey(ts) { return new Date(ts).toISOString().slice(0,10); }
-
-// ══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  IMPORT
-// ══════════════════════════════════════════════
-document.getElementById('fileInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-        const data = await file.arrayBuffer();
-        const wb = XLSX.read(data);
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(ws);
-        processImportedData(jsonData, file.name);
-    } catch(err) { alert('Import failed: ' + err.message); }
-    e.target.value = '';
+// ═══════════════════════════════════════════════════════
+$('fileInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const wb=XLSX.read(await file.arrayBuffer());
+    processImport(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]),file.name);
+  }catch(err){alert('Import failed: '+err.message)}
+  e.target.value='';
 });
 
-function processImportedData(data, fileName) {
-    const openPos = {};
-    const imported = [];
-    const importId = Date.now().toString();
-
-    data.reverse().forEach(record => {
-        const symbol = record['Symbol'];
-        const status = record['Status'];
-        const desc = record['Trade Description'];
-        const orderTime = record['Order Time'];
-        const priceMatch = status.match(/\$([0-9.]+)/);
-        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
-        const qtyMatch = desc.match(/(?:Open|Close)\s+(\d+)\s+/);
-        if (!qtyMatch) return;
-        const qty = parseInt(qtyMatch[1]);
-        const action = desc.includes('Buy to Open') ? 'BUY' : 'SELL';
-        const ctype = desc.toLowerCase().includes('call') ? 'CALL' : 'PUT';
-        const ticker = getTickerPrefix(symbol);
-        const tm = orderTime.match(/(\d{2}:\d{2}:\d{2} [AP]M) (\d{2}\/\d{2}\/\d{4})/);
-        const time = tm ? tm[1] : orderTime;
-        const dateStr = tm ? tm[2] : new Date().toLocaleDateString();
-        const [month, day, year] = dateStr.split('/');
-        const fullDate = new Date(`${year}-${month}-${day}`);
-        const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][fullDate.getDay()];
-        const key = `${symbol}_${ctype}`;
-
-        if (action === 'BUY') {
-            openPos[key] = {
-                tradeId: generateId(), symbol: ticker, fullSymbol: symbol,
-                contractType: ctype, totalQty: qty, remainingQty: qty,
-                entryPrice: price, entryTime: time, day: dayName,
-                timestamp: fullDate.toISOString(), closes: []
-            };
-        } else if (action === 'SELL' && openPos[key]) {
-            openPos[key].closes.push({ qty, exitPrice: price, exitTime: time,
-                pnl: ((price - openPos[key].entryPrice) * 100 * qty).toFixed(2) });
-            openPos[key].remainingQty -= qty;
-            if (openPos[key].remainingQty <= 0) {
-                const pos = openPos[key];
-                const totalPnl = pos.closes.reduce((s,c) => s + parseFloat(c.pnl), 0);
-                const avgExit = pos.closes.reduce((s,c) => s + c.exitPrice*c.qty, 0) / pos.totalQty;
-                imported.push({
-                    id: pos.tradeId, stock: pos.symbol, fullSymbol: pos.fullSymbol,
-                    option: pos.contractType, day: pos.day, totalQty: pos.totalQty,
-                    remainingQty: 0, entry: pos.entryPrice, avgExit, status: 'CLOSED',
-                    entryTime: pos.entryTime, setups: ['Imported'], closes: pos.closes,
-                    realizedPnl: totalPnl, timestamp: pos.timestamp, source: 'imported', importId
-                });
-                delete openPos[key];
-            }
-        }
-    });
-
-    Object.values(openPos).forEach(pos => {
-        const totalPnl = pos.closes.reduce((s,c) => s + parseFloat(c.pnl), 0);
-        const closedQty = pos.totalQty - pos.remainingQty;
-        const avgExit = closedQty > 0 ? pos.closes.reduce((s,c) => s + c.exitPrice*c.qty, 0) / closedQty : 0;
-        imported.push({
-            id: pos.tradeId, stock: pos.symbol, fullSymbol: pos.fullSymbol,
-            option: pos.contractType, day: pos.day, totalQty: pos.totalQty,
-            remainingQty: pos.remainingQty, entry: pos.entryPrice, avgExit,
-            status: pos.remainingQty === pos.totalQty ? 'OPEN' : 'PARTIAL',
-            entryTime: pos.entryTime, setups: ['Imported'], closes: pos.closes,
-            realizedPnl: totalPnl, timestamp: pos.timestamp, source: 'imported', importId
-        });
-    });
-
-    const batchPnl = imported.reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0);
-    importBatches.push({ importId, fileName, importDate: new Date().toISOString(), tradeCount: imported.length, pnl: batchPnl });
-    localStorage.setItem('obsidian_import_batches', JSON.stringify(importBatches));
-
-    trades = [...imported, ...trades];
-    save();
-    render();
-}
-
-// ══════════════════════════════════════════════
-//  DELETE MODAL (unified)
-// ══════════════════════════════════════════════
-let pendingDeleteFn = null;
-
-function showDeleteModal(bodyHtml, confirmFn, btnLabel) {
-    document.getElementById('deleteModalBody').innerHTML = bodyHtml;
-    document.getElementById('deleteConfirmBtn').textContent = btnLabel || 'Yes, Delete';
-    pendingDeleteFn = confirmFn;
-    document.getElementById('deleteModal').style.display = 'flex';
-}
-function closeDeleteModal() {
-    document.getElementById('deleteModal').style.display = 'none';
-    pendingDeleteFn = null;
-}
-function confirmDelete() {
-    if (pendingDeleteFn) pendingDeleteFn();
-    closeDeleteModal();
-}
-
-// ── Delete by Import File
-function showDeleteBatch(importId) {
-    const batch = importBatches.find(b => b.importId === importId);
-    if (!batch) return;
-    const cnt = trades.filter(t => t.importId === importId).length;
-    showDeleteModal(
-        `<p class="text-gray-300 mb-2">Delete import file:</p>
-         <p class="text-[#FFD700] font-bold mb-3">${batch.fileName}</p>
-         <p class="text-sm text-gray-400">This will permanently remove <strong class="text-[#00FFCC]">${cnt} trade entries</strong> from the journal. Cannot be undone.</p>`,
-        () => {
-            trades = trades.filter(t => t.importId !== importId);
-            importBatches = importBatches.filter(b => b.importId !== importId);
-            localStorage.setItem('obsidian_import_batches', JSON.stringify(importBatches));
-            save(); render();
-        },
-        '🗑️ Delete Import'
-    );
-}
-
-// ── Delete by Day
-function showDeleteDay(dateStr) {
-    const cnt = trades.filter(t => tradeDate(t) === dateStr).length;
-    const label = new Date(dateStr + 'T12:00:00').toLocaleDateString([], { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    showDeleteModal(
-        `<p class="text-gray-300 mb-2">Delete all trades for:</p>
-         <p class="text-[#00D9FF] font-bold mb-3">${label}</p>
-         <p class="text-sm text-gray-400">This will permanently remove <strong class="text-[#00FFCC]">${cnt} trade entries</strong> (from all sources) for this day. Cannot be undone.</p>`,
-        () => {
-            trades = trades.filter(t => tradeDate(t) !== dateStr);
-            // Also update import batch counts
-            importBatches = importBatches.map(b => {
-                const remaining = trades.filter(t => t.importId === b.importId);
-                if (remaining.length === 0) return null; // mark for removal
-                return { ...b, tradeCount: remaining.length, pnl: remaining.reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0) };
-            }).filter(Boolean);
-            localStorage.setItem('obsidian_import_batches', JSON.stringify(importBatches));
-            save(); render();
-        },
-        '🗑️ Delete Day'
-    );
-}
-
-// ══════════════════════════════════════════════
-//  MANAGER PANEL
-// ══════════════════════════════════════════════
-let managerOpen = true;
-function toggleManagerPanel() {
-    managerOpen = !managerOpen;
-    document.getElementById('managerBody').style.display = managerOpen ? 'block' : 'none';
-    document.getElementById('managerChevron').style.transform = managerOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
-}
-
-function renderManagerPanel() {
-    // ── Import file list
-    const fileListEl = document.getElementById('importFileDeleteList');
-    if (importBatches.length === 0) {
-        fileListEl.innerHTML = '<p class="text-xs text-gray-600 italic">No imports found.</p>';
-    } else {
-        fileListEl.innerHTML = importBatches.map(b => {
-            const liveCnt = trades.filter(t => t.importId === b.importId).length;
-            const livePnl = trades.filter(t => t.importId === b.importId).reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0);
-            const pnlColor = livePnl >= 0 ? '#4ade80' : '#f87171';
-            const dateStr = new Date(b.importDate).toLocaleDateString([], { month:'short', day:'numeric', year:'numeric' });
-            return `
-            <div style="background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:10px;padding:14px 16px;margin-bottom:10px">
-                <div class="flex items-start justify-between gap-3 flex-wrap">
-                    <div style="min-width:0;flex:1">
-                        <div class="font-bold text-white text-xs truncate mb-1" title="${b.fileName}">📄 ${b.fileName}</div>
-                        <div class="text-[10px] text-gray-500">Imported ${dateStr}</div>
-                    </div>
-                    <div class="flex items-center gap-4 shrink-0">
-                        <div class="text-center">
-                            <div class="text-[9px] text-gray-600 uppercase">Trades</div>
-                            <div class="text-white font-bold text-xs">${liveCnt}</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-[9px] text-gray-600 uppercase">P&L</div>
-                            <div class="font-bold text-xs" style="color:${pnlColor}">${livePnl >= 0 ? '+' : ''}${fmt(livePnl)}</div>
-                        </div>
-                        <button onclick="showDeleteBatch('${b.importId}')"
-                            style="background:rgba(248,113,113,0.1);border:1px solid #f87171;color:#f87171;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:10px;font-weight:800;text-transform:uppercase;font-family:inherit;transition:all 0.2s;white-space:nowrap"
-                            onmouseover="this.style.background='#f87171';this.style.color='#fff'"
-                            onmouseout="this.style.background='rgba(248,113,113,0.1)';this.style.color='#f87171'">
-                            🗑️ Delete
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
+function processImport(data,fileName){
+  const openPos={};const imported=[];const importId=Date.now().toString();
+  data.reverse().forEach(r=>{
+    const sym=r['Symbol'],st=r['Status'],desc=r['Trade Description'],ot=r['Order Time'];
+    const pm=st.match(/\$([0-9.]+)/);const price=pm?parseFloat(pm[1]):0;
+    const qm=desc.match(/(?:Open|Close)\s+(\d+)\s+/);if(!qm)return;
+    const qty=parseInt(qm[1]);
+    const action=desc.includes('Buy to Open')?'BUY':'SELL';
+    const ctype=desc.toLowerCase().includes('call')?'CALL':'PUT';
+    const ticker=getPrefix(sym);
+    const tm=ot.match(/(\d{2}:\d{2}:\d{2} [AP]M) (\d{2}\/\d{2}\/\d{4})/);
+    const time=tm?tm[1]:ot;
+    const ds=tm?tm[2]:new Date().toLocaleDateString();
+    const [mo,dy,yr]=ds.split('/');
+    const fd=new Date(`${yr}-${mo}-${dy}`);
+    const dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][fd.getDay()];
+    const key=`${sym}_${ctype}`;
+    if(action==='BUY'){
+      openPos[key]={tradeId:genId(),symbol:ticker,fullSymbol:sym,contractType:ctype,totalQty:qty,remainingQty:qty,entryPrice:price,entryTime:time,day:dayName,timestamp:fd.toISOString(),closes:[]};
+    }else if(action==='SELL'&&openPos[key]){
+      openPos[key].closes.push({qty,exitPrice:price,exitTime:time,pnl:((price-openPos[key].entryPrice)*100*qty).toFixed(2)});
+      openPos[key].remainingQty-=qty;
+      if(openPos[key].remainingQty<=0){
+        const p=openPos[key];const tp=p.closes.reduce((s,c)=>s+parseFloat(c.pnl),0);
+        const ae=p.closes.reduce((s,c)=>s+c.exitPrice*c.qty,0)/p.totalQty;
+        imported.push({id:p.tradeId,stock:p.symbol,fullSymbol:p.fullSymbol,option:p.contractType,day:p.day,totalQty:p.totalQty,remainingQty:0,entry:p.entryPrice,avgExit:ae,status:'CLOSED',entryTime:p.entryTime,setups:['Imported'],closes:p.closes,realizedPnl:tp,timestamp:p.timestamp,source:'imported',importId});
+        delete openPos[key];
+      }
     }
-
-    // ── Day list
-    const dayListEl = document.getElementById('dayDeleteList');
-    const dayMap = {};
-    trades.forEach(t => {
-        const dk = tradeDate(t);
-        if (!dayMap[dk]) dayMap[dk] = { count: 0, pnl: 0, sources: new Set() };
-        dayMap[dk].count++;
-        dayMap[dk].pnl += parseFloat(t.realizedPnl || 0);
-        dayMap[dk].sources.add(t.source || 'manual');
-    });
-    const sortedDays = Object.keys(dayMap).sort().reverse(); // most recent first
-
-    if (sortedDays.length === 0) {
-        dayListEl.innerHTML = '<p class="text-xs text-gray-600 italic">No trade days found.</p>';
-    } else {
-        dayListEl.innerHTML = sortedDays.map(dk => {
-            const d = dayMap[dk];
-            const pnlColor = d.pnl >= 0 ? '#4ade80' : '#f87171';
-            const label = new Date(dk + 'T12:00:00').toLocaleDateString([], { weekday:'short', month:'short', day:'numeric', year:'numeric' });
-            const srcTags = Array.from(d.sources).map(s =>
-                s === 'imported'
-                    ? `<span style="background:rgba(255,215,0,0.15);color:#FFD700;border:1px solid rgba(255,215,0,0.3);padding:1px 6px;border-radius:8px;font-size:8px;font-weight:800">📦 IMPORT</span>`
-                    : `<span style="background:rgba(0,217,255,0.15);color:#00D9FF;border:1px solid rgba(0,217,255,0.3);padding:1px 6px;border-radius:8px;font-size:8px;font-weight:800">✍️ MANUAL</span>`
-            ).join(' ');
-            return `
-            <div style="background:rgba(0,217,255,0.03);border:1px solid rgba(0,217,255,0.12);border-radius:10px;padding:12px 16px;margin-bottom:8px">
-                <div class="flex items-center justify-between gap-3 flex-wrap">
-                    <div>
-                        <div class="font-bold text-white text-xs mb-1">${label}</div>
-                        <div class="flex items-center gap-2">${srcTags}</div>
-                    </div>
-                    <div class="flex items-center gap-4 shrink-0">
-                        <div class="text-center">
-                            <div class="text-[9px] text-gray-600 uppercase">Entries</div>
-                            <div class="text-white font-bold text-xs">${d.count}</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-[9px] text-gray-600 uppercase">P&L</div>
-                            <div class="font-bold text-xs" style="color:${pnlColor}">${d.pnl >= 0 ? '+' : ''}${fmt(d.pnl)}</div>
-                        </div>
-                        <button onclick="showDeleteDay('${dk}')"
-                            style="background:rgba(248,113,113,0.1);border:1px solid #f87171;color:#f87171;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:10px;font-weight:800;text-transform:uppercase;font-family:inherit;transition:all 0.2s;white-space:nowrap"
-                            onmouseover="this.style.background='#f87171';this.style.color='#fff'"
-                            onmouseout="this.style.background='rgba(248,113,113,0.1)';this.style.color='#f87171'">
-                            🗑️ Delete Day
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    }
+  });
+  Object.values(openPos).forEach(p=>{
+    const tp=p.closes.reduce((s,c)=>s+parseFloat(c.pnl),0);const cq=p.totalQty-p.remainingQty;
+    const ae=cq>0?p.closes.reduce((s,c)=>s+c.exitPrice*c.qty,0)/cq:0;
+    imported.push({id:p.tradeId,stock:p.symbol,fullSymbol:p.fullSymbol,option:p.contractType,day:p.day,totalQty:p.totalQty,remainingQty:p.remainingQty,entry:p.entryPrice,avgExit:ae,status:p.remainingQty===p.totalQty?'OPEN':'PARTIAL',entryTime:p.entryTime,setups:['Imported'],closes:p.closes,realizedPnl:tp,timestamp:p.timestamp,source:'imported',importId});
+  });
+  const bp=imported.reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
+  importBatches.push({importId,fileName,importDate:new Date().toISOString(),tradeCount:imported.length,pnl:bp});
+  trades=[...imported,...trades];
+  save();render();
 }
 
-// ══════════════════════════════════════════════
-//  RENDER IMPORT BATCH LIST (top summary)
-// ══════════════════════════════════════════════
-function renderImportBatches() {
-    const el = document.getElementById('importBatchList');
-    if (importBatches.length === 0) {
-        el.innerHTML = '<p class="text-xs text-gray-500 italic">No imports yet. Use Import Excel to load trades. Manage imports in the <strong class="text-[#FFD700]">Import & Day Manager</strong> section at the bottom.</p>';
-        return;
-    }
-    const totalImported = trades.filter(t => t.source === 'imported').length;
-    const totalImportPnl = trades.filter(t => t.source === 'imported').reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0);
-    const pnlColor = totalImportPnl >= 0 ? 'text-green-400' : 'text-red-400';
-    el.innerHTML = `
-        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:12px 16px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:10px">
-            <div class="flex items-center gap-2">
-                <span>📦</span>
-                <span class="text-[#FFD700] font-bold text-sm">${importBatches.length} import${importBatches.length>1?'s':''} loaded</span>
-            </div>
-            <div class="text-xs text-gray-400">${totalImported} imported trades</div>
-            <div class="text-xs font-bold ${pnlColor}">${totalImportPnl >= 0 ? '+' : ''}${fmt(totalImportPnl)} P&L</div>
-            <a href="#managerPanel" onclick="if(!managerOpen)toggleManagerPanel()" 
-               style="margin-left:auto;font-size:10px;color:#FFD700;text-decoration:underline;cursor:pointer;font-weight:700">
-                ↓ Manage Imports & Days
-            </a>
-        </div>`;
+// ═══════════════════════════════════════════════════════
+//  DELETE MODAL
+// ═══════════════════════════════════════════════════════
+function showDel(html,fn,lbl){
+  $('delModalBody').innerHTML=html;$('delConfirmBtn').textContent=lbl||'Delete';
+  pendingDel=fn;$('delModal').style.display='flex';
+}
+function closeDel(){$('delModal').style.display='none';pendingDel=null}
+function confirmDel(){if(pendingDel)pendingDel();closeDel()}
+
+function showDelBatch(importId){
+  const b=importBatches.find(x=>x.importId===importId);if(!b)return;
+  const cnt=trades.filter(t=>t.importId===importId).length;
+  showDel(`<p class="mb-1">Delete import file:</p><p class="text-[#FFD700] font-bold mb-3">${b.fileName}</p><p class="text-[11px] text-gray-400">Permanently removes <strong class="text-[#00FFCC]">${cnt} trade entries</strong>.</p>`,
+    ()=>{trades=trades.filter(t=>t.importId!==importId);importBatches=importBatches.filter(x=>x.importId!==importId);save();render()},'🗑️ Delete Import');
+}
+function showDelDay(dk){
+  const cnt=trades.filter(t=>tradeDate(t)===dk).length;
+  const lbl=new Date(dk+'T12:00:00').toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  showDel(`<p class="mb-1">Delete all trades for:</p><p class="text-[#00D9FF] font-bold mb-3">${lbl}</p><p class="text-[11px] text-gray-400">Permanently removes <strong class="text-[#00FFCC]">${cnt} entries</strong> (all sources).</p>`,
+    ()=>{trades=trades.filter(t=>tradeDate(t)!==dk);importBatches=importBatches.map(b=>{const rem=trades.filter(t=>t.importId===b.importId);return rem.length?{...b,tradeCount:rem.length,pnl:rem.reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0)}:null}).filter(Boolean);save();render()},'🗑️ Delete Day');
 }
 
-// ══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  EXPORT
-// ══════════════════════════════════════════════
-function exportToExcel() {
-    if (trades.length === 0) { alert('No trades to export'); return; }
-    const rows = [];
-    trades.forEach(t => {
-        if (t.closes && t.closes.length > 0) {
-            t.closes.forEach(c => rows.push({
-                Date: new Date(t.timestamp).toLocaleDateString(), Day: t.day||'--',
-                Symbol: t.stock, Type: t.option, 'Total Qty': t.totalQty, 'Close Qty': c.qty,
-                Entry: t.entry, Exit: c.exitPrice, 'P&L': c.pnl,
-                'Entry Time': t.entryTime, 'Exit Time': c.exitTime,
-                Setup: (t.setups||[]).join(', '), Source: t.source||'manual'
-            }));
-        } else {
-            rows.push({
-                Date: new Date(t.timestamp).toLocaleDateString(), Day: t.day||'--',
-                Symbol: t.stock, Type: t.option, 'Total Qty': t.totalQty, 'Rem Qty': t.remainingQty,
-                Entry: t.entry, Status: t.status, 'Entry Time': t.entryTime,
-                Setup: (t.setups||[]).join(', '), Source: t.source||'manual'
-            });
-        }
-    });
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb2 = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb2, ws, 'Trades');
-    XLSX.writeFile(wb2, `Obsidian_Elite_Export_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-
-// ══════════════════════════════════════════════
-//  CHARTS
-// ══════════════════════════════════════════════
-function initCharts() {
-    const ctx = document.getElementById('equityChart').getContext('2d');
-    equityChart = new Chart(ctx, {
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    type: 'bar',
-                    label: 'Daily P&L',
-                    data: [],
-                    backgroundColor: [],
-                    borderRadius: 4,
-                    yAxisID: 'y',
-                    order: 2
-                },
-                {
-                    type: 'line',
-                    label: 'Cumulative',
-                    data: [],
-                    borderColor: '#00FFCC',
-                    backgroundColor: 'rgba(0,255,204,0.08)',
-                    tension: 0.4,
-                    borderWidth: 2.5,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#00FFCC',
-                    fill: true,
-                    yAxisID: 'y2',
-                    order: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: { color: '#9ca3af', font: { family:'JetBrains Mono', size:10 } }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(10,14,20,0.95)',
-                    borderColor: 'rgba(0,255,204,0.3)',
-                    borderWidth: 1,
-                    titleColor: '#00FFCC',
-                    bodyColor: '#fff',
-                    padding: 10,
-                    callbacks: {
-                        label: ctx => {
-                            const v = ctx.parsed.y;
-                            return ` ${ctx.dataset.label}: ${v >= 0 ? '+' : ''}$${v.toFixed(2)}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#6b7280', font: { family:'JetBrains Mono', size:9 }, maxRotation: 45 }
-                },
-                y: {
-                    position: 'left',
-                    grid: { color: 'rgba(31,41,55,0.3)' },
-                    ticks: { color: '#6b7280', font: { family:'JetBrains Mono', size:9 },
-                        callback: v => '$'+v.toFixed(0) }
-                },
-                y2: {
-                    position: 'right',
-                    grid: { display: false },
-                    ticks: { color: '#00FFCC', font: { family:'JetBrains Mono', size:9 },
-                        callback: v => '$'+v.toFixed(0) }
-                }
-            }
-        }
-    });
-
-    precisionChart = new Chart(document.getElementById('precisionChart').getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Wins', 'Losses'],
-            datasets: [{ data: [0, 0], backgroundColor: ['#00FFCC', '#1f2937'], borderWidth: 0, cutout: '75%' }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
-}
-
-function setChartRange(r) {
-    chartRange = r;
-    ['all','month','week'].forEach(k => {
-        document.getElementById('chart-'+k).classList.toggle('active', k === r);
-    });
-    updateAnalytics();
-}
-
-function updateAnalytics() {
-    const closedTrades = trades.filter(t => t.status === 'CLOSED');
-
-    // Build daily P&L map
-    const dailyMap = {};
-    closedTrades.forEach(t => {
-        const dk = dateKey(t.timestamp);
-        dailyMap[dk] = (dailyMap[dk] || 0) + parseFloat(t.realizedPnl || 0);
-    });
-
-    let days = Object.keys(dailyMap).sort();
-
-    // Filter by range
-    if (chartRange === 'week') {
-        const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
-        days = days.filter(d => new Date(d) >= cutoff);
-    } else if (chartRange === 'month') {
-        const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
-        days = days.filter(d => new Date(d) >= cutoff);
+// ═══════════════════════════════════════════════════════
+function exportToExcel(){
+  if(!trades.length){alert('No trades');return}
+  const rows=[];
+  trades.forEach(t=>{
+    if(t.closes&&t.closes.length){
+      t.closes.forEach(c=>rows.push({'Date':new Date(t.timestamp).toLocaleDateString(),'Day':t.day,'Symbol':t.stock,'Type':t.option,'Qty':t.totalQty,'Close Qty':c.qty,'Entry':t.entry,'Exit':c.exitPrice,'P&L':c.pnl,'Return%':((c.exitPrice-t.entry)/t.entry*100).toFixed(2),'Entry Time':t.entryTime,'Exit Time':c.exitTime,'Setup':(t.setups||[]).join(', '),'Source':t.source||'manual'}));
+    }else{
+      rows.push({'Date':new Date(t.timestamp).toLocaleDateString(),'Day':t.day,'Symbol':t.stock,'Type':t.option,'Qty':t.totalQty,'Rem':t.remainingQty,'Entry':t.entry,'Status':t.status,'Entry Time':t.entryTime,'Setup':(t.setups||[]).join(', '),'Source':t.source||'manual'});
     }
-
-    // Cumulative
-    let cumul = 0;
-    if (chartRange !== 'all' && days.length > 0) {
-        // start cumul from sum before cutoff
-        const allDaysSorted = Object.keys(dailyMap).sort();
-        allDaysSorted.forEach(d => {
-            if (!days.includes(d)) cumul += dailyMap[d];
-        });
-    }
-
-    const dailyVals = days.map(d => dailyMap[d]);
-    const cumulVals = [];
-    days.forEach(d => { cumul += dailyMap[d]; cumulVals.push(cumul); });
-
-    const labels = days.map(d => {
-        const dt = new Date(d + 'T12:00:00');
-        return dt.toLocaleDateString([], { month:'short', day:'numeric' });
-    });
-
-    equityChart.data.labels = labels;
-    equityChart.data.datasets[0].data = dailyVals;
-    equityChart.data.datasets[0].backgroundColor = dailyVals.map(v => v >= 0 ? 'rgba(74,222,128,0.7)' : 'rgba(248,113,113,0.7)');
-    equityChart.data.datasets[1].data = cumulVals;
-    equityChart.update();
-
-    // Win/Loss
-    let wins = 0, losses = 0, totalPnl = 0;
-    closedTrades.forEach(t => {
-        const pnl = parseFloat(t.realizedPnl || 0);
-        totalPnl += pnl;
-        if (pnl > 0) wins++; else if (pnl < 0) losses++;
-    });
-    precisionChart.data.datasets[0].data = [wins, losses];
-    precisionChart.update();
-    const wr = (wins+losses) > 0 ? (wins/(wins+losses)*100) : 0;
-    document.getElementById('winRateText').innerText = Math.round(wr) + '%';
-    document.getElementById('totalWins').innerText = wins;
-    document.getElementById('totalLosses').innerText = losses;
-
-    document.getElementById('totalPnl').innerText = fmt(totalPnl);
-    document.getElementById('totalPnl').className = `stat-value ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
-    document.getElementById('totalTrades').innerText = trades.length;
-    document.getElementById('totalTradesDetail').innerText = trades.reduce((s,t) => s + (t.closes?.length||0), 0) + ' closes';
-
-    const openCnt = trades.reduce((s,t) => s + (t.remainingQty||0), 0);
-    const openVal = trades.filter(t => t.remainingQty > 0).reduce((s,t) => s + t.entry*t.remainingQty*100, 0);
-    document.getElementById('openContracts').innerText = openCnt;
-    document.getElementById('openValue').innerText = fmt(openVal);
-
-    document.getElementById('totalEntries').innerText = trades.length;
-    document.getElementById('totalCloses').innerText = trades.reduce((s,t) => s+(t.closes?.length||0), 0);
+  });
+  const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Trades');
+  XLSX.writeFile(wb,`Stellium_Export_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-// ══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  CHARTS INIT
+// ═══════════════════════════════════════════════════════
+function initCharts(){
+  const monoFont={family:'JetBrains Mono',size:9};
+  const tooltipBase={backgroundColor:'rgba(3,5,10,0.95)',borderColor:'rgba(0,255,204,0.2)',borderWidth:1,titleColor:'#00FFCC',bodyColor:'#e2e8f0',padding:10,cornerRadius:8};
+
+  equityChart=new Chart($('equityChart').getContext('2d'),{
+    data:{labels:[],datasets:[
+      {type:'bar',label:'Daily P&L',data:[],backgroundColor:[],borderRadius:5,yAxisID:'y',order:2,barThickness:'flex',maxBarThickness:40},
+      {type:'line',label:'Cumulative',data:[],borderColor:'#00FFCC',backgroundColor:'rgba(0,255,204,0.06)',tension:.4,borderWidth:2,pointRadius:0,pointHoverRadius:5,fill:true,yAxisID:'y2',order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{color:'#6b7280',font:monoFont,boxWidth:10}},tooltip:{...tooltipBase,callbacks:{label:c=>{const v=c.parsed.y;return` ${c.dataset.label}: ${v>=0?'+':''}$${v.toFixed(2)}`}}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#4b5563',font:monoFont,maxRotation:45}},y:{position:'left',grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:monoFont,callback:v=>'$'+v.toFixed(0)}},y2:{position:'right',grid:{display:false},ticks:{color:'#00FFCC',font:monoFont,callback:v=>'$'+v.toFixed(0)}}}}
+  });
+
+  precisionChart=new Chart($('precisionChart').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:['Wins','Losses'],datasets:[{data:[0,0],backgroundColor:['#00FFCC','rgba(255,255,255,0.05)'],borderWidth:0,cutout:'78%'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tooltipBase}}}
+  });
+
+  tickerChart=new Chart($('tickerChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:[],datasets:[{label:'P&L',data:[],backgroundColor:[],borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{...tooltipBase,callbacks:{label:c=>{const v=c.parsed.x;return` P&L: ${v>=0?'+':''}$${v.toFixed(2)}`}}}},
+      scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:monoFont,callback:v=>'$'+v.toFixed(0)}},y:{grid:{display:false},ticks:{color:'#e2e8f0',font:{family:'JetBrains Mono',size:11,weight:'700'}}}}}
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHART RANGE
+// ═══════════════════════════════════════════════════════
+function setChartRange(r){
+  chartRange=r;['all','month','week'].forEach(k=>$('cr-'+k).classList.toggle('on',k===r));
+  updateCharts();
+}
+function setTickerRange(r){
+  tickerRange=r;['today','week','month','all'].forEach(k=>$('tr-'+k).classList.toggle('on',k===r));
+  updateCharts();
+}
+
+// ═══════════════════════════════════════════════════════
+//  UPDATE ALL CHARTS + STATS
+// ═══════════════════════════════════════════════════════
+function updateCharts(){
+  const closed=trades.filter(t=>t.status==='CLOSED');
+  const today=todayStr();
+
+  // ── Equity chart
+  const dailyMap={};
+  closed.forEach(t=>{const dk=dateKey(t.timestamp);dailyMap[dk]=(dailyMap[dk]||0)+parseFloat(t.realizedPnl||0)});
+  let days=Object.keys(dailyMap).sort();
+  if(chartRange==='week'){const c=new Date();c.setDate(c.getDate()-7);days=days.filter(d=>new Date(d)>=c)}
+  else if(chartRange==='month'){const c=new Date();c.setDate(c.getDate()-30);days=days.filter(d=>new Date(d)>=c)}
+  let cumul=0;
+  if(chartRange!=='all'){Object.keys(dailyMap).sort().forEach(d=>{if(!days.includes(d))cumul+=dailyMap[d]})}
+  const dVals=days.map(d=>dailyMap[d]);
+  const cVals=[];days.forEach(d=>{cumul+=dailyMap[d];cVals.push(cumul)});
+  equityChart.data.labels=days.map(d=>new Date(d+'T12:00:00').toLocaleDateString([],{month:'short',day:'numeric'}));
+  equityChart.data.datasets[0].data=dVals;
+  equityChart.data.datasets[0].backgroundColor=dVals.map(v=>v>=0?'rgba(34,197,94,0.75)':'rgba(239,68,68,0.75)');
+  equityChart.data.datasets[1].data=cVals;
+  equityChart.update('none');
+
+  // ── Ticker chart
+  let tickerTrades=closed;
+  if(tickerRange==='today') tickerTrades=closed.filter(t=>tradeDate(t)===today);
+  else if(tickerRange==='week'){const c=new Date();c.setDate(c.getDate()-7);tickerTrades=closed.filter(t=>new Date(t.timestamp)>=c)}
+  else if(tickerRange==='month'){const c=new Date();c.setDate(c.getDate()-30);tickerTrades=closed.filter(t=>new Date(t.timestamp)>=c)}
+  const tkMap={};
+  tickerTrades.forEach(t=>{const tk=t.stock;tkMap[tk]=(tkMap[tk]||0)+parseFloat(t.realizedPnl||0)});
+  const tkEntries=Object.entries(tkMap).sort((a,b)=>b[1]-a[1]);
+  tickerChart.data.labels=tkEntries.map(([k])=>k);
+  tickerChart.data.datasets[0].data=tkEntries.map(([,v])=>v);
+  tickerChart.data.datasets[0].backgroundColor=tkEntries.map(([,v])=>v>=0?'rgba(34,197,94,0.75)':'rgba(239,68,68,0.75)');
+  tickerChart.update('none');
+
+  // ── Win rate
+  let wins=0,losses=0,grossW=0,grossL=0,totalPnl=0;
+  const todayPnl=closed.filter(t=>tradeDate(t)===today).reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
+  closed.forEach(t=>{const p=parseFloat(t.realizedPnl||0);totalPnl+=p;if(p>0){wins++;grossW+=p}else if(p<0){losses++;grossL+=Math.abs(p)}});
+  const wr=(wins+losses)>0?(wins/(wins+losses)*100):0;
+  const pf=grossL>0?(grossW/grossL):grossW>0?999:0;
+  precisionChart.data.datasets[0].data=[wins,losses||1];precisionChart.update('none');
+  $('winRateBig').textContent=Math.round(wr)+'%';
+  $('wWins').textContent=wins;$('wLosses').textContent=losses;
+  $('wPF').textContent=pf>99?'∞':pf.toFixed(2);
+
+  // ── Header stats
+  $('hNetPnl').textContent=fmt(totalPnl);
+  $('hNetPnl').className='stat-val glow-cyan '+(totalPnl>=0?'text-[#00FFCC]':'text-red-400');
+  $('hTodayPnl').textContent=fmt(todayPnl);
+  $('hTodayPnl').className='stat-val glow-gold '+(todayPnl>=0?'text-[#FFD700]':'text-red-400');
+  const todayCount=closed.filter(t=>tradeDate(t)===today).length;
+  $('hTodaySub').textContent=`${todayCount} trade${todayCount!==1?'s':''} today`;
+  $('hWinRate').textContent=Math.round(wr)+'%';
+  $('hWRSub').textContent=`${wins}W · ${losses}L`;
+  const openCnt=trades.reduce((s,t)=>s+(t.remainingQty||0),0);
+  const openVal=trades.filter(t=>t.remainingQty>0).reduce((s,t)=>s+t.entry*t.remainingQty*100,0);
+  $('hOpen').textContent=openCnt;$('hOpenVal').textContent=fmt(openVal)+' exposure';
+  $('hTotal').textContent=trades.length;$('hTotalSub').textContent=trades.reduce((s,t)=>s+(t.closes?.length||0),0)+' closes';
+  $('hEntries').textContent=trades.length;$('hCloses').textContent=trades.reduce((s,t)=>s+(t.closes?.length||0),0);
+}
+
+// ═══════════════════════════════════════════════════════
+//  METRICS PANEL
+// ═══════════════════════════════════════════════════════
+function setMetricPeriod(p){
+  metricPeriod=p;['daily','weekly','monthly','yearly'].forEach(k=>$('mt-'+k).classList.toggle('on',k===p));
+  renderMetrics();
+}
+
+function getPeriodTrades(){
+  const now=new Date();
+  return trades.filter(t=>{
+    const d=new Date(t.timestamp);
+    if(metricPeriod==='daily')   return dateKey(t.timestamp)===todayStr();
+    if(metricPeriod==='weekly'){const wd=new Date(now);wd.setDate(wd.getDate()-wd.getDay());return d>=wd}
+    if(metricPeriod==='monthly') return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+    if(metricPeriod==='yearly')  return d.getFullYear()===now.getFullYear();
+    return true;
+  });
+}
+
+function renderMetrics(){
+  const pt=getPeriodTrades();
+  const closed=pt.filter(t=>t.status==='CLOSED');
+  let pnl=0,wins=0,losses=0,gW=0,gL=0,totalTrades=pt.length;
+  closed.forEach(t=>{const p=parseFloat(t.realizedPnl||0);pnl+=p;if(p>0){wins++;gW+=p}else if(p<0){losses++;gL+=Math.abs(p)}});
+  const wr=(wins+losses)>0?Math.round(wins/(wins+losses)*100):0;
+  const pf=gL>0?gW/gL:gW>0?999:0;
+  const avgWin=wins>0?gW/wins:0;const avgLoss=losses>0?gL/losses:0;
+  const rr=avgLoss>0?avgWin/avgLoss:0;
+  const openTrades=pt.filter(t=>t.remainingQty>0).length;
+  const closedTrades=closed.length;
+  const periodLabel={daily:'Today',weekly:'This Week',monthly:'This Month',yearly:'This Year'}[metricPeriod];
+
+  const kpis=[
+    {l:`${periodLabel} P&L`,  v:fmt(pnl),    c:pnl>=0?'#00FFCC':'#ef4444'},
+    {l:'Trades',              v:totalTrades, c:'#e2e8f0'},
+    {l:'Closed',              v:closedTrades,c:'#9ca3af'},
+    {l:'Open',                v:openTrades,  c:'#4ade80'},
+    {l:'Win Rate',            v:wr+'%',       c:wr>=50?'#4ade80':'#f87171'},
+    {l:'Wins',                v:wins,         c:'#4ade80'},
+    {l:'Losses',              v:losses,       c:'#f87171'},
+    {l:'Profit Factor',       v:pf>99?'∞':pf.toFixed(2), c:pf>=1?'#00FFCC':'#f87171'},
+    {l:'Avg Win',             v:fmt(avgWin),  c:'#4ade80'},
+    {l:'Avg Loss',            v:fmt(avgLoss), c:'#f87171'},
+    {l:'Risk:Reward',         v:rr.toFixed(2),c:rr>=1?'#00FFCC':'#fb923c'},
+    {l:'Gross Profit',        v:fmt(gW),      c:'#4ade80'},
+    {l:'Gross Loss',          v:fmt(gL),      c:'#f87171'},
+  ];
+
+  $('metricsGrid').innerHTML=kpis.map(k=>`
+    <div class="kpi-box">
+      <div class="kv" style="color:${k.c};font-size:${String(k.v).length>7?'1rem':'1.2rem'}">${k.v}</div>
+      <div class="kl">${k.l}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  IMPORT BATCH LIST (top)
+// ═══════════════════════════════════════════════════════
+function renderImportBatches(){
+  const el=$('importBatchList');
+  if(!importBatches.length){
+    el.innerHTML='<p class="text-[10px] text-gray-600 italic">No imports yet — use Import Excel above. Manage imports in the <span class="text-[#FFD700]">Import & Day Manager</span> below.</p>';
+    return;
+  }
+  const ti=trades.filter(t=>t.source==='imported').length;
+  const tp=trades.filter(t=>t.source==='imported').reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
+  el.innerHTML=`<div class="flex items-center gap-4 flex-wrap p-3 rounded-lg" style="background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.12)">
+    <span class="text-base">📦</span>
+    <span class="text-[#FFD700] font-bold text-xs">${importBatches.length} import${importBatches.length>1?'s':''}</span>
+    <span class="text-[10px] text-gray-500">${ti} trades</span>
+    <span class="pnl-pill ${tp>=0?'pos':'neg'}">${tp>=0?'+':''}${fmt(tp)}</span>
+    <a href="#managerPanel" onclick="if(!mgrOpen)toggleMgr()" class="ml-auto text-[10px] text-[#FFD700] underline cursor-pointer font-bold">↓ Manage</a>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  MANAGER PANEL
+// ═══════════════════════════════════════════════════════
+function toggleMgr(){
+  mgrOpen=!mgrOpen;
+  $('mgrBody').style.display=mgrOpen?'block':'none';
+  $('mgrChevron').style.transform=mgrOpen?'rotate(0)':'rotate(-90deg)';
+}
+
+function renderMgr(){
+  // Import files
+  const fi=$('importFileList');
+  fi.innerHTML=importBatches.length?importBatches.map(b=>{
+    const lc=trades.filter(t=>t.importId===b.importId).length;
+    const lp=trades.filter(t=>t.importId===b.importId).reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
+    return`<div class="imp-card">
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div style="min-width:0;flex:1">
+          <div class="text-xs font-bold text-white truncate">📄 ${b.fileName}</div>
+          <div class="text-[9px] text-gray-600 mt-0.5">${new Date(b.importDate).toLocaleString()}</div>
+        </div>
+        <div class="flex items-center gap-4 shrink-0">
+          <div class="text-center"><div class="text-[9px] text-gray-600">Trades</div><div class="text-xs font-bold text-white">${lc}</div></div>
+          <div class="text-center"><div class="text-[9px] text-gray-600">P&L</div><div class="text-xs font-bold ${lp>=0?'text-green-400':'text-red-400'}">${lp>=0?'+':''}${fmt(lp)}</div></div>
+          <button onclick="showDelBatch('${b.importId}')" class="btn btn-red" style="padding:4px 10px;font-size:9px">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join(''):'<p class="text-[10px] text-gray-600 italic">No imports.</p>';
+
+  // Days
+  const dl=$('dayDeleteList');
+  const dayMap={};
+  trades.forEach(t=>{const dk=tradeDate(t);if(!dayMap[dk])dayMap[dk]={count:0,pnl:0,src:new Set()};dayMap[dk].count++;dayMap[dk].pnl+=parseFloat(t.realizedPnl||0);dayMap[dk].src.add(t.source||'manual')});
+  const dks=Object.keys(dayMap).sort().reverse();
+  dl.innerHTML=dks.length?dks.map(dk=>{
+    const d=dayMap[dk];const lbl=new Date(dk+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const tags=Array.from(d.src).map(s=>s==='imported'?`<span class="badge b-imported">📦 Import</span>`:`<span class="badge b-manual">✍️ Manual</span>`).join(' ');
+    return`<div class="day-card">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <div class="text-xs font-bold text-white mb-1">${lbl}</div>
+          <div class="flex gap-1">${tags}</div>
+        </div>
+        <div class="flex items-center gap-4 shrink-0">
+          <div class="text-center"><div class="text-[9px] text-gray-600">Entries</div><div class="text-xs font-bold text-white">${d.count}</div></div>
+          <div class="text-center"><div class="text-[9px] text-gray-600">P&L</div><div class="text-xs font-bold ${d.pnl>=0?'text-green-400':'text-red-400'}">${d.pnl>=0?'+':''}${fmt(d.pnl)}</div></div>
+          <button onclick="showDelDay('${dk}')" class="btn btn-red" style="padding:4px 10px;font-size:9px">🗑️ Day</button>
+        </div>
+      </div>
+    </div>`;
+  }).join(''):'<p class="text-[10px] text-gray-600 italic">No trade days.</p>';
+}
+
+// ═══════════════════════════════════════════════════════
 //  SORT
-// ══════════════════════════════════════════════
-function sortBy(col) {
-    sortDir = (sortCol === col && sortDir === 'asc') ? 'desc' : 'asc';
-    sortCol = col;
-    document.querySelectorAll('.sort-icon').forEach(el => { el.textContent='⇅'; el.className='sort-icon'; });
-    const ic = document.getElementById('sort-'+col);
-    if (ic) { ic.textContent = sortDir==='asc'?'▲':'▼'; ic.className='sort-icon '+sortDir; }
-    renderTradeTable();
+// ═══════════════════════════════════════════════════════
+function sortBy(col){
+  sortDir=(sortCol===col&&sortDir==='asc')?'desc':'asc';sortCol=col;
+  document.querySelectorAll('.si').forEach(el=>{el.textContent='⇅';el.className='si'});
+  const ic=$('si-'+col);if(ic){ic.textContent=sortDir==='asc'?'▲':'▼';ic.className='si '+sortDir}
+  renderTable();
 }
-function getSorted() {
-    if (!sortCol) return [...trades];
-    return [...trades].sort((a, b) => {
-        let va, vb;
-        if (sortCol === 'date') { va = new Date(a.timestamp).getTime(); vb = new Date(b.timestamp).getTime(); }
-        else if (['realizedPnl','entry','avgExit','totalQty'].includes(sortCol)) { va = parseFloat(a[sortCol]||0); vb = parseFloat(b[sortCol]||0); }
-        else { va = (a[sortCol]||'').toString().toLowerCase(); vb = (b[sortCol]||'').toString().toLowerCase(); }
-        return (va < vb ? -1 : va > vb ? 1 : 0) * (sortDir==='asc'?1:-1);
-    });
+function getSorted(){
+  if(!sortCol)return[...trades];
+  return[...trades].sort((a,b)=>{
+    let va,vb;
+    if(sortCol==='date'){va=new Date(a.timestamp).getTime();vb=new Date(b.timestamp).getTime()}
+    else if(['realizedPnl','entry','avgExit','totalQty'].includes(sortCol)){va=parseFloat(a[sortCol]||0);vb=parseFloat(b[sortCol]||0)}
+    else{va=(a[sortCol]||'').toString().toLowerCase();vb=(b[sortCol]||'').toString().toLowerCase()}
+    return(va<vb?-1:va>vb?1:0)*(sortDir==='asc'?1:-1);
+  });
 }
 
-// ══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  VIEW MODE
-// ══════════════════════════════════════════════
-function setView(v) {
-    viewMode = v;
-    ['flat','daily','weekly','monthly'].forEach(k => {
-        document.getElementById('view-'+k).classList.toggle('active', k === v);
-    });
-    collapsedGroups.clear();
-    renderTradeTable();
+// ═══════════════════════════════════════════════════════
+function setView(v){
+  viewMode=v;['flat','daily','weekly','monthly'].forEach(k=>$('v'+k[0]).classList.toggle('on',k===v));
+  collapsedGrp.clear();renderTable();
 }
-function expandAll()  { collapsedGroups.clear(); renderTradeTable(); }
-function collapseAll() {
-    const sorted = getSorted();
-    sorted.forEach(t => {
-        if (viewMode === 'daily')   collapsedGroups.add(dateKey(t.timestamp));
-        if (viewMode === 'weekly')  collapsedGroups.add(weekKey(t.timestamp));
-        if (viewMode === 'monthly') collapsedGroups.add(monthKey(t.timestamp));
-    });
-    renderTradeTable();
+function expandAll(){collapsedGrp.clear();renderTable()}
+function collapseAll(){
+  getSorted().forEach(t=>{
+    if(viewMode==='daily')   collapsedGrp.add(dateKey(t.timestamp));
+    if(viewMode==='weekly')  collapsedGrp.add(weekKey(t.timestamp));
+    if(viewMode==='monthly') collapsedGrp.add(monthKey(t.timestamp));
+  });renderTable();
 }
-function toggleGroup(key) {
-    if (collapsedGroups.has(key)) collapsedGroups.delete(key);
-    else collapsedGroups.add(key);
-    renderTradeTable();
-}
+function toggleGrp(k){collapsedGrp.has(k)?collapsedGrp.delete(k):collapsedGrp.add(k);renderTable()}
 
-// ══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  RENDER TABLE
-// ══════════════════════════════════════════════
-function renderTradeTable() {
-    const body = document.getElementById('tradeBody');
-    body.innerHTML = '';
-    if (trades.length === 0) {
-        body.innerHTML = `<tr><td colspan="13" class="text-center py-12 text-gray-400">
-            <div class="text-4xl mb-4">📊</div>
-            <div class="text-lg">No trades yet</div>
-            <div class="text-sm mt-2">Start by opening a trade or importing Excel</div>
-        </td></tr>`;
-        return;
-    }
-
-    const sorted = getSorted();
-
-    if (viewMode === 'flat') {
-        sorted.forEach(t => {
-            const origIdx = trades.findIndex(x => x.id === t.id);
-            appendTradeRow(body, t, origIdx);
-        });
-    } else {
-        // Group
-        let getKey;
-        if (viewMode === 'daily')   getKey = t => dateKey(t.timestamp);
-        if (viewMode === 'weekly')  getKey = t => weekKey(t.timestamp);
-        if (viewMode === 'monthly') getKey = t => monthKey(t.timestamp);
-
-        // Build ordered groups
-        const groups = {};
-        sorted.forEach(t => {
-            const k = getKey(t);
-            if (!groups[k]) groups[k] = [];
-            groups[k].push(t);
-        });
-
-        Object.entries(groups).forEach(([key, groupTrades]) => {
-            const isCollapsed = collapsedGroups.has(key);
-            const groupPnl = groupTrades.reduce((s,t) => s + parseFloat(t.realizedPnl||0), 0);
-            const pnlColor = groupPnl >= 0 ? '#4ade80' : '#f87171';
-            const winCnt = groupTrades.filter(t => parseFloat(t.realizedPnl||0) > 0).length;
-            const label = viewMode === 'daily'
-                ? new Date(key+'T12:00:00').toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'})
-                : viewMode === 'weekly' ? `Week ${key.split('-W')[1]}, ${key.split('-W')[0]}`
-                : new Date(key+'-01T12:00:00').toLocaleDateString([],{month:'long',year:'numeric'});
-
-            const headerClass = viewMode === 'monthly' ? 'month-header-row' :
-                                viewMode === 'weekly'  ? 'week-header-row'  : 'group-header-row';
-
-            const hRow = document.createElement('tr');
-            hRow.className = headerClass;
-            hRow.onclick = () => toggleGroup(key);
-            hRow.innerHTML = `
-                <td colspan="13">
-                    <div class="flex items-center gap-4 flex-wrap">
-                        <span class="collapse-icon ${isCollapsed?'collapsed':''}" style="color:var(--primary);font-size:12px">▼</span>
-                        <span class="font-bold text-white text-xs">${label}</span>
-                        <span class="text-gray-500 text-[10px]">${groupTrades.length} trades · ${winCnt}W/${groupTrades.length-winCnt}L</span>
-                        <span class="font-black text-sm" style="color:${pnlColor}">${groupPnl >= 0 ? '+' : ''}${fmt(groupPnl)}</span>
-                        ${isCollapsed ? '<span class="text-gray-600 text-[9px] ml-auto uppercase tracking-widest">Click to expand</span>' : ''}
-                    </div>
-                </td>`;
-            body.appendChild(hRow);
-
-            if (!isCollapsed) {
-                groupTrades.forEach(t => {
-                    const origIdx = trades.findIndex(x => x.id === t.id);
-                    appendTradeRow(body, t, origIdx, true);
-                });
-            }
-        });
-    }
-}
-
-function appendTradeRow(body, t, origIdx, indented = false) {
-    const ticker = getTickerPrefix(t.stock);
-    const source = t.source || 'manual';
-    const realizedPnl = parseFloat(t.realizedPnl || 0);
-    const avgExit = t.avgExit || 0;
-    const frozen = isFrozen(t);
-
-    let statusBadge = t.status === 'OPEN'
-        ? '<span class="badge badge-open">🟢 OPEN</span>'
-        : t.status === 'PARTIAL'
-        ? '<span class="badge badge-partial">🟡 PARTIAL</span>'
-        : '<span class="badge badge-closed">⚫ CLOSED</span>';
-
-    const mainRow = document.createElement('tr');
-    mainRow.id = `trade-row-${origIdx}`;
-    if (indented) mainRow.style.paddingLeft = '24px';
-
-    const frozenBadge = frozen ? '<span class="badge badge-frozen ml-1" title="Frozen: previous day import">🔒</span>' : '';
-    const canDelete = !frozen;
-
-    mainRow.innerHTML = `
-        <td style="width:28px;padding:8px 4px">
-            ${indented ? '<span class="text-gray-700 text-[8px]">┗</span>' : ''}
-        </td>
-        <td>
-            <span class="badge ${source==='imported'?'badge-imported':'badge-manual'}">
-                ${source==='imported'?'📦':'✍️'}
-            </span>${frozenBadge}
-        </td>
-        <td class="text-[#00D9FF] font-bold text-[10px]">${t.day||'--'}</td>
-        <td class="text-gray-400 text-[10px]">${new Date(t.timestamp).toLocaleDateString([],{month:'short',day:'numeric'})}</td>
-        <td class="font-black text-white text-xs">
-            ${ticker}<span class="${t.option==='CALL'?'text-green-400':'text-red-400'} text-[9px] ml-1">${t.option}</span>
-        </td>
-        <td>${statusBadge}</td>
-        <td class="text-white font-bold text-xs">${t.remainingQty}/${t.totalQty}</td>
-        <td class="text-white font-mono text-[11px]">${fmt(t.entry)}</td>
-        <td class="text-gray-400 font-mono text-[11px]">${avgExit>0?fmt(avgExit):'--'}</td>
-        <td class="text-gray-500 text-[9px]">${t.entryTime}</td>
-        <td class="text-[10px] text-gray-400">${(t.setups||[]).slice(0,2).join(', ')}</td>
-        <td class="text-right font-black text-xs ${realizedPnl>=0?'text-green-400':'text-red-500'}">
-            ${realizedPnl!==0?fmt(realizedPnl):'--'}
-        </td>
-        <td class="text-center">
-            <div class="flex gap-1 justify-center flex-wrap">
-                ${t.remainingQty > 0 ? `<button onclick="toggleClosePanel(${origIdx})" class="btn-close-trade ${openClosePanels.has(origIdx)?'open':''}">📍 CLOSE</button>` : ''}
-                <button onclick="toggleEditPanel(${origIdx})" class="btn-edit">✏️</button>
-                ${canDelete ? `<button onclick="removeTrade(${origIdx})" class="text-red-400 hover:text-red-300 text-sm" title="Delete">🗑️</button>` : `<span title="Frozen — delete via Import Manager" style="opacity:0.3;font-size:13px;cursor:not-allowed">🔒</span>`}
-            </div>
-        </td>`;
-    body.appendChild(mainRow);
-
-    // ── Close Panel
-    const closePanelRow = document.createElement('tr');
-    closePanelRow.id = `closeInputs-${origIdx}`;
-    closePanelRow.className = 'close-panel-row';
-    closePanelRow.style.display = openClosePanels.has(origIdx) ? 'table-row' : 'none';
-    closePanelRow.innerHTML = `
-        <td colspan="13" class="p-4">
-            <div class="flex items-center gap-4 flex-wrap">
-                <div><label style="font-size:9px;margin-bottom:3px">Contracts</label>
-                    <input type="number" id="closeQty-${origIdx}" min="1" max="${t.remainingQty}" value="${t.remainingQty}" class="inline-input" style="width:80px"></div>
-                <div><label style="font-size:9px;margin-bottom:3px">Exit Price</label>
-                    <input type="number" id="closePrice-${origIdx}" step="0.01" placeholder="0.00" class="inline-input" style="width:100px"></div>
-                <div class="flex gap-2 mt-4">
-                    <button onclick="submitClose(${origIdx})" class="btn-sm-green">✅ Submit</button>
-                    <button onclick="toggleClosePanel(${origIdx})" class="btn-sm-red">❌ Cancel</button>
-                </div>
-                <div class="ml-auto text-xs text-gray-400">Available: <span class="text-[#00FFCC] font-bold">${t.remainingQty}</span></div>
-            </div>
-        </td>`;
-    body.appendChild(closePanelRow);
-
-    // ── Edit Panel
-    const editPanelRow = document.createElement('tr');
-    editPanelRow.id = `editInputs-${origIdx}`;
-    editPanelRow.className = 'edit-panel-row';
-    editPanelRow.style.display = openEditPanels.has(origIdx) ? 'table-row' : 'none';
-    const dayOpts = ['Monday','Tuesday','Wednesday','Thursday','Friday'].map(d =>
-        `<option value="${d}" ${t.day===d?'selected':''}>${d}</option>`).join('');
-    const setupOpts = ['5/12 CURL','5/12 REJECT','34/50 Bounce','34/50 Reject','PM HI break','PM low break','PD CL Bounce','PD CL Fail','PD HI Brko','PD LW Brkdwn'];
-    const setupBtns = setupOpts.map(s => {
-        const isAct = (t.setups||[]).includes(s);
-        return `<span class="toggle-btn text-[9px] ${isAct?'active':''}" style="--brand-color:#6366f1;color:#a5b4fc;min-width:0;flex:none;padding:4px 7px" data-editsetup="${origIdx}" data-val="${s}" onclick="this.classList.toggle('active')">${s}</span>`;
-    }).join('');
-    editPanelRow.innerHTML = `
-        <td colspan="13" class="p-4">
-            <div class="text-[10px] font-bold text-indigo-400 mb-3 uppercase tracking-widest">✏️ Edit Trade</div>
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-3">
-                <div><label style="font-size:8px;margin-bottom:3px">Symbol</label>
-                    <input type="text" id="editStock-${origIdx}" value="${t.stock}" class="inline-input" style="text-transform:uppercase;width:100%"></div>
-                <div><label style="font-size:8px;margin-bottom:3px">Type</label>
-                    <select id="editOption-${origIdx}" class="inline-input" style="width:100%">
-                        <option value="CALL" ${t.option==='CALL'?'selected':''}>CALL</option>
-                        <option value="PUT"  ${t.option==='PUT' ?'selected':''}>PUT</option>
-                    </select></div>
-                <div><label style="font-size:8px;margin-bottom:3px">Day</label>
-                    <select id="editDay-${origIdx}" class="inline-input" style="width:100%">${dayOpts}</select></div>
-                <div><label style="font-size:8px;margin-bottom:3px">Entry Price</label>
-                    <input type="number" id="editEntry-${origIdx}" value="${t.entry}" step="0.01" class="inline-input" style="width:100%"></div>
-                <div><label style="font-size:8px;margin-bottom:3px">Total Qty</label>
-                    <input type="number" id="editQty-${origIdx}" value="${t.totalQty}" min="1" class="inline-input" style="width:100%"></div>
-                <div><label style="font-size:8px;margin-bottom:3px">Entry Time</label>
-                    <input type="text" id="editTime-${origIdx}" value="${t.entryTime}" class="inline-input" style="width:100%"></div>
-            </div>
-            <div class="mb-3"><label style="font-size:8px;margin-bottom:3px">Setups</label>
-                <div class="flex flex-wrap gap-1">${setupBtns}</div></div>
-            <div class="flex gap-2">
-                <button onclick="submitEdit(${origIdx})" class="btn-sm-green">💾 Save</button>
-                <button onclick="toggleEditPanel(${origIdx})" class="btn-sm-red">❌ Cancel</button>
-            </div>
-        </td>`;
-    body.appendChild(editPanelRow);
-}
-
-// ══════════════════════════════════════════════
-//  PANEL TOGGLES
-// ══════════════════════════════════════════════
-function toggleClosePanel(idx) {
-    if (openClosePanels.has(idx)) openClosePanels.delete(idx);
-    else openClosePanels.add(idx);
-    renderTradeTable();
-    if (openClosePanels.has(idx)) {
-        setTimeout(() => { const el = document.getElementById(`closePrice-${idx}`); if(el) el.focus(); }, 50);
-    }
-}
-function toggleEditPanel(idx) {
-    if (openEditPanels.has(idx)) openEditPanels.delete(idx);
-    else openEditPanels.add(idx);
-    renderTradeTable();
-}
-
-// ══════════════════════════════════════════════
-//  SUBMIT CLOSE
-// ══════════════════════════════════════════════
-function submitClose(idx) {
-    const t = trades[idx];
-    const cq = parseInt(document.getElementById(`closeQty-${idx}`).value);
-    const ep = parseFloat(document.getElementById(`closePrice-${idx}`).value);
-    if (isNaN(cq)||cq<1) { alert('Valid quantity required'); return; }
-    if (cq > t.remainingQty) { alert(`Max ${t.remainingQty} contracts`); return; }
-    if (isNaN(ep)||ep<=0) { alert('Valid exit price required'); return; }
-    const pnl = ((ep - t.entry) * 100 * cq).toFixed(2);
-    const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    if (!t.closes) t.closes = [];
-    t.closes.push({ qty: cq, exitPrice: ep, exitTime: now, pnl });
-    t.remainingQty -= cq;
-    const closedQty = t.totalQty - t.remainingQty;
-    t.avgExit = t.closes.reduce((s,c) => s + c.exitPrice*c.qty, 0) / closedQty;
-    t.realizedPnl = t.closes.reduce((s,c) => s + parseFloat(c.pnl), 0);
-    t.status = t.remainingQty === 0 ? 'CLOSED' : 'PARTIAL';
-    openClosePanels.delete(idx);
-    save(); render();
-}
-
-// ══════════════════════════════════════════════
-//  SUBMIT EDIT
-// ══════════════════════════════════════════════
-function submitEdit(idx) {
-    const t = trades[idx];
-    const ns = document.getElementById(`editStock-${idx}`).value.trim().toUpperCase();
-    const no = document.getElementById(`editOption-${idx}`).value;
-    const nd = document.getElementById(`editDay-${idx}`).value;
-    const ne = parseFloat(document.getElementById(`editEntry-${idx}`).value);
-    const nq = parseInt(document.getElementById(`editQty-${idx}`).value);
-    const nt = document.getElementById(`editTime-${idx}`).value.trim();
-    if (!ns) { alert('Symbol required'); return; }
-    if (isNaN(ne)||ne<=0) { alert('Valid entry price required'); return; }
-    if (isNaN(nq)||nq<1) { alert('Valid qty required'); return; }
-    const setupBtns = document.querySelectorAll(`[data-editsetup="${idx}"].active`);
-    const newSetups = Array.from(setupBtns).map(b => b.dataset.val);
-    t.stock = ns; t.option = no; t.day = nd; t.entry = ne;
-    t.totalQty = nq; if (t.remainingQty > nq) t.remainingQty = nq;
-    t.entryTime = nt;
-    if (newSetups.length > 0) t.setups = newSetups;
-    if (t.closes && t.closes.length > 0) {
-        t.closes = t.closes.map(c => ({ ...c, pnl: ((c.exitPrice - ne)*100*c.qty).toFixed(2) }));
-        const cq = t.totalQty - t.remainingQty;
-        t.avgExit = t.closes.reduce((s,c) => s + c.exitPrice*c.qty, 0) / (cq||1);
-        t.realizedPnl = t.closes.reduce((s,c) => s + parseFloat(c.pnl), 0);
-    }
-    openEditPanels.delete(idx);
-    save(); render();
-}
-
-// ══════════════════════════════════════════════
-//  REMOVE TRADE
-// ══════════════════════════════════════════════
-function removeTrade(idx) {
-    const t = trades[idx];
-    if (isFrozen(t)) { alert('This trade is frozen. Delete via the Import Manager.'); return; }
-    if (confirm('Delete this trade?')) {
-        openClosePanels.delete(idx); openEditPanels.delete(idx);
-        trades.splice(idx, 1);
-        save(); render();
-    }
-}
-
-// ══════════════════════════════════════════════
-//  FORM SUBMIT
-// ══════════════════════════════════════════════
-document.getElementById('tradeForm').onsubmit = (e) => {
-    e.preventDefault();
-    let tick = document.querySelector('#tickerSelect .active')?.dataset.ticker;
-    const ct = document.getElementById('customStock').value.trim().toUpperCase();
-    if (ct) tick = ct;
-    const type = document.querySelector('#typeSelect .active')?.dataset.type;
-    const day  = document.getElementById('daySelect').value;
-    const ent  = parseFloat(document.getElementById('entry').value);
-    const cnt  = parseInt(document.getElementById('count').value);
-    const set  = Array.from(document.querySelectorAll('#setupGrid .active')).map(b => b.dataset.val);
-    if (!tick) { alert('Select a symbol'); return; }
-    if (!type) { alert('Select contract type'); return; }
-    if (!day)  { alert('Select a day'); return; }
-    if (isNaN(ent)||ent<=0) { alert('Valid entry price required'); return; }
-    if (set.length===0) { alert('Select at least one setup'); return; }
-    trades.unshift({
-        id: generateId(), stock: tick, option: type, day, totalQty: cnt,
-        remainingQty: cnt, entry: ent, avgExit: 0, status: 'OPEN',
-        entryTime: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-        setups: set, closes: [], realizedPnl: 0, timestamp: new Date().toISOString(), source: 'manual'
+// ═══════════════════════════════════════════════════════
+function renderTable(){
+  const body=$('tradeBody');body.innerHTML='';
+  if(!trades.length){
+    body.innerHTML=`<tr><td colspan="14" class="text-center py-12 text-gray-600">
+      <div class="text-3xl mb-3">✦</div><div class="text-sm">No trades yet — open your first position above</div>
+    </td></tr>`;return;
+  }
+  const sorted=getSorted();
+  if(viewMode==='flat'){sorted.forEach(t=>{const oi=trades.findIndex(x=>x.id===t.id);appendRow(body,t,oi)})}
+  else{
+    let getKey=viewMode==='daily'?t=>dateKey(t.timestamp):viewMode==='weekly'?t=>weekKey(t.timestamp):t=>monthKey(t.timestamp);
+    const groups={};
+    sorted.forEach(t=>{const k=getKey(t);if(!groups[k])groups[k]=[];groups[k].push(t)});
+    Object.entries(groups).forEach(([key,gt])=>{
+      const isCol=collapsedGrp.has(key);
+      const gpnl=gt.reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
+      const gw=gt.filter(t=>parseFloat(t.realizedPnl||0)>0).length;
+      const lbl=viewMode==='daily'?new Date(key+'T12:00:00').toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):viewMode==='weekly'?`Week ${key.split('-W')[1]}, ${key.split('-W')[0]}`:new Date(key+'-01T12:00:00').toLocaleDateString([],{month:'long',year:'numeric'});
+      const hcls=viewMode==='monthly'?'row-group-month':viewMode==='weekly'?'row-group-week':'row-group-day';
+      const hr=document.createElement('tr');hr.className=hcls;hr.onclick=()=>toggleGrp(key);
+      hr.innerHTML=`<td colspan="14" style="padding:9px 12px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="color:var(--primary);font-size:11px;transition:transform .2s;display:inline-block;transform:${isCol?'rotate(-90deg)':'rotate(0)'}">▼</span>
+          <span style="font-weight:800;color:#fff;font-size:11px">${lbl}</span>
+          <span style="color:#6b7280;font-size:9px">${gt.length} trades · ${gw}W/${gt.length-gw}L</span>
+          <span style="font-weight:900;font-size:12px;color:${gpnl>=0?'#4ade80':'#ef4444'}">${gpnl>=0?'+':''}${fmt(gpnl)}</span>
+        </div>
+      </td>`;body.appendChild(hr);
+      if(!isCol)gt.forEach(t=>{const oi=trades.findIndex(x=>x.id===t.id);appendRow(body,t,oi,true)});
     });
-    resetForm(); save(); render();
-};
-
-function resetForm() {
-    document.getElementById('tradeForm').reset();
-    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  }
 }
 
-// Toggle Handlers
-document.querySelectorAll('#setupGrid .toggle-btn').forEach(btn => {
-    btn.onclick = function() { this.classList.toggle('active'); };
-});
-document.querySelectorAll('#tickerSelect .toggle-btn, #typeSelect .toggle-btn').forEach(btn => {
-    btn.onclick = function() {
-        this.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        if (this.parentElement.id === 'tickerSelect') document.getElementById('customStock').value = '';
-    };
-});
-document.getElementById('customStock').oninput = function() {
-    if (this.value.trim()) document.querySelectorAll('#tickerSelect .toggle-btn').forEach(b => b.classList.remove('active'));
-};
+function appendRow(body,t,oi,indent=false){
+  const src=t.source||'manual';
+  const pnl=parseFloat(t.realizedPnl||0);
+  const ret=calcReturn(t);
+  const frozen=isFrozen(t);
+  const sbadge=t.status==='OPEN'?'<span class="badge b-open">🟢 Open</span>':t.status==='PARTIAL'?'<span class="badge b-partial">🟡 Partial</span>':'<span class="badge b-closed">⚫ Closed</span>';
+  const fbadge=frozen?'<span class="badge b-frozen ml-1">🔒</span>':'';
 
-// ══════════════════════════════════════════════
-//  SAVE & RENDER
-// ══════════════════════════════════════════════
-function save() { localStorage.setItem('obsidian_elite_v4', JSON.stringify(trades)); }
+  const mr=document.createElement('tr');
+  mr.innerHTML=`
+    <td style="width:24px;padding:8px 4px">${indent?'<span style="color:#374151;font-size:8px">┗</span>':''}</td>
+    <td><span class="badge ${src==='imported'?'b-imported':'b-manual'}">${src==='imported'?'📦':'✍️'}</span>${fbadge}</td>
+    <td style="color:#00D9FF;font-weight:700;font-size:10px">${t.day||'--'}</td>
+    <td style="color:#6b7280;font-size:10px">${new Date(t.timestamp).toLocaleDateString([],{month:'short',day:'numeric'})}</td>
+    <td style="font-weight:900;color:#fff;font-size:12px">${t.stock}<span style="font-size:8px;margin-left:3px;color:${t.option==='CALL'?'#4ade80':'#ef4444'}">${t.option}</span></td>
+    <td>${sbadge}</td>
+    <td style="font-weight:700;color:#e2e8f0">${t.remainingQty}/${t.totalQty}</td>
+    <td style="color:#e2e8f0">$${parseFloat(t.entry).toFixed(2)}</td>
+    <td style="color:#9ca3af">${t.avgExit>0?'$'+parseFloat(t.avgExit).toFixed(2):'--'}</td>
+    <td style="color:#4b5563;font-size:9px">${t.entryTime}</td>
+    <td style="font-size:9px;color:#9ca3af;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(t.setups||[]).slice(0,2).join(' · ')}</td>
+    <td style="text-align:right;font-weight:900;color:${pnl>=0?'#4ade80':'#ef4444'}">${pnl!==0?fmt(pnl):'--'}</td>
+    <td style="text-align:right">
+      ${ret!==null?`<span class="pnl-pill ${ret>=0?'pos':'neg'}">${fmtPct(ret)}</span>`:'<span style="color:#4b5563">--</span>'}
+    </td>
+    <td style="text-align:center">
+      <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
+        ${t.remainingQty>0?`<button onclick="toggleClose(${oi})" class="btn btn-orange ${openClose.has(oi)?'lit':''}">📍</button>`:''}
+        <button onclick="toggleEdit(${oi})" class="btn btn-indigo">✏️</button>
+        ${!frozen?`<button onclick="delTrade(${oi})" style="background:transparent;border:none;cursor:pointer;color:#6b7280;font-size:14px;padding:4px" title="Delete">🗑️</button>`:`<span title="Frozen" style="opacity:.3;font-size:13px">🔒</span>`}
+      </div>
+    </td>`;
+  body.appendChild(mr);
 
-function render() {
-    save();
-    renderImportBatches();
-    renderManagerPanel();
-    renderTradeTable();
-    updateAnalytics();
+  // Close panel
+  const cr=document.createElement('tr');cr.className='row-close';
+  cr.style.display=openClose.has(oi)?'table-row':'none';
+  cr.innerHTML=`<td colspan="14" style="padding:12px 16px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><div class="field-lbl" style="margin-bottom:4px">Qty to Close</div><input type="number" id="cq-${oi}" class="sm" min="1" max="${t.remainingQty}" value="${t.remainingQty}" style="width:80px"></div>
+      <div><div class="field-lbl" style="margin-bottom:4px">Exit Price</div><input type="number" id="cp-${oi}" class="sm" step="0.01" placeholder="0.00" style="width:100px"></div>
+      <div style="display:flex;gap:6px;margin-top:16px">
+        <button onclick="submitClose(${oi})" class="btn btn-green-sm">✅ Submit</button>
+        <button onclick="toggleClose(${oi})" class="btn btn-red-sm">❌ Cancel</button>
+      </div>
+      <div style="margin-left:auto;font-size:10px;color:#6b7280">Available: <span style="color:var(--primary);font-weight:700">${t.remainingQty}</span></div>
+    </div>
+  </td>`;body.appendChild(cr);
+
+  // Edit panel
+  const er=document.createElement('tr');er.className='row-edit';
+  er.style.display=openEdit.has(oi)?'table-row':'none';
+  const dayOpts=['Monday','Tuesday','Wednesday','Thursday','Friday'].map(d=>`<option ${t.day===d?'selected':''}>${d}</option>`).join('');
+  const setupVals=['5/12 CURL','5/12 REJECT','34/50 Bounce','34/50 Reject','PM HI Break','PM Low Break','PD CL Bounce','PD CL Fail','PD HI Brko','PD LW Brkdwn','BULL ALRT'];
+  const sBtns=setupVals.map(s=>`<span class="tg-btn ${(t.setups||[]).includes(s)?'on':''}" style="--bc:#6366f1;color:#a5b4fc;min-width:0;flex:none;padding:4px 8px;font-size:9px" data-es="${oi}" data-v="${s}" onclick="this.classList.toggle('on')">${s}</span>`).join('');
+  er.innerHTML=`<td colspan="14" style="padding:14px 16px">
+    <div style="font-size:9px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px">✏️ Edit Trade</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:10px">
+      <div><div class="field-lbl" style="font-size:8px;margin-bottom:3px">Symbol</div><input type="text" id="es-${oi}" value="${t.stock}" class="sm" style="text-transform:uppercase;width:100%"></div>
+      <div><div class="field-lbl" style="font-size:8px;margin-bottom:3px">Type</div><select id="eo-${oi}" class="sm" style="width:100%"><option ${t.option==='CALL'?'selected':''}>CALL</option><option ${t.option==='PUT'?'selected':''}>PUT</option></select></div>
+      <div><div class="field-lbl" style="font-size:8px;margin-bottom:3px">Day</div><select id="ed-${oi}" class="sm" style="width:100%">${dayOpts}</select></div>
+      <div><div class="field-lbl" style="font-size:8px;margin-bottom:3px">Entry $</div><input type="number" id="ee-${oi}" value="${t.entry}" step=".01" class="sm" style="width:100%"></div>
+      <div><div class="field-lbl" style="font-size:8px;margin-bottom:3px">Qty</div><input type="number" id="eq-${oi}" value="${t.totalQty}" min="1" class="sm" style="width:100%"></div>
+      <div><div class="field-lbl" style="font-size:8px;margin-bottom:3px">Time</div><input type="text" id="et-${oi}" value="${t.entryTime}" class="sm" style="width:100%"></div>
+    </div>
+    <div style="margin-bottom:10px"><div class="field-lbl" style="font-size:8px;margin-bottom:4px">Setups</div><div style="display:flex;flex-wrap:wrap;gap:4px">${sBtns}</div></div>
+    <div style="display:flex;gap:6px">
+      <button onclick="submitEdit(${oi})" class="btn btn-green-sm">💾 Save</button>
+      <button onclick="toggleEdit(${oi})" class="btn btn-red-sm">❌ Cancel</button>
+    </div>
+  </td>`;body.appendChild(er);
 }
 
-// ══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  PANEL TOGGLES
+// ═══════════════════════════════════════════════════════
+function toggleClose(oi){openClose.has(oi)?openClose.delete(oi):openClose.add(oi);renderTable();if(openClose.has(oi))setTimeout(()=>{const e=$('cp-'+oi);if(e)e.focus()},50)}
+function toggleEdit(oi){openEdit.has(oi)?openEdit.delete(oi):openEdit.add(oi);renderTable()}
+
+function submitClose(oi){
+  const t=trades[oi];
+  const cq=parseInt($('cq-'+oi).value),ep=parseFloat($('cp-'+oi).value);
+  if(isNaN(cq)||cq<1){alert('Enter valid qty');return}
+  if(cq>t.remainingQty){alert(`Max ${t.remainingQty}`);return}
+  if(isNaN(ep)||ep<=0){alert('Enter valid exit price');return}
+  const pnl=((ep-t.entry)*100*cq).toFixed(2);
+  const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(!t.closes)t.closes=[];
+  t.closes.push({qty:cq,exitPrice:ep,exitTime:now,pnl});
+  t.remainingQty-=cq;
+  const cqd=t.totalQty-t.remainingQty;
+  t.avgExit=t.closes.reduce((s,c)=>s+c.exitPrice*c.qty,0)/cqd;
+  t.realizedPnl=t.closes.reduce((s,c)=>s+parseFloat(c.pnl),0);
+  t.status=t.remainingQty===0?'CLOSED':'PARTIAL';
+  openClose.delete(oi);save();render();
+}
+
+function submitEdit(oi){
+  const t=trades[oi];
+  const ns=$('es-'+oi).value.trim().toUpperCase(),no=$('eo-'+oi).value,nd=$('ed-'+oi).value;
+  const ne=parseFloat($('ee-'+oi).value),nq=parseInt($('eq-'+oi).value),nt=$('et-'+oi).value.trim();
+  if(!ns||isNaN(ne)||ne<=0||isNaN(nq)||nq<1){alert('Fill all fields');return}
+  const newSetups=Array.from(document.querySelectorAll(`[data-es="${oi}"].on`)).map(b=>b.dataset.v);
+  t.stock=ns;t.option=no;t.day=nd;t.entry=ne;t.totalQty=nq;
+  if(t.remainingQty>nq)t.remainingQty=nq;t.entryTime=nt;
+  if(newSetups.length)t.setups=newSetups;
+  if(t.closes&&t.closes.length){
+    t.closes=t.closes.map(c=>({...c,pnl:((c.exitPrice-ne)*100*c.qty).toFixed(2)}));
+    const cqd=t.totalQty-t.remainingQty;
+    t.avgExit=t.closes.reduce((s,c)=>s+c.exitPrice*c.qty,0)/(cqd||1);
+    t.realizedPnl=t.closes.reduce((s,c)=>s+parseFloat(c.pnl),0);
+  }
+  openEdit.delete(oi);save();render();
+}
+
+function delTrade(oi){
+  if(isFrozen(trades[oi])){alert('Trade is frozen. Delete via Import Manager.');return}
+  if(confirm('Delete this trade?')){openClose.delete(oi);openEdit.delete(oi);trades.splice(oi,1);save();render()}
+}
+
+// ═══════════════════════════════════════════════════════
+//  FORM SUBMIT
+// ═══════════════════════════════════════════════════════
+$('tradeForm').onsubmit=e=>{
+  e.preventDefault();
+  let tick=document.querySelector('#tickerSel .on')?.dataset.ticker;
+  const ct=$('customStock').value.trim().toUpperCase();if(ct)tick=ct;
+  const type=document.querySelector('#typeSel .on')?.dataset.type;
+  const day=$('daySelect').value,ent=parseFloat($('entry').value),cnt=parseInt($('count').value);
+  const set=Array.from(document.querySelectorAll('#setupGrid .on')).map(b=>b.dataset.val);
+  if(!tick){alert('Select a symbol');return}
+  if(!type){alert('Select Call or Put');return}
+  if(!day){alert('Select a day');return}
+  if(isNaN(ent)||ent<=0){alert('Enter valid entry price');return}
+  if(!set.length){alert('Select at least one setup');return}
+  trades.unshift({id:genId(),stock:tick,option:type,day,totalQty:cnt,remainingQty:cnt,entry:ent,avgExit:0,status:'OPEN',entryTime:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),setups:set,closes:[],realizedPnl:0,timestamp:new Date().toISOString(),source:'manual'});
+  $('tradeForm').reset();document.querySelectorAll('.tg-btn').forEach(b=>b.classList.remove('on'));
+  setTodayDay();save();render();
+};
+
+// Toggle logic
+document.querySelectorAll('#setupGrid .tg-btn').forEach(b=>{b.onclick=function(){this.classList.toggle('on')}});
+document.querySelectorAll('#tickerSel .tg-btn,#typeSel .tg-btn').forEach(b=>{b.onclick=function(){this.closest('.tg-group').querySelectorAll('.tg-btn').forEach(x=>x.classList.remove('on'));this.classList.add('on');if(this.closest('#tickerSel'))$('customStock').value=''}});
+$('customStock').oninput=function(){if(this.value.trim())document.querySelectorAll('#tickerSel .tg-btn').forEach(b=>b.classList.remove('on'))};
+
+// ═══════════════════════════════════════════════════════
+//  MASTER RENDER
+// ═══════════════════════════════════════════════════════
+function render(){
+  save();
+  renderImportBatches();
+  renderMgr();
+  renderMetrics();
+  renderTable();
+  updateCharts();
+}
+
+function setTodayDay(){
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const t=days[new Date().getDay()];
+  if(['Monday','Tuesday','Wednesday','Thursday','Friday'].includes(t))$('daySelect').value=t;
+}
+
+// ═══════════════════════════════════════════════════════
 //  INIT
-// ══════════════════════════════════════════════
-window.onload = () => {
-    initCharts();
-    render();
-    document.getElementById('currentDateDisplay').innerText = new Date().toDateString();
-    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const today = days[new Date().getDay()];
-    if (['Monday','Tuesday','Wednesday','Thursday','Friday'].includes(today)) {
-        document.getElementById('daySelect').value = today;
-    }
+// ═══════════════════════════════════════════════════════
+window.onload=()=>{
+  initCharts();
+  $('currentDateDisplay').textContent=new Date().toDateString();
+  setTodayDay();
+  render();
 };
 </script>
 </body>
