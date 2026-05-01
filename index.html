@@ -173,6 +173,7 @@ select option{background:#0a0e16}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fi .25s ease}
 .modal-box{background:linear-gradient(145deg,#080c12,#050810);border:1.5px solid rgba(0,255,204,0.25);border-radius:18px;padding:36px;max-width:480px;width:92%;box-shadow:0 24px 80px rgba(0,255,204,0.18)}
 @keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes fadeInZ{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
 
 /* ── CHART CONTAINERS ── */
 .ch-wrap{position:relative;height:260px}
@@ -194,6 +195,10 @@ select option{background:#0a0e16}
 .logo-star{display:inline-block;animation:spin 12s linear infinite;font-size:28px}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes profileSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes symbolGlow{
+  0%,100%{filter:drop-shadow(0 0 4px rgba(0,255,204,0.4))}
+  50%{filter:drop-shadow(0 0 10px rgba(168,85,247,0.7))}
+}
 
 /* ── PNL PILL ── */
 .pnl-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace}
@@ -423,6 +428,9 @@ select option{background:#0a0e16}
         <div class="tg-btn" style="--bc:#06b6d4;color:#06b6d4" data-val="PD HI Brko">PD HI Brko</div>
         <div class="tg-btn" style="--bc:#f59e0b;color:#f59e0b" data-val="PD LW Brkdwn">PD LW Brkdwn</div>
         <div class="tg-btn" style="--bc:#ff6b6b;color:#ff6b6b" data-val="BULL ALRT">🐂 BULL ALRT</div>
+        <div class="tg-btn" style="--bc:#facc15;color:#facc15" data-val="EARNINGS">📅 EARNINGS</div>
+        <div class="tg-btn" style="--bc:#e879f9;color:#e879f9" data-val="ATH">🏔 ATH</div>
+        <div class="tg-btn" style="--bc:#38bdf8;color:#38bdf8" data-val="PHYSC LEVEL">🔵 PHYSC LEVEL</div>
       </div>
     </div>
 
@@ -548,6 +556,25 @@ select option{background:#0a0e16}
 
 </div><!-- /container -->
 
+<!-- ══ SCREENSHOT ZOOM OVERLAY ══ -->
+<div id="zoomOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);backdrop-filter:blur(12px);z-index:3000;align-items:center;justify-content:center;padding:20px;animation:fadeInZ .2s ease" onclick="closeZoom()">
+  <div style="position:relative;max-width:95vw;max-height:92vh" onclick="event.stopPropagation()">
+    <!-- Close -->
+    <button onclick="closeZoom()" style="position:absolute;top:-14px;right:-14px;background:rgba(239,68,68,0.85);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:14px;font-weight:900;cursor:pointer;z-index:1;display:flex;align-items:center;justify-content:center;transition:transform .15s;box-shadow:0 4px 12px rgba(0,0,0,0.5)" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">✕</button>
+    <!-- Zoom controls -->
+    <div style="position:absolute;bottom:-44px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center">
+      <button onclick="adjustZoom(-0.2)" style="background:rgba(0,255,204,0.12);border:1px solid rgba(0,255,204,0.3);color:var(--primary);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:900;transition:all .15s" onmouseover="this.style.background='rgba(0,255,204,0.25)'" onmouseout="this.style.background='rgba(0,255,204,0.12)'">−</button>
+      <span id="zoomLevelLabel" style="font-size:11px;color:#9ca3af;font-family:'JetBrains Mono',monospace;min-width:36px;text-align:center">100%</span>
+      <button onclick="adjustZoom(0.2)" style="background:rgba(0,255,204,0.12);border:1px solid rgba(0,255,204,0.3);color:var(--primary);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:900;transition:all .15s" onmouseover="this.style.background='rgba(0,255,204,0.25)'" onmouseout="this.style.background='rgba(0,255,204,0.12)'">+</button>
+      <button onclick="resetZoom()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;padding:4px 10px;border-radius:8px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Reset</button>
+      <span style="font-size:10px;color:#4b5563;font-family:'JetBrains Mono',monospace">· Click outside to close</span>
+    </div>
+    <div id="zoomImgWrap" style="overflow:auto;max-width:95vw;max-height:88vh;border-radius:12px;border:1px solid rgba(0,255,204,0.15);box-shadow:0 0 60px rgba(0,255,204,0.1)">
+      <img id="zoomImg" style="display:block;transform-origin:top left;transition:transform .2s ease;cursor:grab;user-select:none" draggable="false">
+    </div>
+  </div>
+</div>
+
 <!-- ══ TRADE JOURNAL MODAL ══ -->
 <div id="journalModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px">
   <div style="background:linear-gradient(145deg,#060a10,#040609);border:1px solid rgba(0,255,204,0.25);border-radius:20px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,255,204,0.15)">
@@ -563,9 +590,15 @@ select option{background:#0a0e16}
     <div style="padding:20px 24px">
       <!-- Screenshot upload -->
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(0,255,204,0.6);margin-bottom:8px">📸 Chart Screenshot</div>
-        <div id="jScreenshotWrap" style="border:1.5px dashed rgba(0,255,204,0.2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;background:rgba(0,255,204,0.02)" onclick="$('jChartUpload').click()" onmouseover="this.style.borderColor='rgba(0,255,204,0.45)'" onmouseout="this.style.borderColor='rgba(0,255,204,0.2)'">
-          <img id="jChartPreview" style="max-width:100%;border-radius:8px;display:none;margin:0 auto">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(0,255,204,0.6)">📸 Chart Screenshot</div>
+          <div id="jScreenshotActions" style="display:none;gap:6px;align-items:center">
+            <button onclick="zoomScreenshot()" style="background:rgba(0,255,204,0.1);border:1px solid rgba(0,255,204,0.3);color:var(--primary);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;transition:all .2s" onmouseover="this.style.background='rgba(0,255,204,0.2)'" onmouseout="this.style.background='rgba(0,255,204,0.1)'">🔍 Zoom</button>
+            <button onclick="replaceScreenshot()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">↺ Replace</button>
+          </div>
+        </div>
+        <div id="jScreenshotWrap" style="border:1.5px dashed rgba(0,255,204,0.2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;background:rgba(0,255,204,0.02);position:relative" onclick="handleScreenshotClick()" onmouseover="this.style.borderColor='rgba(0,255,204,0.45)'" onmouseout="this.style.borderColor='rgba(0,255,204,0.2)'">
+          <img id="jChartPreview" style="max-width:100%;border-radius:8px;display:none;margin:0 auto;cursor:zoom-in;transition:opacity .2s" onclick="event.stopPropagation();zoomScreenshot()" title="Click to zoom">
           <div id="jUploadHint" style="color:#4b5563;font-size:12px">Click to upload chart image · PNG / JPG<br><span style="font-size:10px;color:#374151">Drop your chart screenshot here for reference</span></div>
         </div>
         <input type="file" id="jChartUpload" accept="image/*" style="display:none" onchange="handleJournalChart(event)">
@@ -1181,16 +1214,27 @@ function appendRow(body,t,oi,indent=false){
   const sbadge=t.status==='OPEN'?'<span class="badge b-open">🟢 Open</span>':t.status==='PARTIAL'?'<span class="badge b-partial">🟡 Partial</span>':'<span class="badge b-closed">⚫ Closed</span>';
   const fbadge=frozen?'<span class="badge b-frozen ml-1">🔒</span>':'';
 
+  const hasScreenshot=!!(tradeJournals[t.id]&&tradeJournals[t.id].chart);
   const hasJournal=!!(tradeJournals[t.id]&&(tradeJournals[t.id].why||tradeJournals[t.id].good||tradeJournals[t.id].lesson));
   const journalDot=hasJournal?`<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#a78bfa;margin-left:3px;vertical-align:middle" title="Journal entry exists"></span>`:'';
+
+  // Flashy symbol style when screenshot is saved
+  const symStyle=hasScreenshot
+    ? `font-weight:900;font-size:12px;background:linear-gradient(135deg,#00FFCC,#00D9FF,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 6px rgba(0,255,204,0.55));animation:symbolGlow 2s ease-in-out infinite`
+    : `color:#fff;font-weight:900;font-size:12px`;
+
+  const screenshotBadge=hasScreenshot
+    ? `<span style="display:inline-block;font-size:8px;padding:1px 5px;border-radius:4px;background:rgba(0,255,204,0.12);border:1px solid rgba(0,255,204,0.3);color:var(--primary);margin-left:4px;vertical-align:middle;font-family:'JetBrains Mono',monospace;letter-spacing:.03em" title="Chart screenshot saved">📸</span>`
+    : '';
+
   const mr=document.createElement('tr');
   mr.innerHTML=`
     <td style="width:24px;padding:8px 4px">${indent?'<span style="color:#374151;font-size:8px">┗</span>':''}</td>
     <td><span class="badge ${src==='imported'?'b-imported':'b-manual'}">${src==='imported'?'📦':'✍️'}</span>${fbadge}</td>
     <td style="color:#00D9FF;font-weight:700;font-size:10px">${t.day||'--'}</td>
     <td style="color:#6b7280;font-size:10px">${fmtLocalDate(t.timestamp)}</td>
-    <td style="font-weight:900;font-size:12px">
-      <a onclick="openJournal('${t.id}')" style="color:#fff;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(167,139,250,0.4);text-underline-offset:3px;transition:color .15s" onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#fff'" title="📓 Click to open Trade Journal">${t.stock}</a>${journalDot}<span style="font-size:8px;margin-left:3px;color:${t.option==='CALL'?'#4ade80':'#ef4444'}">${t.option}</span>
+    <td style="font-size:12px">
+      <a onclick="openJournal('${t.id}')" style="${symStyle};cursor:pointer;text-decoration:underline;text-decoration-color:rgba(167,139,250,0.4);text-underline-offset:3px;-webkit-text-fill-color:${hasScreenshot?'transparent':'#fff'}" onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'" title="📓 Click to open Trade Journal">${t.stock}</a>${screenshotBadge}${journalDot}<span style="font-size:8px;margin-left:3px;color:${t.option==='CALL'?'#4ade80':'#ef4444'}">${t.option}</span>
     </td>
     <td>${sbadge}</td>
     <td style="font-weight:700;color:#e2e8f0">${t.remainingQty}/${t.totalQty}</td>
@@ -1230,7 +1274,7 @@ function appendRow(body,t,oi,indent=false){
   const er=document.createElement('tr');er.className='row-edit';
   er.style.display=openEdit.has(oi)?'table-row':'none';
   const dayOpts=['Monday','Tuesday','Wednesday','Thursday','Friday'].map(d=>`<option ${t.day===d?'selected':''}>${d}</option>`).join('');
-  const setupVals=['5/12 CURL','5/12 REJECT','34/50 Bounce','34/50 Reject','PM HI Break','PM Low Break','PD CL Bounce','PD CL Fail','PD HI Brko','PD LW Brkdwn','BULL ALRT'];
+  const setupVals=['5/12 CURL','5/12 REJECT','34/50 Bounce','34/50 Reject','PM HI Break','PM Low Break','PD CL Bounce','PD CL Fail','PD HI Brko','PD LW Brkdwn','BULL ALRT','EARNINGS','ATH','PHYSC LEVEL'];
   const sBtns=setupVals.map(s=>`<span class="tg-btn ${(t.setups||[]).includes(s)?'on':''}" style="--bc:#6366f1;color:#a5b4fc;min-width:0;flex:none;padding:4px 8px;font-size:9px" data-es="${oi}" data-v="${s}" onclick="this.classList.toggle('on')">${s}</span>`).join('');
   er.innerHTML=`<td colspan="13" style="padding:14px 16px">
     <div style="font-size:9px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px">✏️ Edit Trade</div>
@@ -1370,8 +1414,19 @@ function openJournal(tradeId){
   $('jWhy').value=j.why||'';$('jGood').value=j.good||'';$('jBad').value=j.bad||'';
   $('jAvoid').value=j.avoid||'';$('jLesson').value=j.lesson||'';
   // Chart preview
-  if(j.chart){$('jChartPreview').src=j.chart;$('jChartPreview').style.display='block';$('jUploadHint').style.display='none'}
-  else{$('jChartPreview').style.display='none';$('jUploadHint').style.display='block'}
+  if(j.chart){
+    $('jChartPreview').src=j.chart;
+    $('jChartPreview').style.display='block';
+    $('jUploadHint').style.display='none';
+    $('jScreenshotActions').style.display='flex';
+    $('jScreenshotWrap').style.cursor='default';
+  } else {
+    $('jChartPreview').src='';
+    $('jChartPreview').style.display='none';
+    $('jUploadHint').style.display='block';
+    $('jScreenshotActions').style.display='none';
+    $('jScreenshotWrap').style.cursor='pointer';
+  }
   // Stars
   journalRating=j.rating||0;renderStars();
   $('journalModal').style.display='flex';
@@ -1388,16 +1443,56 @@ function saveJournal(){
   save();renderTable();// refresh journal dot indicators
   closeJournal();
 }
+function handleScreenshotClick(){
+  // If no screenshot yet, trigger upload; if screenshot exists, zoom it
+  const hasImg=$('jChartPreview').style.display!=='none';
+  if(hasImg) zoomScreenshot();
+  else $('jChartUpload').click();
+}
+function replaceScreenshot(){$('jChartUpload').click()}
 function handleJournalChart(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=r=>{
     if(!tradeJournals[currentJournalTradeId])tradeJournals[currentJournalTradeId]={};
     tradeJournals[currentJournalTradeId].chart=r.target.result;
-    $('jChartPreview').src=r.target.result;$('jChartPreview').style.display='block';$('jUploadHint').style.display='none';
+    $('jChartPreview').src=r.target.result;
+    $('jChartPreview').style.display='block';
+    $('jUploadHint').style.display='none';
+    $('jScreenshotActions').style.display='flex';
+    // Stop the wrap click from re-triggering upload once image is shown
+    $('jScreenshotWrap').style.cursor='default';
   };
   reader.readAsDataURL(file);
 }
+
+// ── ZOOM FUNCTIONS ──
+let zoomLevel=1;
+function zoomScreenshot(){
+  const src=$('jChartPreview').src;if(!src)return;
+  zoomLevel=1;
+  $('zoomImg').src=src;
+  $('zoomImg').style.transform='scale(1)';
+  $('zoomLevelLabel').textContent='100%';
+  $('zoomOverlay').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeZoom(){$('zoomOverlay').style.display='none';document.body.style.overflow=''}
+function adjustZoom(delta){
+  zoomLevel=Math.max(0.3,Math.min(4,zoomLevel+delta));
+  $('zoomImg').style.transform=`scale(${zoomLevel})`;
+  $('zoomLevelLabel').textContent=Math.round(zoomLevel*100)+'%';
+}
+function resetZoom(){zoomLevel=1;$('zoomImg').style.transform='scale(1)';$('zoomLevelLabel').textContent='100%'}
+// Keyboard: Escape closes zoom, +/- adjust
+document.addEventListener('keydown',e=>{
+  if($('zoomOverlay').style.display==='flex'){
+    if(e.key==='Escape')closeZoom();
+    if(e.key==='='||e.key==='+')adjustZoom(0.2);
+    if(e.key==='-')adjustZoom(-0.2);
+    if(e.key==='0')resetZoom();
+  }
+});
 function setJRating(n){journalRating=n;renderStars()}
 function renderStars(){
   const stars=$('jStars').querySelectorAll('span');
