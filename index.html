@@ -1019,18 +1019,59 @@ $('fileInput').addEventListener('change',async e=>{
     const wb=XLSX.read(await file.arrayBuffer());
     const ws=wb.Sheets[wb.SheetNames[0]];
     const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    let hi=-1;for(let i=0;i<Math.min(raw.length,10);i++){if(raw[i].some(c=>String(c).trim()==='Run Date')){hi=i;break;}}
-    if(hi<0){showToast('error','Import Failed','No Run Date header.');return;}
-    const headers=raw[hi].map(h=>String(h).trim());
-    const data=raw.slice(hi+1).map(row=>{const obj={};headers.forEach((h,i)=>{obj[h]=row[i]??'';});return obj;});
-    const{importId,imported}=processImportCore(data,false);
-    if(!imported.length){showToast('warning','No Trades','No valid trades found.');return;}
-    const batchPnl=imported.reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
-    importBatches.push({importId,fileName:file.name,importDate:new Date().toISOString(),tradeCount:imported.length,pnl:batchPnl});
-    trades=[...imported,...trades];save();render();showToast('success','Import Complete',`${imported.length} trades loaded`);updateTape();
+    let headerIdx=-1;
+    for(let i=0;i<Math.min(raw.length,10);i++){if(raw[i].some(c=>String(c).trim()==='Run Date')){headerIdx=i;break;}}
+    if(headerIdx<0){showToast('error','Import Failed','Could not find "Run Date" header row.');return;}
+    const headers=raw[headerIdx].map(h=>String(h).trim());
+    const data=raw.slice(headerIdx+1).map(row=>{const obj={};headers.forEach((h,i)=>{obj[h]=row[i]??'';});return obj;});
+    processImport(data,file.name);
   }catch(err){showToast('error','Import Error',err.message);}
   e.target.value='';
 });
+
+function processImport(data,fileName){
+  const importId=Date.now().toString();const imported=[];
+  const hasDesc=data.length>0&&'Description' in data[0];
+  const symGroups={};
+  data.forEach(r=>{
+    const action=(r['Action']||'').toString().trim(),sym=(r['Symbol']||'').toString().trim();
+    const priceRaw=hasDesc?r['Price ($)']:r['Price ($)']||r['Price'];
+    const price=parseFloat(priceRaw||0),qty=parseFloat(r['Quantity']||0),runDate=r['Run Date'];
+    if(!action||!sym||isNaN(price)||isNaN(qty)||qty===0)return;
+    if(!action.includes('OPENING')&&!action.includes('CLOSING'))return;
+    if(!symGroups[sym])symGroups[sym]={rows:[]};
+    symGroups[sym].rows.push({action,sym,price,qty,runDate});
+  });
+  Object.entries(symGroups).forEach(([sym,grp])=>{
+    const rows=grp.rows;if(!rows.length)return;
+    const tickerMatch=rows[0].action.match(/\(([^)]+)\)/);
+    const ticker=tickerMatch?tickerMatch[1]:sym.replace(/^-/,'').replace(/\d.*/,'');
+    const ctype=rows[0].action.includes(' CALL ')?'CALL':'PUT';
+    let yr,mo,dy;const rdRaw=rows[0].runDate;
+    if(rdRaw instanceof Date){yr=rdRaw.getUTCFullYear();mo=rdRaw.getUTCMonth();dy=rdRaw.getUTCDate();}
+    else if(typeof rdRaw==='string'&&rdRaw.includes('/')){const[m,d,y]=rdRaw.split('/');yr=parseInt(y);mo=parseInt(m)-1;dy=parseInt(d);}
+    else if(typeof rdRaw==='string'&&rdRaw.length>0){const d=new Date(rdRaw);yr=d.getUTCFullYear();mo=d.getUTCMonth();dy=d.getUTCDate();}
+    else if(typeof rdRaw==='number'){const d=new Date(Math.round((rdRaw-25569)*86400*1000));yr=d.getUTCFullYear();mo=d.getUTCMonth();dy=d.getUTCDate();}
+    else{const d=new Date();yr=d.getFullYear();mo=d.getMonth();dy=d.getDate();}
+    const fdNoon=new Date(yr,mo,dy,12,0,0,0);const dayName=fullDayName(fdNoon);
+    const buys=rows.filter(r=>r.action.includes('OPENING')&&r.qty>0);
+    const sells=rows.filter(r=>r.action.includes('CLOSING')&&r.qty<0);
+    const totalBuyQty=buys.reduce((s,r)=>s+r.qty,0);
+    const entryPrice=totalBuyQty>0?buys.reduce((s,r)=>s+r.price*r.qty,0)/totalBuyQty:(sells.length?sells[0].price:0);
+    const totalSellQty=sells.reduce((s,r)=>s+Math.abs(r.qty),0);
+    const totalQty=totalBuyQty||totalSellQty;
+    const closes=sells.map(r=>{const cq=Math.abs(r.qty);return{qty:cq,exitPrice:r.price,exitTime:'--',pnl:((r.price-entryPrice)*100*cq).toFixed(2)};});
+    const realizedPnl=closes.reduce((s,c)=>s+parseFloat(c.pnl),0);
+    const remainingQty=Math.max(0,totalBuyQty-totalSellQty);
+    const avgExit=totalSellQty>0?sells.reduce((s,r)=>s+r.price*Math.abs(r.qty),0)/totalSellQty:0;
+    const status=remainingQty===0?'CLOSED':remainingQty===totalQty?'OPEN':'PARTIAL';
+    imported.push({id:genId(),stock:ticker,fullSymbol:sym,option:ctype,day:dayName,totalQty,remainingQty,entry:parseFloat(entryPrice.toFixed(4)),avgExit:parseFloat(avgExit.toFixed(4)),status,entryTime:'--',setups:['Imported'],closes,realizedPnl:parseFloat(realizedPnl.toFixed(2)),timestamp:fdNoon.toISOString(),source:'imported',importId});
+  });
+  if(!imported.length){showToast('warning','No Trades','No valid trades found.');return;}
+  const batchPnl=imported.reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
+  importBatches.push({importId,fileName,importDate:new Date().toISOString(),tradeCount:imported.length,pnl:batchPnl});
+  trades=[...imported,...trades];save();render();showToast('success','Import Complete',`${imported.length} trades loaded from ${fileName}`);updateTape();
+}
 
 // ═══ DELETE MODAL ═══
 function showDel(html,fn,lbl){$('delModalBody').innerHTML=html;$('delConfirmBtn').textContent=lbl||'Delete';pendingDel=fn;$('delModal').style.display='flex';}
@@ -1597,8 +1638,82 @@ function pmRenderSavedPlans(){
   }).join('');
 }
 
+// ═══ PNL CALENDAR ═══
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+function calBuildDayMap(){
+  const closed=trades.filter(t=>t.status==='CLOSED');
+  const dm={};
+  closed.forEach(t=>{
+    const dk=localDateStr(new Date(t.timestamp));
+    dm[dk]=(dm[dk]||0)+parseFloat(t.realizedPnl||0);
+  });
+  return dm;
+}
+function renderCalendar(){
+  const grid=document.getElementById('calGrid');
+  const monthLabel=document.getElementById('calMonthLabel');
+  const monthPnl=document.getElementById('calMonthPnl');
+  const tradingDays=document.getElementById('calTradingDays');
+  const winDays=document.getElementById('calWinDays');
+  if(!grid)return;
+  const dm=calBuildDayMap();
+  const today=todayStr();
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  if(monthLabel)monthLabel.textContent=monthNames[calMonth]+' '+calYear;
+  // First day of month (Monday-based grid: Mon=0)
+  const firstDay=new Date(calYear,calMonth,1);
+  // getDay(): 0=Sun,1=Mon...6=Sat → convert to Mon-based: Mon=0,...Sun=6
+  let startOffset=(firstDay.getDay()+6)%7;
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const totalCells=Math.ceil((startOffset+daysInMonth)/7)*7;
+  let html='';
+  // Month stats
+  let mPnl=0,mTrade=0,mWin=0;
+  for(let d=1;d<=daysInMonth;d++){
+    const dk=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const pnl=dm[dk];
+    if(pnl!==undefined){mPnl+=pnl;mTrade++;if(pnl>0)mWin++;}
+  }
+  if(monthPnl){monthPnl.textContent=(mPnl>=0?'+':'')+'$'+Math.abs(mPnl).toFixed(2);monthPnl.style.color=mPnl>=0?'#00FFCC':'#f87171';}
+  if(tradingDays)tradingDays.textContent=mTrade;
+  if(winDays)winDays.textContent=mWin;
+  // Build cells
+  for(let i=0;i<totalCells;i++){
+    const dayNum=i-startOffset+1;
+    if(dayNum<1||dayNum>daysInMonth){
+      html+=`<div style="min-height:58px;border-radius:6px;background:transparent;"></div>`;
+      continue;
+    }
+    const dk=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+    const pnl=dm[dk];
+    const isToday=dk===today;
+    const hasTrade=pnl!==undefined;
+    const isWeekend=((i%7)>=5);
+    let bg='rgba(255,255,255,0.03)';
+    let border='rgba(255,255,255,0.06)';
+    let pnlColor='transparent';
+    if(hasTrade){
+      bg=pnl>=0?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)';
+      border=pnl>=0?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)';
+      pnlColor=pnl>=0?'#4ade80':'#f87171';
+    }
+    const todayRing=isToday?'box-shadow:0 0 0 2px var(--primary);':'';
+    const opacity=isWeekend&&!hasTrade?'opacity:.45;':'';
+    const pnlStr=hasTrade?((pnl>=0?'+':'-')+'$'+Math.abs(pnl).toFixed(0)):'';
+    const tradeCount=hasTrade?trades.filter(t=>t.status==='CLOSED'&&localDateStr(new Date(t.timestamp))===dk).length:0;
+    html+=`<div style="min-height:58px;border-radius:6px;background:${bg};border:1px solid ${border};padding:5px 6px;position:relative;${todayRing}${opacity}cursor:${hasTrade?'default':'default'};">
+      <div style="font-size:10px;font-weight:${isToday?'900':'600'};color:${isToday?'var(--primary)':'#6b7280'};font-family:'JetBrains Mono',monospace;line-height:1;">${dayNum}</div>
+      ${hasTrade?`<div style="font-size:10px;font-weight:900;color:${pnlColor};font-family:'JetBrains Mono',monospace;margin-top:6px;line-height:1;">${pnlStr}</div><div style="font-size:8px;color:${pnlColor};opacity:.7;margin-top:3px;font-family:'JetBrains Mono',monospace;">${tradeCount} trade${tradeCount!==1?'s':''}</div>`:''}
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+function calToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
+
 // ═══ MASTER RENDER ═══
-function render(){save();renderImportBatches();renderMgr();renderMetrics();renderProfile();renderTable();updateCharts();}
+function render(){save();renderImportBatches();renderMgr();renderMetrics();renderProfile();renderTable();updateCharts();renderCalendar();}
 function setTodayDay(){const fullNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];const t=fullNames[new Date().getDay()];const sel=$('daySelect');if(['Monday','Tuesday','Wednesday','Thursday','Friday'].includes(t)){sel.value=t}}
 
 // ═══ INIT ═══
