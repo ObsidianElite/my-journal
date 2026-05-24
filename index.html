@@ -697,6 +697,33 @@ body.pm-active #particleCanvas{display:none!important;}
       <tbody id="iraTradeBody"></tbody>
     </table>
   </div>
+  <!-- IRA IMPORT MANAGER -->
+  <div id="iraMgrPanel" style="border-top:1px solid rgba(99,102,241,0.14);overflow:hidden;">
+    <div onclick="iraMgrToggle()" style="padding:13px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:rgba(99,102,241,0.04);" onmouseover="this.style.background='rgba(99,102,241,0.08)'" onmouseout="this.style.background='rgba(99,102,241,0.04)'">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:15px;">🗂️</span>
+        <div>
+          <div style="font-size:11px;font-weight:800;color:#a78bfa;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;">IRA Import Manager</div>
+          <div style="font-size:9px;color:#6b7280;margin-top:2px;font-family:'JetBrains Mono',monospace;">Delete full import batches or individual IRA records by date</div>
+        </div>
+      </div>
+      <span id="iraMgrChevron" style="color:#a78bfa;font-size:14px;transition:transform .2s;">▼</span>
+    </div>
+    <div id="iraMgrBody" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+        <div style="padding:16px 18px;border-right:1px solid rgba(99,102,241,0.1);">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.6);margin-bottom:8px;font-family:'JetBrains Mono',monospace;">📦 By Import File</div>
+          <div style="font-size:10px;color:#6b7280;margin-bottom:10px;">Remove an entire Excel import and all its trades.</div>
+          <div id="iraBatchList"></div>
+        </div>
+        <div style="padding:16px 18px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.6);margin-bottom:8px;font-family:'JetBrains Mono',monospace;">📅 By Trading Date</div>
+          <div style="font-size:10px;color:#6b7280;margin-bottom:10px;">Remove all IRA trades for a specific date.</div>
+          <div id="iraDateList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- /IRA ACCOUNT TRACKER -->
 
@@ -1551,9 +1578,11 @@ window.onload=()=>{
 // ═══ IRA ACCOUNT TRACKER — storage key: stellium_ira_v2 ═══
 (function(){
   const IRA_KEY='stellium_ira_v2';
+  const IRA_BATCH_KEY='stellium_ira_batches';
   let iraTrades=JSON.parse(localStorage.getItem(IRA_KEY)||'[]');
+  let iraImportBatches=JSON.parse(localStorage.getItem(IRA_BATCH_KEY)||'[]');
   let iraRange='all',iraChart=null;
-  function iraSave(){localStorage.setItem(IRA_KEY,JSON.stringify(iraTrades));}
+  function iraSave(){localStorage.setItem(IRA_KEY,JSON.stringify(iraTrades));localStorage.setItem(IRA_BATCH_KEY,JSON.stringify(iraImportBatches));}
   function iraGenId(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
   function iraFmt(v){const n=parseFloat(v)||0;return(n<0?'-$':'$')+Math.abs(n).toFixed(2);}
   function iraFmtD(ts){return new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'});}
@@ -1702,6 +1731,7 @@ window.onload=()=>{
         });
         const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
         function fullDay(d){return days[d.getDay()];}
+        const batchId=iraGenId();
         let imported=0;
         Object.entries(symGroups).forEach(([sym,grp])=>{
           const rows=grp.rows;if(!rows.length)return;
@@ -1728,10 +1758,13 @@ window.onload=()=>{
           // Skip duplicates
           const isDupe=iraTrades.some(t=>t.symbol===ticker&&Math.abs(t.entry-parseFloat(entryPrice.toFixed(4)))<0.001&&Math.abs(t.date-fdNoon.getTime())<86400000);
           if(isDupe)return;
-          iraTrades.unshift({id:iraGenId(),symbol:ticker,type:ctype,qty:totalQty,entry:parseFloat(entryPrice.toFixed(4)),exit:avgExit?parseFloat(avgExit.toFixed(4)):null,pnl:parseFloat(pnl.toFixed(2)),setup:'Imported',status,date:fdNoon.getTime()});
+          iraTrades.unshift({id:iraGenId(),symbol:ticker,type:ctype,qty:totalQty,entry:parseFloat(entryPrice.toFixed(4)),exit:avgExit?parseFloat(avgExit.toFixed(4)):null,pnl:parseFloat(pnl.toFixed(2)),setup:'Imported',status,date:fdNoon.getTime(),importId:batchId,fileName:file.name});
           imported++;
         });
-        iraSave();iraRefresh();
+        if(imported>0){
+          iraImportBatches.push({batchId,fileName:file.name,importDate:new Date().toISOString(),tradeCount:imported});
+        }
+        iraSave();iraRefresh();iraRenderMgr();
         showToast(imported>0?'success':'warning','IRA Import',`${imported} IRA trade${imported!==1?'s':''} imported from ${file.name}`);
       }catch(err){showToast('error','IRA Import Error',err.message);}
       e.target.value='';
@@ -1757,6 +1790,93 @@ window.onload=()=>{
     XLSX.utils.book_append_sheet(wb,ws,'IRA Trades');
     XLSX.writeFile(wb,`IRA_Trades_${new Date().toISOString().slice(0,10)}.xlsx`);
     showToast('success','IRA Exported',`${iraTrades.length} IRA trades saved to Excel.`);
+  };
+
+  // ═══ IRA IMPORT MANAGER ═══
+  let iraMgrOpen=false;
+  window.iraMgrToggle=function(){
+    iraMgrOpen=!iraMgrOpen;
+    const body=document.getElementById('iraMgrBody');
+    const chev=document.getElementById('iraMgrChevron');
+    if(body)body.style.display=iraMgrOpen?'block':'none';
+    if(chev)chev.style.transform=iraMgrOpen?'rotate(180deg)':'rotate(0)';
+    if(iraMgrOpen)iraRenderMgr();
+  };
+
+  window.iraRenderMgr=function(){
+    // By Import File
+    const bl=document.getElementById('iraBatchList');
+    if(bl){
+      if(!iraImportBatches.length){
+        bl.innerHTML='<div style="font-size:10px;color:#4b5563;font-family:\'JetBrains Mono\',monospace;font-style:italic;">No imports yet.</div>';
+      } else {
+        bl.innerHTML=iraImportBatches.map(b=>{
+          const cnt=iraTrades.filter(t=>t.importId===b.batchId).length;
+          const bpnl=iraTrades.filter(t=>t.importId===b.batchId).reduce((s,t)=>s+parseFloat(t.pnl||0),0);
+          return`<div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.18);border-radius:8px;padding:10px 12px;margin-bottom:7px;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:11px;font-weight:700;color:#e2e8f0;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${b.fileName}</div>
+                <div style="font-size:9px;color:#6b7280;margin-top:2px;font-family:'JetBrains Mono',monospace;">${new Date(b.importDate).toLocaleString()}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                <div style="text-align:center;"><div style="font-size:9px;color:#6b7280;">Trades</div><div style="font-size:11px;font-weight:700;color:#e2e8f0;font-family:'JetBrains Mono',monospace;">${cnt}</div></div>
+                <div style="text-align:center;"><div style="font-size:9px;color:#6b7280;">P&amp;L</div><div style="font-size:11px;font-weight:700;color:${bpnl>=0?'#4ade80':'#f87171'};font-family:'JetBrains Mono',monospace;">${bpnl>=0?'+':''}${iraFmt(bpnl)}</div></div>
+                <button onclick="iraDelBatch('${b.batchId}')" style="background:rgba(239,68,68,0.08);border:1.5px solid #ef4444;color:#ef4444;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:9px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;" onmouseover="this.style.background='#ef4444';this.style.color='#fff'" onmouseout="this.style.background='rgba(239,68,68,0.08)';this.style.color='#ef4444'">🗑️ Delete</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    }
+    // By Date
+    const dl=document.getElementById('iraDateList');
+    if(dl){
+      const dateMap={};
+      iraTrades.forEach(t=>{
+        const dk=new Date(t.date).toISOString().slice(0,10);
+        if(!dateMap[dk])dateMap[dk]={count:0,pnl:0};
+        dateMap[dk].count++;dateMap[dk].pnl+=parseFloat(t.pnl||0);
+      });
+      const dks=Object.keys(dateMap).sort().reverse();
+      if(!dks.length){
+        dl.innerHTML='<div style="font-size:10px;color:#4b5563;font-family:\'JetBrains Mono\',monospace;font-style:italic;">No trades yet.</div>';
+      } else {
+        dl.innerHTML=dks.map(dk=>{
+          const d=dateMap[dk];
+          const lbl=new Date(dk+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+          return`<div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.18);border-radius:8px;padding:10px 12px;margin-bottom:7px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <div style="font-size:11px;font-weight:700;color:#e2e8f0;font-family:'JetBrains Mono',monospace;">${lbl}</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                <div style="text-align:center;"><div style="font-size:9px;color:#6b7280;">Trades</div><div style="font-size:11px;font-weight:700;color:#e2e8f0;font-family:'JetBrains Mono',monospace;">${d.count}</div></div>
+                <div style="text-align:center;"><div style="font-size:9px;color:#6b7280;">P&amp;L</div><div style="font-size:11px;font-weight:700;color:${d.pnl>=0?'#4ade80':'#f87171'};font-family:'JetBrains Mono',monospace;">${d.pnl>=0?'+':''}${iraFmt(d.pnl)}</div></div>
+                <button onclick="iraDelDate('${dk}')" style="background:rgba(239,68,68,0.08);border:1.5px solid #ef4444;color:#ef4444;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:9px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;" onmouseover="this.style.background='#ef4444';this.style.color='#fff'" onmouseout="this.style.background='rgba(239,68,68,0.08)';this.style.color='#ef4444'">🗑️ Day</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    }
+  };
+
+  window.iraDelBatch=function(batchId){
+    const b=iraImportBatches.find(x=>x.batchId===batchId);if(!b)return;
+    const cnt=iraTrades.filter(t=>t.importId===batchId).length;
+    if(!confirm(`Delete import "${b.fileName}" and all ${cnt} associated IRA trades?`))return;
+    iraTrades=iraTrades.filter(t=>t.importId!==batchId);
+    iraImportBatches=iraImportBatches.filter(x=>x.batchId!==batchId);
+    iraSave();iraRefresh();iraRenderMgr();
+    showToast('info','IRA Import Deleted',`"${b.fileName}" and ${cnt} trades removed.`);
+  };
+
+  window.iraDelDate=function(dk){
+    const cnt=iraTrades.filter(t=>new Date(t.date).toISOString().slice(0,10)===dk).length;
+    const lbl=new Date(dk+'T12:00:00').toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    if(!confirm(`Delete all ${cnt} IRA trades for ${lbl}?`))return;
+    iraTrades=iraTrades.filter(t=>new Date(t.date).toISOString().slice(0,10)!==dk);
+    iraSave();iraRefresh();iraRenderMgr();
+    showToast('info','IRA Date Deleted',`${cnt} trades for ${lbl} removed.`);
   };
 
   function iraRefresh(){iraSave();iraUpdateStats();iraRenderTable();iraUpdateChart();}
