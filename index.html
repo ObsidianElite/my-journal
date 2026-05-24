@@ -203,47 +203,6 @@ body{padding-bottom:32px}
 .page-tab-pm.active{background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.45);box-shadow:0 0 16px rgba(16,185,129,0.15);}
 .page-section{display:none !important}.page-section.active{display:block !important}
 
-/* ══ IRA SECTION STYLES ══ */
-.ira-section{background:linear-gradient(160deg,#f0f1ff 0%,#f5f3ff 50%,#ede9fe 100%);border:2px solid rgba(99,102,241,0.25);border-radius:18px;position:relative;overflow:hidden;margin-bottom:24px;}
-.ira-section::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#8b5cf6,#a78bfa,#8b5cf6,#6366f1);}
-.ira-section::after{content:'IRA';position:absolute;right:28px;top:50%;transform:translateY(-50%);font-size:120px;font-weight:900;color:rgba(99,102,241,0.04);font-family:'JetBrains Mono',monospace;pointer-events:none;user-select:none;}
-.ira-glass{background:rgba(255,255,255,0.75);backdrop-filter:blur(16px);border:1px solid rgba(99,102,241,0.18);border-radius:12px;position:relative;overflow:hidden;transition:border-color .3s;}
-.ira-glass:hover{border-color:rgba(99,102,241,0.35);box-shadow:0 0 20px rgba(99,102,241,0.1)}
-.ira-stat{background:rgba(255,255,255,0.85);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:14px 18px;text-align:center;position:relative;overflow:hidden;transition:all .2s;}
-.ira-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ig,linear-gradient(90deg,#6366f1,#8b5cf6));}
-.ira-stat-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.7);margin-bottom:5px;font-family:'JetBrains Mono',monospace;}
-.ira-stat-val{font-size:1.6rem;font-weight:900;line-height:1.1;font-family:'JetBrains Mono',monospace;letter-spacing:-0.02em;}
-.ira-stat-sub{font-size:10px;color:#6b7280;margin-top:3px;font-family:'JetBrains Mono',monospace;}
-.ira-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:rgba(99,102,241,0.7);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.ira-section-title::after{content:'';flex:1;height:1px;background:rgba(99,102,241,0.15)}
-.ira-tg-group{display:flex;flex-wrap:wrap;gap:5px;background:rgba(99,102,241,0.06);padding:5px;border-radius:10px;border:1px solid rgba(99,102,241,0.15);}
-.ira-tg-btn{flex:1;min-width:52px;text-align:center;padding:6px 5px;font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;background:rgba(255,255,255,0.7);border:1px solid rgba(99,102,241,0.15);transition:all .18s;text-transform:uppercase;font-family:'JetBrains Mono',monospace;color:#64748b;user-select:none;}
-.ira-tg-btn:hover{border-color:rgba(99,102,241,0.45);color:#6366f1;background:rgba(99,102,241,0.08)}
-.ira-tg-btn.on{background:#6366f1!important;color:#fff!important;border-color:#4f46e5!important;box-shadow:0 0 12px rgba(99,102,241,0.35);font-weight:900;}
-.ira-tg-btn.on[data-type="CALL"]{background:#10b981!important}.ira-tg-btn.on[data-type="PUT"]{background:#ef4444!important}
-.ira-vtog{padding:6px 13px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:7px;cursor:pointer;border:1px solid rgba(99,102,241,0.2);color:rgba(99,102,241,0.5);background:transparent;transition:all .18s;font-family:'JetBrains Mono',monospace;}
-.ira-vtog.on{background:rgba(99,102,241,0.12);color:#6366f1;border-color:rgba(99,102,241,0.4);box-shadow:0 0 10px rgba(99,102,241,0.12);}
-.ira-vtog:hover:not(.on){color:rgba(99,102,241,0.75);border-color:rgba(99,102,241,0.3)}
-.ira-btn-cta{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:12px 24px;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:800;text-transform:uppercase;cursor:pointer;border:none;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;transition:all .2s;letter-spacing:.08em;}
-.ira-btn-cta:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(99,102,241,0.4)}
-.ira-btn-outline{background:rgba(99,102,241,0.06);border:1.5px solid #6366f1;color:#6366f1;padding:10px 20px;font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:800;text-transform:uppercase;cursor:pointer;border-radius:9px;display:inline-flex;align-items:center;gap:6px;transition:all .2s;letter-spacing:.06em;}
-.ira-btn-outline:hover{background:#6366f1;color:#fff;transform:translateY(-1px)}
-.ira-pnl-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;}
-.ira-pnl-pill.pos{background:rgba(99,102,241,0.12);color:#818cf8;border:1px solid rgba(99,102,241,0.2)}
-.ira-pnl-pill.neg{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
-.ira-row-close{background:rgba(16,185,129,0.05);border-left:3px solid #10b981}
-.ira-row-edit{background:rgba(99,102,241,0.06);border-left:3px solid #8b5cf6}
-.ira-row-grp-day{background:rgba(99,102,241,0.04);border-top:1px solid rgba(99,102,241,0.14);cursor:pointer}
-.ira-row-grp-day:hover td{background:rgba(99,102,241,0.07)}
-.ira-row-grp-week{background:rgba(139,92,246,0.04);border-top:1px solid rgba(139,92,246,0.12);cursor:pointer}
-.ira-row-grp-month{background:rgba(245,158,11,0.04);border-top:2px solid rgba(245,158,11,0.18);cursor:pointer}
-.ira-tbl thead th{background:rgba(238,240,255,0.98)!important;color:#6366f1!important;border-bottom-color:rgba(99,102,241,0.2)!important;}
-.ira-tbl thead th.sort:hover{background:rgba(99,102,241,0.08)!important;color:#4338ca!important}
-.ira-tbl tbody tr:hover{background:rgba(99,102,241,0.035)!important}
-.ira-si{display:inline-block;margin-left:3px;font-size:8px;opacity:.35}.ira-si.asc,.ira-si.desc{opacity:1;color:#6366f1}
-@media(max-width:768px){.ira-chart-grid{grid-template-columns:1fr!important}}
-
-/* Pre-market styles */
 #page-premarket{position:relative;min-height:100vh;margin:-24px -32px;padding:24px 32px;background:radial-gradient(ellipse 60% 40% at 15% 10%,rgba(209,250,229,0.55) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(219,234,254,0.45) 0%,transparent 55%),linear-gradient(160deg,#f0fdf8 0%,#f8fafc 35%,#eff6ff 70%,#f0fdf4 100%);}
 body.pm-active{background:#f4fbf8!important;background-image:none!important;}
 body.pm-active::before,body.pm-active::after{display:none!important;}
@@ -661,160 +620,6 @@ body.pm-active #particleCanvas{display:none!important;}
 <!-- ════════════════════════════════════════
      IRA ACCOUNT SECTION
 ════════════════════════════════════════ -->
-<div class="ira-section" id="iraSection">
-
-  <!-- IRA HEADER -->
-  <div style="padding:20px 24px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;position:relative;z-index:1;">
-    <div style="display:flex;align-items:center;gap:14px">
-      <div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.1));border:1.5px solid rgba(99,102,241,0.35);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🏦</div>
-      <div>
-        <div style="font-size:19px;font-weight:900;color:#1e1b4b;letter-spacing:-.02em;font-family:'Inter',sans-serif;line-height:1">IRA Account Journal</div>
-        <div style="font-size:10px;color:rgba(99,102,241,0.6);margin-top:3px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em">Tax-Advantaged · Separate from Main Account</div>
-      </div>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:relative;z-index:2;">
-      <input type="file" id="iraFileInput" accept=".xls,.xlsx" style="display:none">
-      <button onclick="document.getElementById('iraFileInput').click()" class="ira-btn-outline">📁 Import IRA Excel</button>
-      <button onclick="iraExportToExcel()" class="ira-btn-outline">💾 Export IRA</button>
-    </div>
-  </div>
-
-  <!-- IRA STATS -->
-  <div style="padding:0 24px 16px;display:flex;flex-wrap:wrap;gap:10px;position:relative;z-index:1;">
-    <div class="ira-stat" style="--ig:linear-gradient(90deg,#6366f1,#8b5cf6);flex:1;min-width:110px"><div class="ira-stat-lbl">IRA Net P&L</div><div id="iraNetPnl" class="ira-stat-val" style="color:#6366f1">$0.00</div><div class="ira-stat-sub">All time</div></div>
-    <div class="ira-stat" style="--ig:linear-gradient(90deg,#f59e0b,#d97706);flex:1;min-width:110px"><div class="ira-stat-lbl">Today's P&L</div><div id="iraTodayPnl" class="ira-stat-val" style="color:#d97706">$0.00</div><div id="iraTodaySub" class="ira-stat-sub">0 trades</div></div>
-    <div class="ira-stat" style="--ig:linear-gradient(90deg,#8b5cf6,#a78bfa);flex:1;min-width:100px"><div class="ira-stat-lbl">Win Rate</div><div id="iraWinRate" class="ira-stat-val" style="color:#8b5cf6">0%</div><div id="iraWRSub" class="ira-stat-sub">0W · 0L</div></div>
-    <div class="ira-stat" style="--ig:linear-gradient(90deg,#10b981,#059669);flex:1;min-width:100px"><div class="ira-stat-lbl">Open Pos</div><div id="iraOpenCnt" class="ira-stat-val" style="color:#10b981">0</div><div id="iraOpenVal" class="ira-stat-sub">$0 exposure</div></div>
-    <div class="ira-stat" style="--ig:linear-gradient(90deg,#06b6d4,#0e7490);flex:1;min-width:100px"><div class="ira-stat-lbl">Total Trades</div><div id="iraTotal" class="ira-stat-val" style="color:#0891b2">0</div><div id="iraTotalSub" class="ira-stat-sub">0 closes</div></div>
-    <div class="ira-stat" style="--ig:linear-gradient(90deg,#ec4899,#db2777);flex:1;min-width:100px"><div class="ira-stat-lbl">Profit Factor</div><div id="iraPF" class="ira-stat-val" style="color:#db2777">0.00</div><div class="ira-stat-sub">Gross W/L</div></div>
-  </div>
-
-  <!-- IRA CHART + WIN RATE -->
-  <div style="padding:0 24px 16px;display:grid;grid-template-columns:1fr 220px;gap:12px;position:relative;z-index:1;" class="ira-chart-grid">
-    <div class="ira-glass" style="padding:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-        <div class="ira-section-title" style="margin-bottom:0">📈 IRA Equity Curve</div>
-        <div style="display:flex;gap:6px;">
-          <button onclick="iraSetChartRange('all')" id="ira-cr-all" class="ira-vtog on">All</button>
-          <button onclick="iraSetChartRange('month')" id="ira-cr-month" class="ira-vtog">Month</button>
-          <button onclick="iraSetChartRange('week')" id="ira-cr-week" class="ira-vtog">Week</button>
-        </div>
-      </div>
-      <div style="position:relative;height:200px"><canvas id="iraEquityChart"></canvas></div>
-    </div>
-    <div class="ira-glass" style="padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-      <div class="ira-section-title" style="width:100%">🎯 IRA Win Rate</div>
-      <div style="position:relative;width:130px;height:130px;">
-        <canvas id="iraPrecisionChart"></canvas>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <span id="iraWinRateBig" style="font-size:1.8rem;font-weight:900;color:#6366f1;font-family:'JetBrains Mono',monospace;line-height:1">0%</span>
-          <span style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em">Win Rate</span>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:10px;">
-        <div class="ira-glass" style="padding:8px;text-align:center;"><div id="iraWWins" style="font-size:1.1rem;font-weight:900;color:#10b981;font-family:'JetBrains Mono',monospace">0</div><div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-top:2px">Wins</div></div>
-        <div class="ira-glass" style="padding:8px;text-align:center;"><div id="iraWLosses" style="font-size:1.1rem;font-weight:900;color:#ef4444;font-family:'JetBrains Mono',monospace">0</div><div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-top:2px">Losses</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- IRA TRADE FORM -->
-  <div style="padding:0 24px 16px;position:relative;z-index:1;">
-    <div class="ira-glass" style="padding:20px;border-top:3px solid #6366f1;">
-      <div class="ira-section-title">⚡ IRA Trade Entry</div>
-      <form id="iraTradeForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <div class="lg:col-span-2">
-          <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.8);margin-bottom:6px">Symbol *</label>
-          <div class="ira-tg-group" id="iraTickerSel">
-            <div class="ira-tg-btn" data-ticker="AAPL">AAPL</div>
-            <div class="ira-tg-btn" data-ticker="AMD">AMD</div>
-            <div class="ira-tg-btn" data-ticker="META">META</div>
-            <div class="ira-tg-btn" data-ticker="NVDA">NVDA</div>
-            <div class="ira-tg-btn" data-ticker="SPY">SPY</div>
-            <div class="ira-tg-btn" data-ticker="SPX">SPX</div>
-            <div class="ira-tg-btn" data-ticker="TSLA">TSLA</div>
-            <div class="ira-tg-btn" data-ticker="COIN">COIN</div>
-          </div>
-          <div style="margin-top:8px"><label style="display:block;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.7);margin-bottom:4px">Custom</label><input type="text" id="iraCustomStock" placeholder="Custom ticker…" maxlength="10" style="background:rgba(255,255,255,0.9);border:1px solid rgba(99,102,241,0.2);color:#1e1b4b;padding:8px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;font-family:'JetBrains Mono',monospace;text-transform:uppercase;transition:border-color .2s" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='rgba(99,102,241,0.2)'"></div>
-        </div>
-        <div>
-          <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.8);margin-bottom:6px">Day *</label>
-          <select id="iraDaySelect" style="background:rgba(255,255,255,0.9);border:1px solid rgba(99,102,241,0.2);color:#1e1b4b;padding:10px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;font-family:'JetBrains Mono',monospace;transition:border-color .2s" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='rgba(99,102,241,0.2)'">
-            <option value="">Select</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
-          </select>
-        </div>
-        <div>
-          <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.8);margin-bottom:6px">Type *</label>
-          <div class="ira-tg-group" id="iraTypeSel"><div class="ira-tg-btn" data-type="CALL">Call</div><div class="ira-tg-btn" data-type="PUT">Put</div></div>
-        </div>
-        <div>
-          <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.8);margin-bottom:6px">Contracts *</label>
-          <input type="number" id="iraCount" value="1" min="1" style="background:rgba(255,255,255,0.9);border:1px solid rgba(99,102,241,0.2);color:#1e1b4b;padding:10px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;font-family:'JetBrains Mono',monospace" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='rgba(99,102,241,0.2)'">
-        </div>
-        <div>
-          <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.8);margin-bottom:6px">Entry Price *</label>
-          <input type="number" id="iraEntry" step="0.01" placeholder="0.00" style="background:rgba(255,255,255,0.9);border:1px solid rgba(99,102,241,0.2);color:#1e1b4b;padding:10px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;font-family:'JetBrains Mono',monospace" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='rgba(99,102,241,0.2)'">
-        </div>
-        <div class="col-span-full" style="border-top:1px solid rgba(99,102,241,0.12);padding-top:14px">
-          <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(99,102,241,0.8);margin-bottom:8px">Setup *</label>
-          <div id="iraSetupGrid" style="display:flex;flex-wrap:wrap;gap:6px;">
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="5/12 CURL">5/12 CURL</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="5/12 REJECT">5/12 REJECT</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="34/50 Bounce">34/50 Bounce</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="34/50 Reject">34/50 Reject</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="PM HI Break">PM HI Break</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="PM Low Break">PM Low Break</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="PD CL Bounce">PD CL Bounce</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="PD CL Fail">PD CL Fail</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="EARNINGS">📅 EARNINGS</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="LONG TERM">📈 LONG TERM</div>
-            <div class="ira-tg-btn" style="flex:none;padding:5px 10px" data-val="PHYSC LEVEL">🔵 PHYSC LEVEL</div>
-          </div>
-        </div>
-        <div class="col-span-full mt-2"><button type="submit" class="ira-btn-cta">🏦 Open IRA Trade</button></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- IRA TRADE HISTORY -->
-  <div style="padding:0 24px 24px;position:relative;z-index:1;">
-    <div class="ira-glass" style="overflow:hidden;">
-      <div style="padding:14px 16px;border-bottom:1px solid rgba(99,102,241,0.1);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div class="ira-section-title" style="margin-bottom:0">📋 IRA Trade History</div>
-          <div style="font-size:10px;color:#6b7280;font-family:'JetBrains Mono',monospace"><span id="iraHEntries" style="color:#6366f1;font-weight:700">0</span> trades · <span id="iraHCloses" style="color:#6366f1;font-weight:700">0</span> closes</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.1em">Group:</span>
-          <button onclick="iraSetView('flat')" id="ira-vf" class="ira-vtog on">Flat</button>
-          <button onclick="iraSetView('daily')" id="ira-vd" class="ira-vtog">Daily</button>
-          <button onclick="iraSetView('weekly')" id="ira-vw" class="ira-vtog">Weekly</button>
-          <button onclick="iraSetView('monthly')" id="ira-vm" class="ira-vtog">Monthly</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="tbl ira-tbl" style="width:100%">
-          <thead><tr>
-            <th style="width:20px"></th>
-            <th class="sort" onclick="iraSortBy('day')">Day <span class="ira-si" id="ira-si-day">⇅</span></th>
-            <th class="sort" onclick="iraSortBy('date')">Date <span class="ira-si" id="ira-si-date">⇅</span></th>
-            <th class="sort" onclick="iraSortBy('stock')">Symbol <span class="ira-si" id="ira-si-stock">⇅</span></th>
-            <th>Status</th>
-            <th class="sort" onclick="iraSortBy('totalQty')">Qty <span class="ira-si" id="ira-si-qty">⇅</span></th>
-            <th class="sort" onclick="iraSortBy('entry')">Entry <span class="ira-si" id="ira-si-entry">⇅</span></th>
-            <th class="sort" onclick="iraSortBy('avgExit')">Exit <span class="ira-si" id="ira-si-exit">⇅</span></th>
-            <th>Time</th><th>Setup</th>
-            <th class="sort" onclick="iraSortBy('realizedPnl')" style="text-align:right">P&L <span class="ira-si" id="ira-si-pnl">⇅</span></th>
-            <th style="text-align:right">Return%</th>
-            <th style="text-align:center">Actions</th>
-          </tr></thead>
-          <tbody id="iraTradeBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- /IRA SECTION -->
 
 
 <!-- ════════════════════════════════════════
@@ -1159,80 +964,15 @@ $('fileInput').addEventListener('change',async e=>{
   e.target.value='';
 });
 
-// ════════════════════════════════════════════════════
-// IRA IMPORT
-// ════════════════════════════════════════════════════
-$('iraFileInput').addEventListener('change',async e=>{
-  const file=e.target.files[0];if(!file)return;
-  try{
-    const wb=XLSX.read(await file.arrayBuffer());
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    let hi=-1;for(let i=0;i<Math.min(raw.length,10);i++){if(raw[i].some(c=>String(c).trim()==='Run Date')){hi=i;break;}}
-    if(hi<0){showToast('error','IRA Import Failed','No Run Date header.');return;}
-    const headers=raw[hi].map(h=>String(h).trim());
-    const data=raw.slice(hi+1).map(row=>{const obj={};headers.forEach((h,i)=>{obj[h]=row[i]??'';});return obj;});
-    const{importId,imported}=processImportCore(data,true);
-    if(!imported.length){showToast('warning','No IRA Trades','No valid trades found.');return;}
-    const batchPnl=imported.reduce((s,t)=>s+parseFloat(t.realizedPnl||0),0);
-    iraImportBatches.push({importId,fileName:file.name,importDate:new Date().toISOString(),tradeCount:imported.length,pnl:batchPnl});
-    iraTrades=[...imported,...iraTrades];iraStore();iraRender();showToast('success','IRA Import Done',`${imported.length} IRA trades loaded`);updateTape();
-  }catch(err){showToast('error','IRA Import Error',err.message);}
-  e.target.value='';
-});
-
-// ════════════════════════════════════════════════════
-// SHARED IMPORT CORE (same Fidelity Excel logic)
-// ════════════════════════════════════════════════════
-function processImportCore(data,isIra){
-  const importId=Date.now().toString();const imported=[];
-  const symGroups={};
-  data.forEach(r=>{
-    const action=(r['Action']||'').toString().trim(),sym=(r['Symbol']||'').toString().trim();
-    const price=parseFloat(r['Price ($)']||r['Price']||0),qty=parseFloat(r['Quantity']||0),runDate=r['Run Date'];
-    if(!action||!sym||isNaN(price)||isNaN(qty)||qty===0)return;
-    if(!action.includes('OPENING')&&!action.includes('CLOSING'))return;
-    if(!symGroups[sym])symGroups[sym]={rows:[]};
-    symGroups[sym].rows.push({action,sym,price,qty,runDate});
-  });
-  Object.entries(symGroups).forEach(([sym,grp])=>{
-    const rows=grp.rows;if(!rows.length)return;
-    const tickerMatch=rows[0].action.match(/\(([^)]+)\)/);
-    const ticker=tickerMatch?tickerMatch[1]:sym.replace(/^-/,'').replace(/\d.*/,'');
-    const ctype=rows[0].action.includes(' CALL ')?'CALL':'PUT';
-    let yr,mo,dy;const rdRaw=rows[0].runDate;
-    if(rdRaw instanceof Date){yr=rdRaw.getUTCFullYear();mo=rdRaw.getUTCMonth();dy=rdRaw.getUTCDate();}
-    else if(typeof rdRaw==='string'&&rdRaw.includes('/')){const[m,d,y]=rdRaw.split('/');yr=parseInt(y);mo=parseInt(m)-1;dy=parseInt(d);}
-    else if(typeof rdRaw==='string'&&rdRaw.length>0){const d=new Date(rdRaw);yr=d.getUTCFullYear();mo=d.getUTCMonth();dy=d.getUTCDate();}
-    else if(typeof rdRaw==='number'){const d=new Date(Math.round((rdRaw-25569)*86400*1000));yr=d.getUTCFullYear();mo=d.getUTCMonth();dy=d.getUTCDate();}
-    else{const d=new Date();yr=d.getFullYear();mo=d.getMonth();dy=d.getDate();}
-    const fdNoon=new Date(yr,mo,dy,12,0,0,0);const dayName=fullDayName(fdNoon);
-    const buys=rows.filter(r=>r.action.includes('OPENING')&&r.qty>0);
-    const sells=rows.filter(r=>r.action.includes('CLOSING')&&r.qty<0);
-    const totalBuyQty=buys.reduce((s,r)=>s+r.qty,0);
-    const entryPrice=totalBuyQty>0?buys.reduce((s,r)=>s+r.price*r.qty,0)/totalBuyQty:(sells.length?sells[0].price:0);
-    const totalSellQty=sells.reduce((s,r)=>s+Math.abs(r.qty),0);
-    const totalQty=totalBuyQty||totalSellQty;
-    const closes=sells.map(r=>{const cq=Math.abs(r.qty);return{qty:cq,exitPrice:r.price,exitTime:'--',pnl:((r.price-entryPrice)*100*cq).toFixed(2)};});
-    const realizedPnl=closes.reduce((s,c)=>s+parseFloat(c.pnl),0);
-    const remainingQty=Math.max(0,totalBuyQty-totalSellQty);
-    const avgExit=totalSellQty>0?sells.reduce((s,r)=>s+r.price*Math.abs(r.qty),0)/totalSellQty:0;
-    const status=remainingQty===0?'CLOSED':remainingQty===totalQty?'OPEN':'PARTIAL';
-    imported.push({id:genId(),stock:ticker,fullSymbol:sym,option:ctype,day:dayName,totalQty,remainingQty,entry:parseFloat(entryPrice.toFixed(4)),avgExit:parseFloat(avgExit.toFixed(4)),status,entryTime:'--',setups:['Imported'],closes,realizedPnl:parseFloat(realizedPnl.toFixed(2)),timestamp:fdNoon.toISOString(),source:'imported',importId});
-  });
-  return{importId,imported};
-}
-
-// ════════════════════════════════════════════════════
-// DELETE MODAL
-// ════════════════════════════════════════════════════
+// ═══ DELETE MODAL ═══
 function showDel(html,fn,lbl){$('delModalBody').innerHTML=html;$('delConfirmBtn').textContent=lbl||'Delete';pendingDel=fn;$('delModal').style.display='flex';}
 function closeDel(){$('delModal').style.display='none';pendingDel=null}
 function confirmDel(){if(pendingDel)pendingDel();closeDel()}
 function showDelBatch(importId){
   const b=importBatches.find(x=>x.importId===importId);if(!b)return;
   const cnt=trades.filter(t=>t.importId===importId).length;
-  showDel(`<p>Delete import: <strong style="color:#FFD700">${b.fileName}</strong></p><p style="font-size:11px;color:#6b7280;margin-top:8px">Removes ${cnt} trades.</p>`,
+  showDel(`<p class="mb-1">Delete import:</p><p class="text-[#FFD700] font-bold mb-3">${b.fileName}</p><p class="text-[11px] text-gray-400">Removes <strong class="text-[#00FFCC]">${cnt} trades</strong>.</p>`,
+// ════════════════════════════════════════════════════
     ()=>{trades=trades.filter(t=>t.importId!==importId);importBatches=importBatches.filter(x=>x.importId!==importId);save();render();showToast('info','Deleted',`Import removed.`);},'🗑️ Delete Import');
 }
 function showDelDay(dk){
@@ -1802,6 +1542,7 @@ window.onload=()=>{
   render();updateTape();pmRenderSavedPlans();
   setTimeout(()=>showToast('info','Stellium Elite','Press ⌘K for commands · ? for shortcuts',4000),800);
 };
+
 </script>
 <script>
 // ═══ IRA ACCOUNT TRACKER — storage key: stellium_ira_v2 ═══
@@ -1937,5 +1678,6 @@ window.onload=()=>{
   if(document.readyState==='complete'){setTimeout(iraRefresh,300);}else{window.addEventListener('load',()=>setTimeout(iraRefresh,300));}
 })();
 </script>
+
 </body>
 </html>
