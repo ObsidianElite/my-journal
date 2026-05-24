@@ -640,8 +640,8 @@ body.pm-active #particleCanvas{display:none!important;}
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative;z-index:2;">
       <button id="iraAddBtn" onclick="iraTogglePanel()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#10133; Add IRA Trade</button>
       <button onclick="iraExportCSV()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(139,92,246,0.1);border:1.5px solid rgba(139,92,246,0.35);color:#a78bfa;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128190; Export IRA CSV</button>
-      <button onclick="document.getElementById('iraFileImport').click()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128196; Import IRA CSV</button>
-      <input type="file" id="iraFileImport" accept=".csv" style="display:none" onchange="iraImportCSV(event)">
+      <button onclick="document.getElementById('iraFileImport').click()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128196; Import Excel</button>
+      <input type="file" id="iraFileImport" accept=".xls,.xlsx" style="display:none" onchange="iraImportCSV(event)">
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:1px;background:rgba(99,102,241,0.1);">
@@ -1677,39 +1677,64 @@ window.onload=()=>{
   };
   window.iraImportCSV=function(e){
     const file=e.target.files[0];if(!file)return;
-    const reader=new FileReader();
-    reader.onload=function(ev){
-      const lines=ev.target.result.split('\n').filter(l=>l.trim());
-      if(!lines.length){showToast('error','IRA Import','Empty file.');return;}
-      // Detect header row
-      const firstLine=lines[0].toLowerCase();
-      const hasHeader=firstLine.includes('symbol')||firstLine.includes('date')||firstLine.includes('type');
-      const rows=hasHeader?lines.slice(1):lines;
-      let imported=0,skipped=0;
-      rows.forEach(row=>{
-        const cols=row.split(',').map(c=>c.replace(/^"|"$/g,'').trim());
-        if(cols.length<5)return;
-        // Expected: Date, Symbol, Type, Qty, Entry, Exit, P&L, Setup, Status, Account
-        const dateStr=cols[0],sym=(cols[1]||'').toUpperCase(),type=cols[2]||'CALL';
-        const qty=parseInt(cols[3])||1;
-        const entry=parseFloat(cols[4]);
-        const exit=cols[5]?parseFloat(cols[5]):null;
-        const setup=cols[7]||'';
-        if(!sym||isNaN(entry)||entry<=0){skipped++;return;}
-        const hasExit=exit&&!isNaN(exit)&&exit>0;
-        const pnl=hasExit?((exit-entry)*100*qty):0;
-        const dateMs=new Date(dateStr).getTime()||Date.now();
-        // Skip duplicates (same date+symbol+entry)
-        const isDupe=iraTrades.some(t=>t.symbol===sym&&t.entry===entry&&Math.abs(t.date-dateMs)<86400000);
-        if(isDupe){skipped++;return;}
-        iraTrades.push({id:iraGenId(),symbol:sym,type:type.toUpperCase().includes('PUT')?'PUT':'CALL',qty,entry,exit:hasExit?exit:null,pnl,setup,status:hasExit?'CLOSED':'OPEN',date:isNaN(dateMs)?Date.now():dateMs});
-        imported++;
-      });
-      iraSave();iraRefresh();
-      showToast(imported>0?'success':'warning','IRA Import',`${imported} trades imported${skipped?' · '+skipped+' skipped':''}.`);
-    };
-    reader.readAsText(file);
-    e.target.value='';
+    file.arrayBuffer().then(buf=>{
+      try{
+        const wb=XLSX.read(buf);
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        let headerIdx=-1;
+        for(let i=0;i<Math.min(raw.length,10);i++){if(raw[i].some(c=>String(c).trim()==='Run Date')){headerIdx=i;break;}}
+        if(headerIdx<0){showToast('error','IRA Import','Could not find "Run Date" header row.');e.target.value='';return;}
+        const headers=raw[headerIdx].map(h=>String(h).trim());
+        const data=raw.slice(headerIdx+1).map(row=>{const obj={};headers.forEach((h,i)=>{obj[h]=row[i]??'';});return obj;});
+        // Group by symbol — same logic as main journal processImport
+        const hasDesc=data.length>0&&'Description' in data[0];
+        const symGroups={};
+        data.forEach(r=>{
+          const action=(r['Action']||'').toString().trim(),sym=(r['Symbol']||'').toString().trim();
+          const priceRaw=hasDesc?r['Price ($)']:r['Price ($)']||r['Price'];
+          const price=parseFloat(priceRaw||0),qty=parseFloat(r['Quantity']||0),runDate=r['Run Date'];
+          if(!action||!sym||isNaN(price)||isNaN(qty)||qty===0)return;
+          if(!action.includes('OPENING')&&!action.includes('CLOSING'))return;
+          if(!symGroups[sym])symGroups[sym]={rows:[]};
+          symGroups[sym].rows.push({action,sym,price,qty,runDate});
+        });
+        const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        function fullDay(d){return days[d.getDay()];}
+        let imported=0;
+        Object.entries(symGroups).forEach(([sym,grp])=>{
+          const rows=grp.rows;if(!rows.length)return;
+          const ctype=rows[0].action.includes(' CALL ')?'CALL':'PUT';
+          const tickerMatch=rows[0].action.match(/\(([^)]+)\)/);
+          const ticker=tickerMatch?tickerMatch[1]:sym.replace(/^-/,'').replace(/\d.*/,'');
+          let yr,mo,dy;const rdRaw=rows[0].runDate;
+          if(rdRaw instanceof Date){yr=rdRaw.getUTCFullYear();mo=rdRaw.getUTCMonth();dy=rdRaw.getUTCDate();}
+          else if(typeof rdRaw==='string'&&rdRaw.includes('/')){const[m,d,y]=rdRaw.split('/');yr=parseInt(y);mo=parseInt(m)-1;dy=parseInt(d);}
+          else if(typeof rdRaw==='string'&&rdRaw.length>0){const d=new Date(rdRaw);yr=d.getUTCFullYear();mo=d.getUTCMonth();dy=d.getUTCDate();}
+          else if(typeof rdRaw==='number'){const d=new Date(Math.round((rdRaw-25569)*86400*1000));yr=d.getUTCFullYear();mo=d.getUTCMonth();dy=d.getUTCDate();}
+          else{const d=new Date();yr=d.getFullYear();mo=d.getMonth();dy=d.getDate();}
+          const fdNoon=new Date(yr,mo,dy,12,0,0,0);
+          const buys=rows.filter(r=>r.action.includes('OPENING')&&r.qty>0);
+          const sells=rows.filter(r=>r.action.includes('CLOSING')&&r.qty<0);
+          const totalBuyQty=buys.reduce((s,r)=>s+r.qty,0);
+          const entryPrice=totalBuyQty>0?buys.reduce((s,r)=>s+r.price*r.qty,0)/totalBuyQty:(sells.length?sells[0].price:0);
+          const totalSellQty=sells.reduce((s,r)=>s+Math.abs(r.qty),0);
+          const totalQty=totalBuyQty||totalSellQty;
+          const avgExit=totalSellQty>0?sells.reduce((s,r)=>s+r.price*Math.abs(r.qty),0)/totalSellQty:null;
+          const pnl=avgExit?((avgExit-entryPrice)*100*totalSellQty):0;
+          const remainingQty=Math.max(0,totalBuyQty-totalSellQty);
+          const status=remainingQty===0?'CLOSED':remainingQty===totalQty?'OPEN':'PARTIAL';
+          // Skip duplicates
+          const isDupe=iraTrades.some(t=>t.symbol===ticker&&Math.abs(t.entry-parseFloat(entryPrice.toFixed(4)))<0.001&&Math.abs(t.date-fdNoon.getTime())<86400000);
+          if(isDupe)return;
+          iraTrades.unshift({id:iraGenId(),symbol:ticker,type:ctype,qty:totalQty,entry:parseFloat(entryPrice.toFixed(4)),exit:avgExit?parseFloat(avgExit.toFixed(4)):null,pnl:parseFloat(pnl.toFixed(2)),setup:'Imported',status,date:fdNoon.getTime()});
+          imported++;
+        });
+        iraSave();iraRefresh();
+        showToast(imported>0?'success':'warning','IRA Import',`${imported} IRA trade${imported!==1?'s':''} imported from ${file.name}`);
+      }catch(err){showToast('error','IRA Import Error',err.message);}
+      e.target.value='';
+    });
   };
 
   function iraRefresh(){iraSave();iraUpdateStats();iraRenderTable();iraUpdateChart();}
