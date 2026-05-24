@@ -5,6 +5,7 @@
 <title>Stellium Elite | Professional Options Terminal</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -506,6 +507,43 @@ body.pm-active #particleCanvas{display:none!important;}
   <div id="tickerCardGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px"></div>
   <div id="tickerChartWrap" style="display:none;margin-top:14px"><div style="position:relative;height:220px"><canvas id="tickerChart"></canvas></div></div>
 </div>
+
+
+<!-- PNL CALENDAR -->
+<div class="glass p-5 mb-6" id="pnlCalendarSection">
+  <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <div class="section-title" style="margin-bottom:0">📅 P&amp;L Calendar</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="calPrev()" style="background:rgba(0,255,204,0.06);border:1px solid rgba(0,255,204,0.2);color:var(--primary);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;">‹</button>
+      <span id="calMonthLabel" style="font-size:12px;font-weight:700;color:#e2e8f0;font-family:'JetBrains Mono',monospace;min-width:110px;text-align:center;"></span>
+      <button onclick="calNext()" style="background:rgba(0,255,204,0.06);border:1px solid rgba(0,255,204,0.2);color:var(--primary);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;">›</button>
+      <button onclick="calToday()" style="background:rgba(0,255,204,0.08);border:1px solid rgba(0,255,204,0.25);color:var(--primary);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;">Today</button>
+    </div>
+  </div>
+  <!-- Day headers -->
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;">
+    <div style="text-align:center;font-size:9px;font-weight:700;color:rgba(0,255,204,0.45);font-family:'JetBrains Mono',monospace;padding:4px 0;text-transform:uppercase;letter-spacing:.08em;">Mon</div>
+    <div style="text-align:center;font-size:9px;font-weight:700;color:rgba(0,255,204,0.45);font-family:'JetBrains Mono',monospace;padding:4px 0;text-transform:uppercase;letter-spacing:.08em;">Tue</div>
+    <div style="text-align:center;font-size:9px;font-weight:700;color:rgba(0,255,204,0.45);font-family:'JetBrains Mono',monospace;padding:4px 0;text-transform:uppercase;letter-spacing:.08em;">Wed</div>
+    <div style="text-align:center;font-size:9px;font-weight:700;color:rgba(0,255,204,0.45);font-family:'JetBrains Mono',monospace;padding:4px 0;text-transform:uppercase;letter-spacing:.08em;">Thu</div>
+    <div style="text-align:center;font-size:9px;font-weight:700;color:rgba(0,255,204,0.45);font-family:'JetBrains Mono',monospace;padding:4px 0;text-transform:uppercase;letter-spacing:.08em;">Fri</div>
+    <div style="text-align:center;font-size:9px;font-weight:700;color:rgba(0,255,204,0.35);font-family:'JetBrains Mono',monospace;padding:4px 0;text-transform:uppercase;letter-spacing:.08em;">Sat</div>
+    <div style="text-align:center;font-size:9px;font-weight:700;color:rgba(0,255,204,0.35);font-family:'JetBrains Mono',monospace;padding:4px 0;text-transform:uppercase;letter-spacing:.08em;">Sun</div>
+  </div>
+  <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
+  <!-- Month summary row -->
+  <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,255,204,0.08);display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+    <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(34,197,94,0.5);display:inline-block;border:1px solid rgba(34,197,94,0.4);"></span><span style="font-size:9px;color:#6b7280;font-family:'JetBrains Mono',monospace;">Profit day</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(239,68,68,0.5);display:inline-block;border:1px solid rgba(239,68,68,0.4);"></span><span style="font-size:9px;color:#6b7280;font-family:'JetBrains Mono',monospace;">Loss day</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,0.04);display:inline-block;border:1px solid rgba(255,255,255,0.08);"></span><span style="font-size:9px;color:#6b7280;font-family:'JetBrains Mono',monospace;">No trades</span></div>
+    <div style="margin-left:auto;display:flex;gap:16px;">
+      <div style="text-align:right;"><div style="font-size:9px;color:#6b7280;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">Month P&amp;L</div><div id="calMonthPnl" style="font-size:14px;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--primary);">$0.00</div></div>
+      <div style="text-align:right;"><div style="font-size:9px;color:#6b7280;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">Trading Days</div><div id="calTradingDays" style="font-size:14px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#e2e8f0;">0</div></div>
+      <div style="text-align:right;"><div style="font-size:9px;color:#6b7280;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">Win Days</div><div id="calWinDays" style="font-size:14px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#4ade80;">0</div></div>
+    </div>
+  </div>
+</div>
+<!-- /PNL CALENDAR -->
 
 <!-- TRADE ENTRY FORM -->
 <div class="glass p-6 mb-6" style="border-top:2px solid var(--primary)">
@@ -1029,7 +1067,9 @@ function exportToExcel(){
 function initCharts(){
   const monoFont={family:'JetBrains Mono',size:9};
   const tooltipBase={backgroundColor:'rgba(3,5,10,0.97)',borderColor:'rgba(0,255,204,0.25)',borderWidth:1,titleColor:'#00FFCC',bodyColor:'#e2e8f0',padding:12,cornerRadius:10};
-  equityChart=new Chart($('equityChart').getContext('2d'),{data:{labels:[],datasets:[{type:'bar',label:'Daily P&L',data:[],backgroundColor:[],borderRadius:5,yAxisID:'y',order:2,barThickness:'flex',maxBarThickness:40},{type:'line',label:'Cumulative',data:[],borderColor:'#00FFCC',backgroundColor:'rgba(0,255,204,0.06)',tension:.4,borderWidth:2,pointRadius:0,pointHoverRadius:5,fill:true,yAxisID:'y2',order:1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{color:'#6b7280',font:monoFont,boxWidth:10}},tooltip:{...tooltipBase,callbacks:{label:c=>{const v=c.parsed.y;return` ${c.dataset.label}: ${v>=0?'+':''}$${v.toFixed(2)}`}}}},scales:{x:{grid:{display:false},ticks:{color:'#4b5563',font:monoFont,maxRotation:45}},y:{position:'left',grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:monoFont,callback:v=>'$'+v.toFixed(0)}},y2:{position:'right',grid:{display:false},ticks:{color:'#00FFCC',font:monoFont,callback:v=>'$'+v.toFixed(0)}}}}});
+  // Register datalabels only for equityChart via inline plugin (not global)
+  const ChartDataLabelsPlugin = window.ChartDataLabels || null;
+  equityChart=new Chart($('equityChart').getContext('2d'),{plugins:ChartDataLabelsPlugin?[ChartDataLabelsPlugin]:[],data:{labels:[],datasets:[{type:'bar',label:'Daily P&L',data:[],backgroundColor:[],borderRadius:5,yAxisID:'y',order:2,barThickness:'flex',maxBarThickness:40},{type:'line',label:'Cumulative',data:[],borderColor:'#00FFCC',backgroundColor:'rgba(0,255,204,0.06)',tension:.4,borderWidth:2,pointRadius:0,pointHoverRadius:5,fill:true,yAxisID:'y2',order:1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{color:'#6b7280',font:monoFont,boxWidth:10}},tooltip:{...tooltipBase,callbacks:{label:c=>{const v=c.parsed.y;return` ${c.dataset.label}: ${v>=0?'+':''}$${v.toFixed(2)}`}}},datalabels:{display:ctx=>ctx.datasetIndex===0,formatter:(v)=>{if(v===0||v===null||v===undefined)return'';const abs=Math.abs(v);if(abs<1)return'';return(v>=0?'+':'-')+'$'+abs.toFixed(0);},color:ctx=>ctx.dataset.data[ctx.dataIndex]>=0?'#4ade80':'#f87171',font:{family:'JetBrains Mono',size:9,weight:'700'},anchor:'end',align:ctx=>ctx.dataset.data[ctx.dataIndex]>=0?'top':'bottom',offset:2,clamp:true}},scales:{x:{grid:{display:false},ticks:{color:'#4b5563',font:monoFont,maxRotation:45}},y:{position:'left',grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:monoFont,callback:v=>'$'+v.toFixed(0)}},y2:{position:'right',grid:{display:false},ticks:{color:'#00FFCC',font:monoFont,callback:v=>'$'+v.toFixed(0)}}}}});
   precisionChart=new Chart($('precisionChart').getContext('2d'),{type:'doughnut',data:{labels:['Wins','Losses'],datasets:[{data:[0,0],backgroundColor:['#00FFCC','rgba(255,255,255,0.05)'],borderWidth:0,cutout:'78%'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tooltipBase}}}});
   tickerChart=new Chart($('tickerChart').getContext('2d'),{type:'bar',data:{labels:[],datasets:[{label:'P&L',data:[],backgroundColor:[],borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tooltipBase,callbacks:{label:c=>{const v=c.parsed.y;return` P&L: ${v>=0?'+':''}$${v.toFixed(2)}`}}}},scales:{x:{grid:{display:false},ticks:{color:'#e2e8f0',font:{family:'JetBrains Mono',size:11,weight:'700'}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b7280',font:monoFont,callback:v=>'$'+v.toFixed(0)}}}}});
   hudSparkChart=new Chart($('hudSparkNet').getContext('2d'),{type:'line',data:{labels:[],datasets:[{data:[],borderColor:'rgba(0,255,204,0.6)',backgroundColor:'rgba(0,255,204,0.08)',borderWidth:1.5,pointRadius:0,fill:true,tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
