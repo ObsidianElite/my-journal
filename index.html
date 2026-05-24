@@ -640,6 +640,7 @@ body.pm-active #particleCanvas{display:none!important;}
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative;z-index:2;">
       <button id="iraAddBtn" onclick="iraTogglePanel()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#10133; Add IRA Trade</button>
       <button onclick="iraExportCSV()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(139,92,246,0.1);border:1.5px solid rgba(139,92,246,0.35);color:#a78bfa;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128190; Export IRA CSV</button>
+      <button onclick="iraExportExcel()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128229; Export Excel</button>
       <button onclick="document.getElementById('iraFileImport').click()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128196; Import Excel</button>
       <input type="file" id="iraFileImport" accept=".xls,.xlsx" style="display:none" onchange="iraImportCSV(event)">
     </div>
@@ -1735,6 +1736,27 @@ window.onload=()=>{
       }catch(err){showToast('error','IRA Import Error',err.message);}
       e.target.value='';
     });
+  };
+
+  window.iraExportExcel=function(){
+    if(!iraTrades.length){showToast('warning','No IRA Trades','Nothing to export.');return;}
+    const rows=iraTrades.map(t=>({
+      'Date':new Date(t.date).toLocaleDateString(),
+      'Symbol':t.symbol,
+      'Type':t.type,
+      'Qty':t.qty,
+      'Entry':parseFloat(t.entry).toFixed(2),
+      'Exit':t.exit?parseFloat(t.exit).toFixed(2):'',
+      'P&L':t.status==='CLOSED'?parseFloat(t.pnl).toFixed(2):'',
+      'Setup':t.setup||'',
+      'Status':t.status,
+      'Account':'IRA'
+    }));
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'IRA Trades');
+    XLSX.writeFile(wb,`IRA_Trades_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('success','IRA Exported',`${iraTrades.length} IRA trades saved to Excel.`);
   };
 
   function iraRefresh(){iraSave();iraUpdateStats();iraRenderTable();iraUpdateChart();}
