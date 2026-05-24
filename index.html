@@ -640,6 +640,8 @@ body.pm-active #particleCanvas{display:none!important;}
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative;z-index:2;">
       <button id="iraAddBtn" onclick="iraTogglePanel()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#10133; Add IRA Trade</button>
       <button onclick="iraExportCSV()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(139,92,246,0.1);border:1.5px solid rgba(139,92,246,0.35);color:#a78bfa;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128190; Export IRA CSV</button>
+      <button onclick="document.getElementById('iraFileImport').click()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.35);color:#818cf8;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:800;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">&#128196; Import IRA CSV</button>
+      <input type="file" id="iraFileImport" accept=".csv" style="display:none" onchange="iraImportCSV(event)">
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:1px;background:rgba(99,102,241,0.1);">
@@ -1673,6 +1675,43 @@ window.onload=()=>{
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`IRA_Trades_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
     showToast('success','IRA Exported',`${iraTrades.length} trades saved.`);
   };
+  window.iraImportCSV=function(e){
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      const lines=ev.target.result.split('\n').filter(l=>l.trim());
+      if(!lines.length){showToast('error','IRA Import','Empty file.');return;}
+      // Detect header row
+      const firstLine=lines[0].toLowerCase();
+      const hasHeader=firstLine.includes('symbol')||firstLine.includes('date')||firstLine.includes('type');
+      const rows=hasHeader?lines.slice(1):lines;
+      let imported=0,skipped=0;
+      rows.forEach(row=>{
+        const cols=row.split(',').map(c=>c.replace(/^"|"$/g,'').trim());
+        if(cols.length<5)return;
+        // Expected: Date, Symbol, Type, Qty, Entry, Exit, P&L, Setup, Status, Account
+        const dateStr=cols[0],sym=(cols[1]||'').toUpperCase(),type=cols[2]||'CALL';
+        const qty=parseInt(cols[3])||1;
+        const entry=parseFloat(cols[4]);
+        const exit=cols[5]?parseFloat(cols[5]):null;
+        const setup=cols[7]||'';
+        if(!sym||isNaN(entry)||entry<=0){skipped++;return;}
+        const hasExit=exit&&!isNaN(exit)&&exit>0;
+        const pnl=hasExit?((exit-entry)*100*qty):0;
+        const dateMs=new Date(dateStr).getTime()||Date.now();
+        // Skip duplicates (same date+symbol+entry)
+        const isDupe=iraTrades.some(t=>t.symbol===sym&&t.entry===entry&&Math.abs(t.date-dateMs)<86400000);
+        if(isDupe){skipped++;return;}
+        iraTrades.push({id:iraGenId(),symbol:sym,type:type.toUpperCase().includes('PUT')?'PUT':'CALL',qty,entry,exit:hasExit?exit:null,pnl,setup,status:hasExit?'CLOSED':'OPEN',date:isNaN(dateMs)?Date.now():dateMs});
+        imported++;
+      });
+      iraSave();iraRefresh();
+      showToast(imported>0?'success':'warning','IRA Import',`${imported} trades imported${skipped?' · '+skipped+' skipped':''}.`);
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  };
+
   function iraRefresh(){iraSave();iraUpdateStats();iraRenderTable();iraUpdateChart();}
   window.iraRefresh=iraRefresh;
   if(document.readyState==='complete'){setTimeout(iraRefresh,300);}else{window.addEventListener('load',()=>setTimeout(iraRefresh,300));}
